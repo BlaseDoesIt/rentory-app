@@ -65,8 +65,9 @@ LateAccrual lineLateAccrual(
       if (days > worst) worst = days;
     }
   } else {
-    final back =
-        line.rentalState == RentalState.returned ? line.returnedAt : null;
+    final back = line.rentalState == RentalState.returned
+        ? line.returnedAt
+        : null;
     worst = daysOver(deadline, back ?? now);
     unitDays = worst * line.quantity;
   }
@@ -123,8 +124,7 @@ OrderLateFee orderLateFee({
   var fees = 0.0;
   var worst = 0;
   for (final l in lines) {
-    final a =
-        lineLateAccrual(l.line, now: now, orderCancelled: orderCancelled);
+    final a = lineLateAccrual(l.line, now: now, orderCancelled: orderCancelled);
     fees += a.fee;
     if (a.worstDays > worst) worst = a.worstDays;
   }

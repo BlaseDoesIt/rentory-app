@@ -88,8 +88,7 @@ List<String> pickupProblems({
 /// Line moves an order-wide pickup performs: everything not yet out.
 bool canPickUpLine(LineFacts l) =>
     !l.isSection &&
-    (l.rentalState == RentalState.none ||
-        l.rentalState == RentalState.booked);
+    (l.rentalState == RentalState.none || l.rentalState == RentalState.booked);
 
 List<String> cancelProblems(List<LineFacts> lines) {
   final out = lines.where((l) => l.rentalState == RentalState.pickedUp).length;
@@ -100,8 +99,8 @@ List<String> cancelProblems(List<LineFacts> lines) {
 
 List<String> resetToDraftProblems(List<LineFacts> lines) =>
     lines.any((l) => l.rentalState == RentalState.pickedUp)
-        ? const ['Items are out. Return them before resetting to draft.']
-        : const [];
+    ? const ['Items are out. Return them before resetting to draft.']
+    : const [];
 
 /// Overdue: committed, past its end date, and something not back yet.
 bool isOverdue({
@@ -120,26 +119,25 @@ int daysLate({
   required bool overdue,
   required DateTime? dateEnd,
   required DateTime now,
-}) =>
-    overdue ? billableDays(dateEnd, now) : 0;
+}) => overdue ? billableDays(dateEnd, now) : 0;
 
 /// Where a unit goes when it is checked in: missing is written off as lost,
 /// damaged goes to maintenance, anything else back on the shelf.
 SerialState serialStateAfterReturn(Condition condition) => switch (condition) {
-      Condition.missing => SerialState.lost,
-      Condition.damaged => SerialState.maintenance,
-      Condition.minor || Condition.good => SerialState.available,
-    };
+  Condition.missing => SerialState.lost,
+  Condition.damaged => SerialState.maintenance,
+  Condition.minor || Condition.good => SerialState.available,
+};
 
 /// A part's own condition after check-in (`PART_CONDITION_MAP`).
 String partConditionAfterReturn(Condition condition) => switch (condition) {
-      Condition.missing => 'lost',
-      Condition.damaged => 'damaged',
-      Condition.minor || Condition.good => 'good',
-    };
+  Condition.missing => 'lost',
+  Condition.damaged => 'damaged',
+  Condition.minor || Condition.good => 'good',
+};
 
 /// Order dates must run forwards.
 String? datesProblem(DateTime? start, DateTime? end) =>
     start != null && end != null && !end.isAfter(start)
-        ? 'The end date must be after the start date.'
-        : null;
+    ? 'The end date must be after the start date.'
+    : null;

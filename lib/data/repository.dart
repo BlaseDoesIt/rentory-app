@@ -141,8 +141,8 @@ abstract interface class RentoryRepository {
   Future<({Asset? asset, Serial? serial})> findByCode(String code);
 }
 
-/// Who hands out order numbers. Locally a counter; with Supabase, the server
-/// (so two devices never print the same number).
+/// Confirms a booking and hands out its number. Locally a counter; with
+/// Supabase, the server, which also refuses a unit another device just took.
 abstract interface class BookingGateway {
-  Future<String> assignNumber(String orderId, DateTime bookedAt);
+  Future<String> confirmBooking(String orderId, DateTime bookedAt);
 }

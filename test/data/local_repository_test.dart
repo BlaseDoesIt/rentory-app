@@ -23,47 +23,63 @@ void main() {
       currentUserId: () => 'u1',
       clock: () => now,
     );
-    camera = (await db.into(db.assets).insertReturning(AssetsCompanion.insert(
-      name: 'Sony FX6',
-      tracking: const Value(Tracking.serial),
-      rentalPriceDay: const Value(100),
-    )))
-        .id;
+    camera =
+        (await db
+                .into(db.assets)
+                .insertReturning(
+                  AssetsCompanion.insert(
+                    name: 'Sony FX6',
+                    tracking: const Value(Tracking.serial),
+                    rentalPriceDay: const Value(100),
+                  ),
+                ))
+            .id;
     for (final n in ['FX6-001', 'FX6-002']) {
-      await db.into(db.serials).insert(SerialsCompanion.insert(
-            assetId: camera,
-            name: n,
-            barcode: Value(n),
-          ));
+      await db
+          .into(db.serials)
+          .insert(
+            SerialsCompanion.insert(
+              assetId: camera,
+              name: n,
+              barcode: Value(n),
+            ),
+          );
     }
-    tripod = (await db.into(db.assets).insertReturning(AssetsCompanion.insert(
-      name: 'Tripod',
-      qtyManual: const Value(3),
-      rentalPriceDay: const Value(10),
-    )))
-        .id;
+    tripod =
+        (await db
+                .into(db.assets)
+                .insertReturning(
+                  AssetsCompanion.insert(
+                    name: 'Tripod',
+                    qtyManual: const Value(3),
+                    rentalPriceDay: const Value(10),
+                  ),
+                ))
+            .id;
   });
 
   tearDown(() => db.close());
 
   Future<String> order({int fromDay = 5, int toDay = 7}) => repo.createOrder(
-        customerName: 'Test customer',
-        start: DateTime.utc(2026, 10, fromDay, 9),
-        end: DateTime.utc(2026, 10, toDay, 9),
-      );
+    customerName: 'Test customer',
+    start: DateTime.utc(2026, 10, fromDay, 9),
+    end: DateTime.utc(2026, 10, toDay, 9),
+  );
 
-  Future<SerialState> stateOf(String name) async =>
-      (await (db.select(db.serials)..where((s) => s.name.equals(name)))
-              .getSingle())
-          .state;
+  Future<SerialState> stateOf(String name) async => (await (db.select(
+    db.serials,
+  )..where((s) => s.name.equals(name))).getSingle()).state;
 
   test('a full rental: book, pickup, split return, money', () async {
     final o = await order();
-    final camLine = await repo.addLine(o,
-        type: LineType.asset, assetId: camera, quantity: 2);
+    final camLine = await repo.addLine(
+      o,
+      type: LineType.asset,
+      assetId: camera,
+      quantity: 2,
+    );
     await repo.addLine(o, type: LineType.section, name: 'Support');
-    await repo.addLine(o,
-        type: LineType.asset, assetId: tripod, quantity: 2);
+    await repo.addLine(o, type: LineType.asset, assetId: tripod, quantity: 2);
 
     expect(await repo.autofillSerials(camLine), 0);
     await repo.book(o);
@@ -78,7 +94,9 @@ void main() {
     // The contract gates the handover.
     await expectLater(repo.pickupAll(o), throwsA(isA<RuleException>()));
     await repo.updateOrder(
-        o, const OrdersCompanion(sigRentalContract: Value(true)));
+      o,
+      const OrdersCompanion(sigRentalContract: Value(true)),
+    );
     await repo.pickupAll(o);
     d = await repo.loadOrder(o);
     expect(d.order.state, OrderState.pickedUp);
@@ -87,9 +105,12 @@ void main() {
     // One camera back damaged on time, the other a day late.
     final serials = d.lines.first.serials;
     now = DateTime.utc(2026, 10, 7, 8);
-    await repo.returnLine(camLine, units: {
-      serials[0].id: (condition: Condition.damaged, note: 'cracked screen'),
-    });
+    await repo.returnLine(
+      camLine,
+      units: {
+        serials[0].id: (condition: Condition.damaged, note: 'cracked screen'),
+      },
+    );
     d = await repo.loadOrder(o);
     expect(d.order.state, OrderState.pickedUp); // tripods still out
     expect(await stateOf('FX6-001'), SerialState.maintenance);
@@ -108,14 +129,22 @@ void main() {
 
   test('a unit booked by one order cannot be booked by another', () async {
     final first = await order();
-    final line1 = await repo.addLine(first,
-        type: LineType.asset, assetId: camera, quantity: 1);
+    final line1 = await repo.addLine(
+      first,
+      type: LineType.asset,
+      assetId: camera,
+      quantity: 1,
+    );
     await repo.autofillSerials(line1);
     await repo.book(first);
 
     final second = await order(fromDay: 6, toDay: 8);
-    final line2 = await repo.addLine(second,
-        type: LineType.asset, assetId: camera, quantity: 1);
+    final line2 = await repo.addLine(
+      second,
+      type: LineType.asset,
+      assetId: camera,
+      quantity: 1,
+    );
     final options = await repo.serialOptions(line2);
     expect(options.map((o) => o.serial.name), ['FX6-002']);
 
@@ -143,8 +172,12 @@ void main() {
 
   test('cancel releases units; items out block cancel', () async {
     final o = await order();
-    final line = await repo.addLine(o,
-        type: LineType.asset, assetId: camera, quantity: 1);
+    final line = await repo.addLine(
+      o,
+      type: LineType.asset,
+      assetId: camera,
+      quantity: 1,
+    );
     await repo.autofillSerials(line);
     await repo.book(o);
     await repo.cancel(o);
@@ -152,8 +185,7 @@ void main() {
     expect((await repo.loadOrder(o)).order.state, OrderState.cancelled);
 
     final p = await order();
-    final l2 =
-        await repo.addLine(p, type: LineType.asset, assetId: camera);
+    final l2 = await repo.addLine(p, type: LineType.asset, assetId: camera);
     await repo.autofillSerials(l2);
     await repo.book(p);
     await repo.pickupAll(p, force: true);
@@ -168,8 +200,9 @@ void main() {
 
   test('every write is marked for sync', () async {
     final o = await order();
-    final row =
-        await (db.select(db.orders)..where((x) => x.id.equals(o))).getSingle();
+    final row = await (db.select(
+      db.orders,
+    )..where((x) => x.id.equals(o))).getSingle();
     expect(row.dirty, isTrue);
     expect(row.id, hasLength(36));
   });

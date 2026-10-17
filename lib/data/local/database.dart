@@ -27,28 +27,30 @@ const syncedTables = [
   'photos',
 ];
 
-@DriftDatabase(tables: [
-  Profiles,
-  Customers,
-  DocumentTypes,
-  CustomerDiscounts,
-  Categories,
-  Locations,
-  Assets,
-  Serials,
-  Parts,
-  Orders,
-  OrderDocuments,
-  OrderLines,
-  OrderLineSerials,
-  OrderLineParts,
-  ReturnChecks,
-  Photos,
-  SyncCursors,
-])
+@DriftDatabase(
+  tables: [
+    Profiles,
+    Customers,
+    DocumentTypes,
+    CustomerDiscounts,
+    Categories,
+    Locations,
+    Assets,
+    Serials,
+    Parts,
+    Orders,
+    OrderDocuments,
+    OrderLines,
+    OrderLineSerials,
+    OrderLineParts,
+    ReturnChecks,
+    Photos,
+    SyncCursors,
+  ],
+)
 class RentoryDatabase extends _$RentoryDatabase {
   RentoryDatabase([QueryExecutor? executor])
-      : super(executor ?? driftDatabase(name: 'rentory'));
+    : super(executor ?? driftDatabase(name: 'rentory'));
 
   /// In-memory database for tests.
   RentoryDatabase.memory(super.executor);
@@ -58,8 +60,8 @@ class RentoryDatabase extends _$RentoryDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        beforeOpen: (details) async {
-          await customStatement('PRAGMA foreign_keys = ON');
-        },
-      );
+    beforeOpen: (details) async {
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
+  );
 }

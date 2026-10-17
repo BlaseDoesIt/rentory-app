@@ -13,28 +13,28 @@ Claim claim({
   required DateTime end,
   double qty = 1,
   Set<String> serials = const {},
-}) =>
-    Claim(
-      lineId: line,
-      orderId: order,
-      assetId: 'cam',
-      orderState: orderState,
-      rentalState: rentalState,
-      start: start,
-      end: end,
-      qtyOutstanding: qty,
-      serialIds: serials,
-    );
+}) => Claim(
+  lineId: line,
+  orderId: order,
+  assetId: 'cam',
+  orderState: orderState,
+  rentalState: rentalState,
+  start: start,
+  end: end,
+  qtyOutstanding: qty,
+  serialIds: serials,
+);
 
 const serials = [
   SerialFacts(id: 's1', name: 'CAM-001', state: SerialState.available),
   SerialFacts(id: 's2', name: 'CAM-002', state: SerialState.reserved),
   SerialFacts(id: 's3', name: 'CAM-003', state: SerialState.maintenance),
   SerialFacts(
-      id: 's4',
-      name: 'CAM-004',
-      state: SerialState.available,
-      blockedByPart: true),
+    id: 's4',
+    name: 'CAM-004',
+    state: SerialState.available,
+    blockedByPart: true,
+  ),
 ];
 
 void main() {
@@ -74,10 +74,11 @@ void main() {
     final claims = [
       claim(rentalState: RentalState.returned, start: d(5), end: d(7)),
       claim(
-          line: 'L2',
-          orderState: OrderState.cancelled,
-          start: d(5),
-          end: d(7)),
+        line: 'L2',
+        orderState: OrderState.cancelled,
+        start: d(5),
+        end: d(7),
+      ),
     ];
     expect(
       freeQuantity(

@@ -23,13 +23,17 @@ void main() {
         OrderState.pickedUp,
       );
       expect(
-        deriveOrderState(OrderState.pickedUp,
-            [line(RentalState.pickedUp), line(RentalState.returned)]),
+        deriveOrderState(OrderState.pickedUp, [
+          line(RentalState.pickedUp),
+          line(RentalState.returned),
+        ]),
         OrderState.partialReturn,
       );
       expect(
-        deriveOrderState(OrderState.partialReturn,
-            [line(RentalState.returned), line(RentalState.returned)]),
+        deriveOrderState(OrderState.partialReturn, [
+          line(RentalState.returned),
+          line(RentalState.returned),
+        ]),
         OrderState.returned,
       );
     });
@@ -44,8 +48,10 @@ void main() {
     });
     test('a new line on a closed order reopens it', () {
       expect(
-        deriveOrderState(OrderState.returned,
-            [line(RentalState.returned), line(RentalState.booked)]),
+        deriveOrderState(OrderState.returned, [
+          line(RentalState.returned),
+          line(RentalState.booked),
+        ]),
         OrderState.partialReturn,
       );
     });
@@ -54,8 +60,9 @@ void main() {
   group('bookProblems', () {
     test('an order of only headings has nothing on it', () {
       expect(
-        bookProblems(OrderState.draft,
-            [line(RentalState.none, type: LineType.section)]),
+        bookProblems(OrderState.draft, [
+          line(RentalState.none, type: LineType.section),
+        ]),
         isNotEmpty,
       );
     });
@@ -73,13 +80,13 @@ void main() {
     });
     test('a booked order cannot be booked again', () {
       expect(
-          bookProblems(OrderState.booked, [line(RentalState.booked)]),
-          isNotEmpty);
+        bookProblems(OrderState.booked, [line(RentalState.booked)]),
+        isNotEmpty,
+      );
     });
   });
 
-  test('only the rental contract blocks pickup, and an admin can force it',
-      () {
+  test('only the rental contract blocks pickup, and an admin can force it', () {
     expect(pickupProblems(rentalContractSigned: false), isNotEmpty);
     expect(pickupProblems(rentalContractSigned: true), isEmpty);
     expect(
@@ -100,18 +107,20 @@ void main() {
     final end = DateTime.utc(2026, 10, 18);
     expect(
       isOverdue(
-          state: OrderState.pickedUp,
-          dateEnd: end,
-          lines: [line(RentalState.pickedUp)],
-          now: now),
+        state: OrderState.pickedUp,
+        dateEnd: end,
+        lines: [line(RentalState.pickedUp)],
+        now: now,
+      ),
       isTrue,
     );
     expect(
       isOverdue(
-          state: OrderState.draft,
-          dateEnd: end,
-          lines: [line(RentalState.none)],
-          now: now),
+        state: OrderState.draft,
+        dateEnd: end,
+        lines: [line(RentalState.none)],
+        now: now,
+      ),
       isFalse,
     );
     expect(daysLate(overdue: true, dateEnd: end, now: now), 2);
@@ -121,7 +130,9 @@ void main() {
     expect(serialStateAfterReturn(Condition.missing), SerialState.lost);
     expect(serialStateAfterReturn(Condition.damaged), SerialState.maintenance);
     expect(serialStateAfterReturn(Condition.minor), SerialState.available);
-    expect(Condition.worst([Condition.good, Condition.damaged]),
-        Condition.damaged);
+    expect(
+      Condition.worst([Condition.good, Condition.damaged]),
+      Condition.damaged,
+    );
   });
 }

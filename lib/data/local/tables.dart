@@ -180,8 +180,10 @@ class Orders extends Table with SyncColumns {
       boolean().withDefault(const Constant(false))();
   BoolColumn get sigLoanContract =>
       boolean().withDefault(const Constant(false))();
-  BoolColumn get itemsCaptured => boolean().withDefault(const Constant(false))();
-  BoolColumn get itemsExamined => boolean().withDefault(const Constant(false))();
+  BoolColumn get itemsCaptured =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get itemsExamined =>
+      boolean().withDefault(const Constant(false))();
   DateTimeColumn get itemsExaminedAt => dateTime().nullable()();
   TextColumn get itemsExaminedBy => text().nullable()();
 
@@ -230,9 +232,8 @@ class OrderLines extends Table with SyncColumns {
   TextColumn get conditionOut => text()
       .map(const KeyConverter(Condition.values))
       .withDefault(const Constant('good'))();
-  TextColumn get conditionIn => text()
-      .map(const KeyConverter(Condition.values))
-      .nullable()();
+  TextColumn get conditionIn =>
+      text().map(const KeyConverter(Condition.values)).nullable()();
   TextColumn get conditionNote => text().nullable()();
 }
 

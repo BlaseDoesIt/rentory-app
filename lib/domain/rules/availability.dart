@@ -81,10 +81,9 @@ Iterable<Claim> blockingClaims(
   String assetId,
   Ask ask,
   DateTime now,
-) =>
-    claims.where(
-      (c) => c.assetId == assetId && _counts(c, ask) && overlaps(c, ask, now),
-    );
+) => claims.where(
+  (c) => c.assetId == assetId && _counts(c, ask) && overlaps(c, ask, now),
+);
 
 /// How many of an untracked asset are free over [ask].
 double freeQuantity({
@@ -94,8 +93,12 @@ double freeQuantity({
   required Ask ask,
   required DateTime now,
 }) {
-  final held = blockingClaims(claims, assetId, ask, now)
-      .fold<double>(0, (a, c) => a + c.qtyOutstanding);
+  final held = blockingClaims(
+    claims,
+    assetId,
+    ask,
+    now,
+  ).fold<double>(0, (a, c) => a + c.qtyOutstanding);
   final free = rentableQty - held;
   return free < 0 ? 0 : free;
 }
@@ -155,6 +158,6 @@ List<SerialOption> freeSerials({
 /// Pick [count] units for a line: free, not overdue anywhere, by name.
 /// Returns fewer than [count] when there are not enough.
 List<SerialFacts> autofillSerials(List<SerialOption> options, int count) => [
-      for (final o in options)
-        if (!o.overdue) o.serial,
-    ].take(count).toList();
+  for (final o in options)
+    if (!o.overdue) o.serial,
+].take(count).toList();

@@ -74,13 +74,17 @@ class _AppShellState extends State<AppShell> {
             labelType: NavigationRailLabelType.all,
             leading: const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text('Rentory',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              child: Text(
+                'Rentory',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ),
             destinations: [
               for (final d in _destinations)
                 NavigationRailDestination(
-                    icon: Icon(d.icon), label: Text(d.label)),
+                  icon: Icon(d.icon),
+                  label: Text(d.label),
+                ),
             ],
           ),
           const VerticalDivider(width: 1),

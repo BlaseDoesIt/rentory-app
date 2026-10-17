@@ -49,15 +49,10 @@ double lineSubtotal({
   required double discountPercent,
   required double quantity,
   required int days,
-}) =>
-    priceDayNet(priceDay, discountPercent) * quantity * days;
+}) => priceDayNet(priceDay, discountPercent) * quantity * days;
 
 /// The order-level discount in money, clamped to [0, linesTotal].
-double orderDiscount(
-  double linesTotal,
-  DiscountType type,
-  double value,
-) {
+double orderDiscount(double linesTotal, DiscountType type, double value) {
   if (value <= 0) return 0;
   final raw = type == DiscountType.fixed
       ? value
@@ -114,7 +109,9 @@ OrderAmounts orderAmounts({
   required double paid,
 }) {
   final lines = lineSubtotals.fold<double>(0, (a, b) => a + b);
-  final discount = roundMoney(orderDiscount(lines, discountType, discountValue));
+  final discount = roundMoney(
+    orderDiscount(lines, discountType, discountValue),
+  );
   final total = roundMoney(lines - discount);
   final charged = roundMoney(total + lateFee);
   final due = charged - paid > 0 ? roundMoney(charged - paid) : 0.0;
