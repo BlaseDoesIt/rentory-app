@@ -2,7 +2,12 @@
 /// the same strings go into SQLite, Supabase and the Odoo JSON-2 API.
 library;
 
-enum OrderState {
+/// Anything stored by its Odoo selection key.
+abstract interface class Keyed {
+  String get key;
+}
+
+enum OrderState implements Keyed {
   draft('draft'),
   booked('booked'),
   pickedUp('picked_up'),
@@ -11,6 +16,7 @@ enum OrderState {
   cancelled('cancelled');
 
   const OrderState(this.key);
+  @override
   final String key;
   static OrderState fromKey(String key) => _byKey(values, key, (e) => e.key);
 
@@ -24,24 +30,26 @@ enum OrderState {
   static const conflicting = {booked, pickedUp, partialReturn, returned};
 }
 
-enum LineType {
+enum LineType implements Keyed {
   asset('asset'),
   part('part'),
   service('service'),
   section('section');
 
   const LineType(this.key);
+  @override
   final String key;
   static LineType fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
 
-enum RentalState {
+enum RentalState implements Keyed {
   none('none'),
   booked('booked'),
   pickedUp('picked_up'),
   returned('returned');
 
   const RentalState(this.key);
+  @override
   final String key;
   static RentalState fromKey(String key) => _byKey(values, key, (e) => e.key);
 
@@ -50,16 +58,17 @@ enum RentalState {
   bool get goneOut => this == pickedUp || this == returned;
 }
 
-enum Tracking {
+enum Tracking implements Keyed {
   none('none'),
   serial('serial');
 
   const Tracking(this.key);
+  @override
   final String key;
   static Tracking fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
 
-enum SerialState {
+enum SerialState implements Keyed {
   available('available'),
   reserved('reserved'),
   out('out'),
@@ -69,6 +78,7 @@ enum SerialState {
   retired('retired');
 
   const SerialState(this.key);
+  @override
   final String key;
   static SerialState fromKey(String key) => _byKey(values, key, (e) => e.key);
 
@@ -76,34 +86,37 @@ enum SerialState {
   bool get unfit => this == maintenance || this == lost || this == retired;
 }
 
-enum PartKind {
+enum PartKind implements Keyed {
   mandatory('mandatory'),
   supply('supply'),
   none('none');
 
   const PartKind(this.key);
+  @override
   final String key;
   static PartKind fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
 
-enum PartState {
+enum PartState implements Keyed {
   available('available'),
   reserved('reserved'),
   out('out');
 
   const PartState(this.key);
+  @override
   final String key;
   static PartState fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
 
 /// Condition of a unit or part when it comes back. Ranked worst first.
-enum Condition {
+enum Condition implements Keyed {
   missing('missing'),
   damaged('damaged'),
   minor('minor'),
   good('good');
 
   const Condition(this.key);
+  @override
   final String key;
   static Condition fromKey(String key) => _byKey(values, key, (e) => e.key);
 
@@ -120,31 +133,34 @@ enum Condition {
   }
 }
 
-enum DiscountType {
+enum DiscountType implements Keyed {
   percent('percent'),
   fixed('fixed');
 
   const DiscountType(this.key);
+  @override
   final String key;
   static DiscountType fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
 
-enum PaymentState {
+enum PaymentState implements Keyed {
   notPaid('not_paid'),
   due('due'),
   paid('paid');
 
   const PaymentState(this.key);
+  @override
   final String key;
   static PaymentState fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
 
-enum Role {
+enum Role implements Keyed {
   admin('admin'),
   office('office'),
   warehouse('warehouse');
 
   const Role(this.key);
+  @override
   final String key;
   static Role fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
