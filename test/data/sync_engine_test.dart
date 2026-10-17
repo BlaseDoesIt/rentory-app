@@ -1,4 +1,3 @@
-
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -117,6 +116,7 @@ class Device {
   final RentoryDatabase db;
   late final SyncEngine sync;
   late final LocalRepository repo;
+
   /// Real time unless a test pins it.
   DateTime? fixedClock;
 

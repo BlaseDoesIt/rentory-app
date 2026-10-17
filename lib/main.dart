@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app.dart';
+import 'app/services.dart';
+import 'data/local/database.dart';
 
-void main() {
-  runApp(const RentoryApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final config = AppConfig.load();
+  if (config.hasServer) {
+    await Supabase.initialize(
+      url: config.supabaseUrl!,
+      publishableKey: config.supabaseKey!,
+    );
+  }
+  runApp(RentoryApp(config: config, db: RentoryDatabase()));
 }
