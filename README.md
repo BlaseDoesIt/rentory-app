@@ -38,3 +38,13 @@ flutter test
 ```
 
 Private and closed-source. © Kosai Alhafez, blasedoesit.com
+
+## Supabase
+
+Project `rentory`. Schema lives in
+`supabase/migrations/`, applied in filename order.
+
+Postgres connections (ports 5432/6543) are filtered on the development
+network, so `supabase db push` cannot connect from there. Apply new migrations
+by pasting them into the dashboard's SQL Editor, which runs over HTTPS. The app
+only uses HTTPS and is not affected.
