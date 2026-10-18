@@ -228,9 +228,12 @@ class StatTile extends StatelessWidget {
       duration: Mono.medium,
       curve: Mono.ease,
       decoration: BoxDecoration(
-        color: selected ? scheme.primary : scheme.surface,
+        color: selected ? null : scheme.surface,
+        gradient: selected ? Mono.ink(context) : null,
         borderRadius: BorderRadius.circular(Mono.radius),
-        border: Border.all(color: selected ? scheme.primary : scheme.outline),
+        border: Border.all(
+          color: selected ? Colors.transparent : scheme.outline,
+        ),
       ),
       child: Material(
         type: MaterialType.transparency,
@@ -372,7 +375,7 @@ class Monogram extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
+        gradient: Mono.soft(context),
         shape: BoxShape.circle,
       ),
       child: Text(
@@ -470,4 +473,81 @@ class BottomActionBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A framed dropdown: a raised panel with a border, each option in its own
+/// thin frame. Use instead of DropdownButton everywhere.
+class MonoDropdown<T> extends StatelessWidget {
+  const MonoDropdown({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.options,
+    required this.onSelected,
+    this.leading,
+  });
+  final String label;
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T?> onSelected;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final frame = dark ? const Color(0xFF3A3A3A) : const Color(0xFFD4D4D4);
+    final item = ButtonStyle(
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: frame.withValues(alpha: 0.7)),
+        ),
+      ),
+      backgroundColor: WidgetStateProperty.resolveWith(
+        (s) =>
+            s.contains(WidgetState.hovered) || s.contains(WidgetState.focused)
+            ? scheme.onSurface.withValues(alpha: 0.08)
+            : scheme.surface,
+      ),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+    return DropdownMenu<T>(
+      // Rebuilt when the value changes from outside.
+      key: ValueKey(value),
+      initialSelection: value,
+      label: Text(label),
+      leadingIcon: leading,
+      expandedInsets: EdgeInsets.zero,
+      requestFocusOnTap: false,
+      onSelected: onSelected,
+      dropdownMenuEntries: [
+        for (final (v, text) in options)
+          DropdownMenuEntry<T>(value: v, label: text, style: item),
+      ],
+    );
+  }
+}
+
+/// Two fields side by side, or stacked when the screen is narrow.
+class FieldPair extends StatelessWidget {
+  const FieldPair(this.first, this.second, {super.key});
+  final Widget first;
+  final Widget second;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) => box.maxWidth < 420
+        ? Column(children: [first, const SizedBox(height: 12), second])
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: first),
+              const SizedBox(width: 12),
+              Expanded(child: second),
+            ],
+          ),
+  );
 }

@@ -58,6 +58,20 @@ Future<bool> confirm(BuildContext context, String question) async {
   return yes ?? false;
 }
 
+/// A calendar date (no time), at local midnight. Returns UTC.
+Future<DateTime?> pickDate(BuildContext context, DateTime? initial) async {
+  final start = (initial ?? DateTime.now()).toLocal();
+  final date = await showDatePicker(
+    context: context,
+    initialDate: start,
+    firstDate: DateTime(1990),
+    lastDate: DateTime(2100),
+  );
+  return date == null
+      ? null
+      : DateTime(date.year, date.month, date.day).toUtc();
+}
+
 /// Date then time, in local time. Returns UTC.
 Future<DateTime?> pickDateTime(BuildContext context, DateTime? initial) async {
   final start = (initial ?? DateTime.now()).toLocal();
@@ -115,6 +129,92 @@ class AmountRow extends StatelessWidget {
           Text(value, style: style),
         ],
       ),
+    );
+  }
+}
+
+/// Asks for a line (or with [multiline], a block) of text. Null when
+/// cancelled. The dialog owns its controller, so nothing is disposed while
+/// the closing animation still draws the field.
+Future<String?> promptText(
+  BuildContext context, {
+  required String title,
+  String? label,
+  String? initial,
+  bool multiline = false,
+  Key? fieldKey,
+  Key? saveKey,
+}) => showDialog<String>(
+  context: context,
+  builder: (_) => _PromptDialog(
+    title: title,
+    label: label,
+    initial: initial,
+    multiline: multiline,
+    fieldKey: fieldKey,
+    saveKey: saveKey,
+  ),
+);
+
+class _PromptDialog extends StatefulWidget {
+  const _PromptDialog({
+    required this.title,
+    this.label,
+    this.initial,
+    this.multiline = false,
+    this.fieldKey,
+    this.saveKey,
+  });
+  final String title;
+  final String? label;
+  final String? initial;
+  final bool multiline;
+  final Key? fieldKey;
+  final Key? saveKey;
+
+  @override
+  State<_PromptDialog> createState() => _PromptDialogState();
+}
+
+class _PromptDialogState extends State<_PromptDialog> {
+  late final _c = TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 420,
+        child: TextField(
+          key: widget.fieldKey,
+          controller: _c,
+          autofocus: true,
+          minLines: widget.multiline ? 4 : 1,
+          maxLines: widget.multiline ? 10 : 1,
+          decoration: InputDecoration(labelText: widget.label),
+          onSubmitted: widget.multiline
+              ? null
+              : (v) => Navigator.pop(context, v),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          key: widget.saveKey,
+          onPressed: () => Navigator.pop(context, _c.text),
+          child: Text(l.save),
+        ),
+      ],
     );
   }
 }

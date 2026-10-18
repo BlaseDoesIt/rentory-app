@@ -296,7 +296,10 @@ class _AppShellState extends State<AppShell> {
 
     if (width < 720) {
       return Scaffold(
-        body: SafeArea(bottom: false, child: _page()),
+        body: DecoratedBox(
+          decoration: BoxDecoration(gradient: Mono.page(context)),
+          child: SafeArea(bottom: false, child: _page()),
+        ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: _go,
@@ -321,7 +324,12 @@ class _AppShellState extends State<AppShell> {
             width: 1,
             color: Theme.of(context).colorScheme.outline,
           ),
-          Expanded(child: _page()),
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(gradient: Mono.page(context)),
+              child: _page(),
+            ),
+          ),
         ],
       ),
     );
@@ -425,7 +433,7 @@ class _NavItem extends StatelessWidget {
       duration: Mono.medium,
       curve: Mono.ease,
       decoration: BoxDecoration(
-        color: selected ? scheme.primary : Colors.transparent,
+        gradient: selected ? Mono.ink(context) : null,
         borderRadius: BorderRadius.circular(Mono.radiusSmall),
       ),
       child: Material(

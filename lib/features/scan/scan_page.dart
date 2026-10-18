@@ -182,7 +182,7 @@ class _ScanPageState extends State<ScanPage> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: scheme.primary,
+                  gradient: Mono.ink(context),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(

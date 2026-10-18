@@ -10,6 +10,43 @@ abstract final class Mono {
   static const ease = Curves.easeOutCubic;
   static const fast = Duration(milliseconds: 180);
   static const medium = Duration(milliseconds: 280);
+
+  /// Ink with depth: black easing into charcoal (or white into silver in
+  /// dark mode). For whatever is selected or needs attention.
+  static LinearGradient ink(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: dark
+          ? const [Color(0xFFFFFFFF), Color(0xFFBDBDBD)]
+          : const [Color(0xFF000000), Color(0xFF3C3C3C)],
+    );
+  }
+
+  /// A soft grey wash for tiles and avatars.
+  static LinearGradient soft(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: dark
+          ? const [Color(0xFF2A2A2A), Color(0xFF141414)]
+          : const [Color(0xFFF3F3F3), Color(0xFFDCDCDC)],
+    );
+  }
+
+  /// The page backdrop: paper fading to light grey (black to charcoal).
+  static LinearGradient page(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: dark
+          ? const [Color(0xFF000000), Color(0xFF101010)]
+          : const [Color(0xFFF8F8F8), Color(0xFFEAEAEA)],
+    );
+  }
 }
 
 ThemeData rentoryTheme(Brightness brightness) {
@@ -21,6 +58,8 @@ ThemeData rentoryTheme(Brightness brightness) {
   final raised = dark ? const Color(0xFF181818) : const Color(0xFFF0F0F0);
   final line = dark ? const Color(0xFF262626) : const Color(0xFFE4E4E4);
   final muted = dark ? const Color(0xFF9A9A9A) : const Color(0xFF6B6B6B);
+  // A step lighter than [line], for frames that must stand out.
+  final frame = dark ? const Color(0xFF3A3A3A) : const Color(0xFFD4D4D4);
 
   final scheme =
       ColorScheme.fromSeed(
@@ -91,6 +130,28 @@ ThemeData rentoryTheme(Brightness brightness) {
   const buttonSize = Size(64, 48);
   const buttonPadding = EdgeInsets.symmetric(horizontal: 20);
 
+  final inputs = InputDecorationTheme(
+    filled: true,
+    fillColor: raised,
+    isDense: false,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    hintStyle: TextStyle(color: muted),
+    labelStyle: TextStyle(color: muted),
+    floatingLabelStyle: TextStyle(color: ink),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(Mono.radiusSmall),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(Mono.radiusSmall),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(Mono.radiusSmall),
+      borderSide: BorderSide(color: ink, width: 1.5),
+    ),
+  );
+
   return base.copyWith(
     scaffoldBackgroundColor: background,
     canvasColor: background,
@@ -150,8 +211,40 @@ ThemeData rentoryTheme(Brightness brightness) {
         textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
-    iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(foregroundColor: ink),
+    // Framed menus: a raised panel with a border, so a list never melts
+    // into a black (or white) page.
+    dropdownMenuTheme: DropdownMenuThemeData(
+      inputDecorationTheme: inputs,
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(raised),
+        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        elevation: const WidgetStatePropertyAll(6),
+        shadowColor: WidgetStatePropertyAll(
+          Colors.black.withValues(alpha: dark ? 0.6 : 0.12),
+        ),
+        side: WidgetStatePropertyAll(BorderSide(color: frame)),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        padding: const WidgetStatePropertyAll(EdgeInsets.all(6)),
+      ),
+    ),
+    menuTheme: MenuThemeData(
+      style: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(raised),
+        side: WidgetStatePropertyAll(BorderSide(color: frame)),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: raised,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: frame),
+      ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: ink,
@@ -163,27 +256,7 @@ ThemeData rentoryTheme(Brightness brightness) {
       ),
       extendedTextStyle: const TextStyle(fontWeight: FontWeight.w600),
     ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: raised,
-      isDense: false,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      hintStyle: TextStyle(color: muted),
-      labelStyle: TextStyle(color: muted),
-      floatingLabelStyle: TextStyle(color: ink),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Mono.radiusSmall),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Mono.radiusSmall),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Mono.radiusSmall),
-        borderSide: BorderSide(color: ink, width: 1.5),
-      ),
-    ),
+    inputDecorationTheme: inputs,
     chipTheme: ChipThemeData(
       backgroundColor: card,
       selectedColor: ink,
