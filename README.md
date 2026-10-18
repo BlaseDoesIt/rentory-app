@@ -62,6 +62,23 @@ flutter test
 
 Private and closed-source. © Kosai Alhafez, blasedoesit.com
 
+## Releases
+
+Release builds carry the server address, since phones and team PCs have no
+env vars. Make a JSON file outside the repo with `SUPABASE_URL` and
+`SUPABASE_ANON_KEY` (the publishable key, safe to ship), then:
+
+```
+flutter build apk --release --dart-define-from-file=<file>
+flutter build windows --release --dart-define-from-file=<file>
+```
+
+Android release signing reads `android/key.properties` (git-ignored), which
+points at the keystore in `C:\Users\BlasePC\.rentory\`. Back both up: every
+later update must be signed with the same key, or phones have to uninstall
+first. The Windows zip needs the Visual C++ runtime DLLs copied next to
+`rentory.exe` (msvcp140, vcruntime140, vcruntime140_1).
+
 ## Supabase
 
 Project `rentory`. Schema lives in
