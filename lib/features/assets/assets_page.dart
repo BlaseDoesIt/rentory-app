@@ -5,9 +5,11 @@ import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
 import '../../data/repository.dart';
+import '../../data/local/database.dart';
 import '../../domain/enums.dart';
+import '../../domain/rules/rented_in.dart';
 import 'asset_detail_page.dart';
-import 'new_asset_page.dart';
+import 'asset_form_page.dart';
 
 class AssetsPage extends StatefulWidget {
   const AssetsPage({super.key});
@@ -215,7 +217,7 @@ class AssetCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: scheme.surfaceContainer,
+                      gradient: Mono.soft(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -260,7 +262,7 @@ class AssetCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (byUnit) StatusPill(l.byUnit, tone: PillTone.muted),
+                  _pill(context, l, a, byUnit),
                 ],
               ),
               const SizedBox(height: 10),
@@ -270,5 +272,35 @@ class AssetCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// The one thing worth knowing at a glance: parked, on loan, or by unit.
+  Widget _pill(BuildContext context, AppLocalizations l, Asset a, bool byUnit) {
+    if (a.stateManual != null) {
+      return StatusPill(
+        l.manualState(a.stateManual!),
+        tone: PillTone.solid,
+        icon: Icons.build_outlined,
+      );
+    }
+    if (a.ownership == Ownership.rentedIn) {
+      final status = rentedInStatus(
+        heldFrom: a.rentedInDateStart,
+        dueBack: a.rentedInDateEnd,
+        givenBackAt: a.rentedInReturnedAt,
+        now: DateTime.now().toUtc(),
+      );
+      return StatusPill(
+        status == RentedInStatus.inHouse
+            ? l.rentedIn
+            : l.rentedInStatus(status),
+        tone: status == RentedInStatus.overdue
+            ? PillTone.solid
+            : PillTone.outline,
+        icon: Icons.handshake_outlined,
+      );
+    }
+    if (byUnit) return StatusPill(l.byUnit, tone: PillTone.muted);
+    return const SizedBox.shrink();
   }
 }

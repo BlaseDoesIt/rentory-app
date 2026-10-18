@@ -12,7 +12,7 @@ import 'package:rentory/data/local/database.dart';
 import 'package:rentory/data/local/local_repository.dart';
 import 'package:rentory/domain/enums.dart';
 import 'package:rentory/features/assets/asset_detail_page.dart';
-import 'package:rentory/features/assets/new_asset_page.dart';
+import 'package:rentory/features/assets/asset_form_page.dart';
 import 'package:rentory/features/orders/order_detail_page.dart';
 import 'package:rentory/features/orders/pickup_page.dart';
 import 'package:rentory/features/orders/return_page.dart';
@@ -551,6 +551,93 @@ void main() {
       (stand.qtyManual, stand.tracking, stand.code),
       (6.0, Tracking.none, 'GRP-2'),
     );
+    await done(tester);
+  });
+
+  testWidgets('rented-in asset: loan fields, warning, give back', (
+    tester,
+  ) async {
+    tall(tester);
+    await tester.pumpWidget(host(const NewAssetPage()));
+    await settle(tester);
+    await typeInto(tester, const Key('asset-name'), 'Borrowed jib');
+    await tapOn(tester, find.text('By quantity'));
+    await tapOn(tester, find.text('Rented in'));
+    await typeInto(tester, const Key('asset-supplier'), 'Grip House');
+    await tapOn(tester, find.byKey(const Key('save-asset')));
+
+    expect(find.byType(AssetDetailPage), findsOneWidget);
+    // No due date yet: the page says so.
+    expect(find.textContaining('no return date'), findsOneWidget);
+    await tapOn(tester, find.byKey(const Key('give-back')));
+    await tapOn(tester, find.byKey(const Key('give-back-confirm')));
+
+    final jib = (await tester.runAsync(
+      () => (db.select(
+        db.assets,
+      )..where((a) => a.name.equals('Borrowed jib'))).getSingle(),
+    ))!;
+    expect(jib.ownership, Ownership.rentedIn);
+    expect(jib.supplierName, 'Grip House');
+    expect(jib.rentedInReturnedAt, isNotNull);
+    expect(jib.rentalOk, isFalse);
+    await done(tester);
+  });
+
+  testWidgets('asset menu: maintenance and back in service', (tester) async {
+    tall(tester);
+    await tester.pumpWidget(host(AssetDetailPage(assetId: camera)));
+    await settle(tester);
+    await tapOn(tester, find.byKey(const Key('asset-menu')));
+    await tapOn(tester, find.text('Send to maintenance'));
+    var a = (await tester.runAsync(() => repo.loadAsset(camera)))!;
+    expect(a.asset.stateManual, AssetManualState.maintenance);
+    expect(a.serials.every((u) => u.state == SerialState.maintenance), isTrue);
+
+    await tapOn(tester, find.byKey(const Key('asset-menu')));
+    await tapOn(tester, find.text('Back in service'));
+    a = (await tester.runAsync(() => repo.loadAsset(camera)))!;
+    expect(a.asset.stateManual, isNull);
+    expect(a.summary.total, 3);
+    await done(tester);
+  });
+
+  testWidgets('pickup: signing the loan contract ticks it', (tester) async {
+    final o = (await tester.runAsync(bookedOrder))!;
+    tall(tester);
+    await tester.pumpWidget(host(PickupPage(orderId: o)));
+    await settle(tester);
+
+    await tapOn(tester, find.byKey(const Key('signature-target')));
+    await tapOn(tester, find.text('Loan contract').last);
+    final pad = find.byKey(const Key('signature-pad'));
+    await tester.ensureVisible(pad);
+    await tester.pump();
+    await tester.drag(pad, const Offset(120, 10));
+    await tester.pump();
+    await tapOn(tester, find.byKey(const Key('save-signature')));
+    await settle(tester, 10);
+    await tapOn(tester, find.text('Macro'));
+
+    final order = (await tester.runAsync(() => repo.loadOrder(o)))!.order;
+    expect(order.signatureTarget, SignatureTarget.loanContract);
+    expect(order.sigLoanContract, isTrue);
+    expect(order.sigRentalContract, isFalse);
+    expect(order.captureMethod, CaptureMethod.macro);
+    await done(tester);
+  });
+
+  testWidgets('order notes are saved', (tester) async {
+    final o = (await tester.runAsync(bookedOrder))!;
+    tall(tester);
+    await tester.pumpWidget(host(OrderDetailPage(orderId: o)));
+    await settle(tester);
+    await tapOn(tester, find.byKey(const Key('edit-notes')));
+    await tester.enterText(find.byKey(const Key('notes-field')), 'Call first');
+    await tapOn(tester, find.byKey(const Key('save-notes')));
+    expect(find.text('Call first'), findsOneWidget);
+    final order = (await tester.runAsync(() => repo.loadOrder(o)))!.order;
+    expect(order.note, 'Call first');
     await done(tester);
   });
 }

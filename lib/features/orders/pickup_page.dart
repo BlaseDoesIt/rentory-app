@@ -32,6 +32,10 @@ class _PickupPageState extends State<PickupPage> {
   List<DocumentType> _docTypes = const [];
   Set<String> _docs = {};
   bool _force = false;
+
+  /// Which document the next signature signs.
+  SignatureTarget _target = SignatureTarget.rentalContract;
+  final _photosUrl = TextEditingController();
   bool _busy = false;
   final _pad = SignaturePadController();
   final _signer = TextEditingController();
@@ -46,6 +50,7 @@ class _PickupPageState extends State<PickupPage> {
   void dispose() {
     _pad.dispose();
     _signer.dispose();
+    _photosUrl.dispose();
     super.dispose();
   }
 
@@ -64,6 +69,9 @@ class _PickupPageState extends State<PickupPage> {
       if (_signer.text.isEmpty) {
         _signer.text =
             detail.order.signatureName ?? detail.summary.customerLabel;
+        _target =
+            detail.order.signatureTarget ?? SignatureTarget.rentalContract;
+        _photosUrl.text = detail.order.photosUrl ?? '';
       }
     });
   }
@@ -103,6 +111,17 @@ class _PickupPageState extends State<PickupPage> {
           signaturePath: Value(path),
           signatureName: Value(_signer.text.trim()),
           signatureDate: Value(DateTime.now().toUtc()),
+          signatureTarget: Value(_target),
+          // Signing a document ticks it, as in Rentory.
+          sigRentalContract: _target == SignatureTarget.rentalContract
+              ? const Value(true)
+              : const Value.absent(),
+          sigPickupReturnReceipt: _target == SignatureTarget.pickupReturnReceipt
+              ? const Value(true)
+              : const Value.absent(),
+          sigLoanContract: _target == SignatureTarget.loanContract
+              ? const Value(true)
+              : const Value.absent(),
         ),
       );
     });
@@ -110,8 +129,23 @@ class _PickupPageState extends State<PickupPage> {
     await _load();
   }
 
+  /// The photos link is kept as typed; empty clears it.
+  Future<bool> _savePhotosUrl() async {
+    final l = context.l10n;
+    final url = _photosUrl.text.trim();
+    if (url == (_detail?.order.photosUrl ?? '')) return true;
+    if (url.isNotEmpty && !RegExp(r'^https?://').hasMatch(url)) {
+      await showProblems(context, [l.linkMustBeHttp]);
+      return false;
+    }
+    await _set(OrdersCompanion(photosUrl: Value(url.isEmpty ? null : url)));
+    return true;
+  }
+
   Future<void> _handOver() async {
     final repo = Services.of(context).repo;
+    if (!await _savePhotosUrl()) return;
+    if (!mounted) return;
     setState(() => _busy = true);
     final ok = await attempt(
       context,
@@ -355,6 +389,18 @@ class _PickupPageState extends State<PickupPage> {
                   ),
                   const SizedBox(height: 16),
                 ],
+                MonoDropdown<SignatureTarget>(
+                  key: const Key('signature-target'),
+                  label: l.signs,
+                  value: _target,
+                  leading: const Icon(Icons.description_outlined),
+                  options: [
+                    for (final t in SignatureTarget.values)
+                      (t, l.signatureTarget(t)),
+                  ],
+                  onSelected: (v) => setState(() => _target = v ?? _target),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   key: const Key('signer-name'),
                   controller: _signer,
@@ -385,7 +431,47 @@ class _PickupPageState extends State<PickupPage> {
           const SizedBox(height: 12),
           SectionCard(
             title: l.conditionPhotos,
-            child: PhotoStrip(orderId: o.id, note: PhotoNote.pickup),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SegmentedButton<CaptureMethod?>(
+                  key: const Key('capture-method'),
+                  showSelectedIcon: false,
+                  emptySelectionAllowed: true,
+                  segments: [
+                    for (final m in CaptureMethod.values)
+                      ButtonSegment(
+                        value: m,
+                        icon: Icon(
+                          m == CaptureMethod.phone
+                              ? Icons.smartphone
+                              : Icons.camera_outlined,
+                        ),
+                        label: Text(l.captureMethod(m)),
+                      ),
+                  ],
+                  selected: {?o.captureMethod},
+                  onSelectionChanged: (s) => _set(
+                    OrdersCompanion(captureMethod: Value(s.firstOrNull)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                PhotoStrip(orderId: o.id, note: PhotoNote.pickup),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const Key('photos-url'),
+                  controller: _photosUrl,
+                  keyboardType: TextInputType.url,
+                  textDirection: TextDirection.ltr,
+                  decoration: InputDecoration(
+                    labelText: l.photosLink,
+                    hintText: 'https://',
+                    prefixIcon: const Icon(Icons.link),
+                  ),
+                  onSubmitted: (_) => _savePhotosUrl(),
+                ),
+              ],
+            ),
           ),
           if (_role == Role.admin && !o.sigRentalContract) ...[
             const SizedBox(height: 12),

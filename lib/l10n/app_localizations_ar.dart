@@ -732,4 +732,209 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get howMany => 'كم وحدة';
+
+  @override
+  String get acquisition => 'الاقتناء';
+
+  @override
+  String get acquisitionDate => 'تاريخ الاقتناء';
+
+  @override
+  String get allowLinesOutside => 'السماح للبنود خارج تواريخ الطلب';
+
+  @override
+  String get allowLinesOutsideHint =>
+      'عند الإيقاف: يجب أن تقع تواريخ كل بند داخل تواريخ الطلب.';
+
+  @override
+  String get availableForRent => 'متاحة للتأجير';
+
+  @override
+  String get availableForRentHint =>
+      'عند الإيقاف: تبقى كأصل فقط ولا تُعرض في الطلبات.';
+
+  @override
+  String get backInService => 'إعادة إلى الخدمة';
+
+  @override
+  String get barcodeSameAsCode => 'نفس الرمز';
+
+  @override
+  String get conditionReceived => 'الحالة عند الاستلام';
+
+  @override
+  String get conditionReturned => 'الحالة عند الإرجاع';
+
+  @override
+  String get costPerDay => 'التكلفة / يوم';
+
+  @override
+  String get costPerUnit => 'التكلفة / وحدة';
+
+  @override
+  String get declaredValuePerUnit => 'القيمة المصرّح بها / وحدة';
+
+  @override
+  String get depositPaid => 'التأمين المدفوع';
+
+  @override
+  String get dueBack => 'موعد الإرجاع';
+
+  @override
+  String get editAsset => 'تعديل المعدّة';
+
+  @override
+  String get evaluationLink => 'رابط التقييم';
+
+  @override
+  String examinedOn(String date) {
+    return 'تم الفحص $date';
+  }
+
+  @override
+  String get followsOrderDates => 'يتبع تواريخ الطلب';
+
+  @override
+  String get giveBack => 'إرجاع للمالك';
+
+  @override
+  String giveBackTo(String who) {
+    return 'إرجاع إلى $who';
+  }
+
+  @override
+  String get givenBackOn => 'أُرجعت في';
+
+  @override
+  String get heldFrom => 'بحوزتنا من';
+
+  @override
+  String get internalNotes => 'ملاحظات داخلية';
+
+  @override
+  String get internalReference => 'المرجع الداخلي';
+
+  @override
+  String get itemsExamined => 'تم فحص المعدات';
+
+  @override
+  String get itemsExaminedHint => 'قام أحدهم بفحص ما عاد وتأكيد حالته.';
+
+  @override
+  String get linkMustBeHttp => 'يجب أن يبدأ الرابط بـ http:// أو https://.';
+
+  @override
+  String get loan => 'الإعارة';
+
+  @override
+  String loanDueIn(String span, String who) {
+    return 'يجب إرجاعها إلى $who خلال $span.';
+  }
+
+  @override
+  String get loanNoDueDate => 'مستأجرة بدون تاريخ إرجاع. أضف تاريخاً.';
+
+  @override
+  String get loanNotes => 'ملاحظات الإعارة';
+
+  @override
+  String loanOverdueBy(String span, String who) {
+    return 'متأخرة على $who بمقدار $span. اتصل بهم.';
+  }
+
+  @override
+  String get noNotes => 'لا ملاحظات.';
+
+  @override
+  String get notForRent => 'غير متاحة للتأجير';
+
+  @override
+  String get notesHint => 'أي شيء يجب أن يعرفه الفريق';
+
+  @override
+  String get ownDates => 'تواريخ خاصة';
+
+  @override
+  String get owned => 'مملوكة';
+
+  @override
+  String get ownedHint => 'ملكنا: مشتراة ومحفوظة.';
+
+  @override
+  String get ownership => 'الملكية';
+
+  @override
+  String get photosLink => 'رابط الصور';
+
+  @override
+  String get quantityOnHand => 'الكمية المتوفرة';
+
+  @override
+  String get rentedFrom => 'مستأجرة من';
+
+  @override
+  String get rentedIn => 'مستأجرة';
+
+  @override
+  String get rentedInHint =>
+      'معارة من مورّد. يجب أن تنتهي الحجوزات قبل موعد إرجاعها.';
+
+  @override
+  String retireQuestion(String name) {
+    return 'إخراج $name من الخدمة؟ ستخرج وحداتها المتاحة أيضاً.';
+  }
+
+  @override
+  String get setMaintenance => 'إرسال للصيانة';
+
+  @override
+  String get setRetired => 'إخراج من الخدمة';
+
+  @override
+  String get signs => 'يوقّع';
+
+  @override
+  String get source => 'المصدر';
+
+  @override
+  String get supplierPhone => 'هاتف المورّد';
+
+  @override
+  String get theSupplier => 'المورّد';
+
+  @override
+  String get theirReference => 'مرجعهم';
+
+  @override
+  String get unit => 'الوحدة';
+
+  @override
+  String get capturePhone => 'هاتف';
+
+  @override
+  String get captureMacro => 'ماكرو';
+
+  @override
+  String get rentalContract => 'عقد الإيجار';
+
+  @override
+  String get pickupReturnReceiptDoc => 'إيصال التسليم / الإرجاع';
+
+  @override
+  String get loanContractDoc => 'عقد الأمانة';
+
+  @override
+  String get loanUpcoming => 'لم تُستلم بعد';
+
+  @override
+  String get loanInHouse => 'لدينا';
+
+  @override
+  String get loanDueSoon => 'موعد إرجاعها قريب';
+
+  @override
+  String get loanOverdue => 'متأخرة على المورّد';
+
+  @override
+  String get loanReturned => 'أُرجعت';
 }

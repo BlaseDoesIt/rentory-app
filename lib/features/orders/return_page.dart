@@ -31,6 +31,9 @@ class _ReturnPageState extends State<ReturnPage> {
   bool _giveDocuments = false;
   bool _hasDocuments = false;
 
+  /// Somebody went over what came back.
+  bool _examined = false;
+
   /// Lines being checked in now.
   final Set<String> _lines = {};
 
@@ -60,6 +63,7 @@ class _ReturnPageState extends State<ReturnPage> {
       _detail = d;
       _hasDocuments = docs.isNotEmpty;
       _giveDocuments = docs.isNotEmpty && d.order.documentsReturnedAt == null;
+      _examined = d.order.itemsExamined;
       for (final v in _out(d)) {
         _lines.add(v.line.id);
         for (final key in _keys(v)) {
@@ -92,7 +96,9 @@ class _ReturnPageState extends State<ReturnPage> {
     final l = context.l10n;
     final d = _detail!;
     final repo = Services.of(context).repo;
-    if (_lines.isEmpty && !_giveDocuments) {
+    if (_lines.isEmpty &&
+        !_giveDocuments &&
+        _examined == d.order.itemsExamined) {
       await showProblems(context, [l.nothingSelected]);
       return;
     }
@@ -119,6 +125,9 @@ class _ReturnPageState extends State<ReturnPage> {
         }
       }
       if (_giveDocuments) await repo.markDocumentsReturned(widget.orderId);
+      if (_examined != d.order.itemsExamined) {
+        await repo.setItemsExamined(widget.orderId, _examined);
+      }
     });
     if (!mounted) return;
     setState(() => _busy = false);
@@ -251,6 +260,22 @@ class _ReturnPageState extends State<ReturnPage> {
                     ),
             ),
           ],
+          const SizedBox(height: 12),
+          SectionCard(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: CheckboxListTile(
+              key: const Key('items-examined'),
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(l.itemsExamined),
+              subtitle: Text(
+                o.itemsExamined && o.itemsExaminedAt != null
+                    ? l.examinedOn(when(o.itemsExaminedAt))
+                    : l.itemsExaminedHint,
+              ),
+              value: _examined,
+              onChanged: (v) => setState(() => _examined = v ?? false),
+            ),
+          ),
           const SizedBox(height: 12),
           SectionCard(
             title: l.conditionPhotos,

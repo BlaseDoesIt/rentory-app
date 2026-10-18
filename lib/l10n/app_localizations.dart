@@ -1369,6 +1369,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'How many'**
   String get howMany;
+
+  /// No description provided for @acquisition.
+  ///
+  /// In en, this message translates to:
+  /// **'Acquisition'**
+  String get acquisition;
+
+  /// No description provided for @acquisitionDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Acquisition date'**
+  String get acquisitionDate;
+
+  /// No description provided for @allowLinesOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow lines outside the order dates'**
+  String get allowLinesOutside;
+
+  /// No description provided for @allowLinesOutsideHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: each line\'s own dates must sit inside the order\'s.'**
+  String get allowLinesOutsideHint;
+
+  /// No description provided for @availableForRent.
+  ///
+  /// In en, this message translates to:
+  /// **'Available for rent'**
+  String get availableForRent;
+
+  /// No description provided for @availableForRentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: kept as an asset only, never offered on orders.'**
+  String get availableForRentHint;
+
+  /// No description provided for @backInService.
+  ///
+  /// In en, this message translates to:
+  /// **'Back in service'**
+  String get backInService;
+
+  /// No description provided for @barcodeSameAsCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as the code'**
+  String get barcodeSameAsCode;
+
+  /// No description provided for @conditionReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition received'**
+  String get conditionReceived;
+
+  /// No description provided for @conditionReturned.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition returned'**
+  String get conditionReturned;
+
+  /// No description provided for @costPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost / day'**
+  String get costPerDay;
+
+  /// No description provided for @costPerUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost / unit'**
+  String get costPerUnit;
+
+  /// No description provided for @declaredValuePerUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared value / unit'**
+  String get declaredValuePerUnit;
+
+  /// No description provided for @depositPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit paid'**
+  String get depositPaid;
+
+  /// No description provided for @dueBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Due back'**
+  String get dueBack;
+
+  /// No description provided for @editAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit asset'**
+  String get editAsset;
+
+  /// No description provided for @evaluationLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaluation link'**
+  String get evaluationLink;
+
+  /// No description provided for @examinedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Examined {date}'**
+  String examinedOn(String date);
+
+  /// No description provided for @followsOrderDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows the order\'s dates'**
+  String get followsOrderDates;
+
+  /// No description provided for @giveBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Give back'**
+  String get giveBack;
+
+  /// No description provided for @giveBackTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Give back to {who}'**
+  String giveBackTo(String who);
+
+  /// No description provided for @givenBackOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Given back'**
+  String get givenBackOn;
+
+  /// No description provided for @heldFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Held from'**
+  String get heldFrom;
+
+  /// No description provided for @internalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal notes'**
+  String get internalNotes;
+
+  /// No description provided for @internalReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal reference'**
+  String get internalReference;
+
+  /// No description provided for @itemsExamined.
+  ///
+  /// In en, this message translates to:
+  /// **'Items examined'**
+  String get itemsExamined;
+
+  /// No description provided for @itemsExaminedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Somebody went over what came back and confirmed its condition.'**
+  String get itemsExaminedHint;
+
+  /// No description provided for @linkMustBeHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'The link must start with http:// or https://.'**
+  String get linkMustBeHttp;
+
+  /// No description provided for @loan.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan'**
+  String get loan;
+
+  /// No description provided for @loanDueIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due back to {who} in {span}.'**
+  String loanDueIn(String span, String who);
+
+  /// No description provided for @loanNoDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rented in with no return date set. Add one.'**
+  String get loanNoDueDate;
+
+  /// No description provided for @loanNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan notes'**
+  String get loanNotes;
+
+  /// No description provided for @loanOverdueBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue to {who} by {span}. Call them.'**
+  String loanOverdueBy(String span, String who);
+
+  /// No description provided for @noNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes.'**
+  String get noNotes;
+
+  /// No description provided for @notForRent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not for rent'**
+  String get notForRent;
+
+  /// No description provided for @notesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything the team should know'**
+  String get notesHint;
+
+  /// No description provided for @ownDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Own dates'**
+  String get ownDates;
+
+  /// No description provided for @owned.
+  ///
+  /// In en, this message translates to:
+  /// **'Owned'**
+  String get owned;
+
+  /// No description provided for @ownedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ours: bought and kept.'**
+  String get ownedHint;
+
+  /// No description provided for @ownership.
+  ///
+  /// In en, this message translates to:
+  /// **'Ownership'**
+  String get ownership;
+
+  /// No description provided for @photosLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos link'**
+  String get photosLink;
+
+  /// No description provided for @quantityOnHand.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity on hand'**
+  String get quantityOnHand;
+
+  /// No description provided for @rentedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Rented from'**
+  String get rentedFrom;
+
+  /// No description provided for @rentedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Rented in'**
+  String get rentedIn;
+
+  /// No description provided for @rentedInHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On loan from a supplier. Bookings must end before it is due back.'**
+  String get rentedInHint;
+
+  /// No description provided for @retireQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Retire {name}? Its free units retire too.'**
+  String retireQuestion(String name);
+
+  /// No description provided for @setMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to maintenance'**
+  String get setMaintenance;
+
+  /// No description provided for @setRetired.
+  ///
+  /// In en, this message translates to:
+  /// **'Retire'**
+  String get setRetired;
+
+  /// No description provided for @signs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signs'**
+  String get signs;
+
+  /// No description provided for @source.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get source;
+
+  /// No description provided for @supplierPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier phone'**
+  String get supplierPhone;
+
+  /// No description provided for @theSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'the supplier'**
+  String get theSupplier;
+
+  /// No description provided for @theirReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Their reference'**
+  String get theirReference;
+
+  /// No description provided for @unit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get unit;
+
+  /// No description provided for @capturePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get capturePhone;
+
+  /// No description provided for @captureMacro.
+  ///
+  /// In en, this message translates to:
+  /// **'Macro'**
+  String get captureMacro;
+
+  /// No description provided for @rentalContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Rental contract'**
+  String get rentalContract;
+
+  /// No description provided for @pickupReturnReceiptDoc.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup / return receipt'**
+  String get pickupReturnReceiptDoc;
+
+  /// No description provided for @loanContractDoc.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan contract'**
+  String get loanContractDoc;
+
+  /// No description provided for @loanUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet collected'**
+  String get loanUpcoming;
+
+  /// No description provided for @loanInHouse.
+  ///
+  /// In en, this message translates to:
+  /// **'In house'**
+  String get loanInHouse;
+
+  /// No description provided for @loanDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Due back soon'**
+  String get loanDueSoon;
+
+  /// No description provided for @loanOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue to supplier'**
+  String get loanOverdue;
+
+  /// No description provided for @loanReturned.
+  ///
+  /// In en, this message translates to:
+  /// **'Given back'**
+  String get loanReturned;
 }
 
 class _AppLocalizationsDelegate

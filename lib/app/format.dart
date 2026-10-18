@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 import '../domain/enums.dart';
+import '../domain/rules/rented_in.dart';
 import '../l10n/app_localizations.dart';
 
 export '../l10n/app_localizations.dart';
@@ -77,5 +78,36 @@ extension Labels on AppLocalizations {
     LineType.asset => lineAsset,
     LineType.service => lineService,
     LineType.section => lineSection,
+  };
+
+  String loanCondition(LoanCondition c) => switch (c) {
+    LoanCondition.good => conditionGood,
+    LoanCondition.minor => conditionMinor,
+    LoanCondition.damaged => conditionDamaged,
+    LoanCondition.lost => serialLost,
+  };
+
+  String manualState(AssetManualState s) => switch (s) {
+    AssetManualState.maintenance => serialMaintenance,
+    AssetManualState.retired => serialRetired,
+  };
+
+  String captureMethod(CaptureMethod m) => switch (m) {
+    CaptureMethod.phone => capturePhone,
+    CaptureMethod.macro => captureMacro,
+  };
+
+  String signatureTarget(SignatureTarget t) => switch (t) {
+    SignatureTarget.rentalContract => rentalContract,
+    SignatureTarget.pickupReturnReceipt => pickupReturnReceiptDoc,
+    SignatureTarget.loanContract => loanContractDoc,
+  };
+
+  String rentedInStatus(RentedInStatus s) => switch (s) {
+    RentedInStatus.upcoming => loanUpcoming,
+    RentedInStatus.inHouse => loanInHouse,
+    RentedInStatus.dueSoon => loanDueSoon,
+    RentedInStatus.overdue => loanOverdue,
+    RentedInStatus.returned => loanReturned,
   };
 }

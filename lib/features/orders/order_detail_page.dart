@@ -139,13 +139,35 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                             v.line.lineType != LineType.section &&
                             lines[i - 1].line.lineType != LineType.section)
                           const Divider(height: 1),
-                        _line(v, l),
+                        _line(v, l, d.order),
                       ],
                     ],
                   ),
           ),
           const SizedBox(height: 12),
           _money(l, d),
+          const SizedBox(height: 12),
+          _notes(l, o),
+          if (draft) ...[
+            const SizedBox(height: 12),
+            SectionCard(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: SwitchListTile(
+                key: const Key('allow-outside'),
+                title: Text(l.allowLinesOutside),
+                subtitle: Text(l.allowLinesOutsideHint),
+                value: o.allowLineDatesOutside,
+                onChanged: _busy
+                    ? null
+                    : (v) => _act(
+                        (r) => r.updateOrder(
+                          o.id,
+                          OrdersCompanion(allowLineDatesOutside: Value(v)),
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -229,7 +251,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           ),
           if (d.summary.overdue)
             Container(
-              color: scheme.primary,
+              decoration: BoxDecoration(gradient: Mono.ink(context)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
@@ -337,6 +359,43 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Internal notes: never printed for the customer.
+  Widget _notes(AppLocalizations l, Order o) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return SectionCard(
+      title: l.internalNotes,
+      trailing: TextButton(
+        key: const Key('edit-notes'),
+        onPressed: _busy ? null : () => _editNotes(o),
+        child: Text(l.edit),
+      ),
+      child: Text(
+        (o.note ?? '').isEmpty ? l.noNotes : o.note!,
+        style: (o.note ?? '').isEmpty ? TextStyle(color: muted) : null,
+      ),
+    );
+  }
+
+  Future<void> _editNotes(Order o) async {
+    final l = context.l10n;
+    final text = await promptText(
+      context,
+      title: l.internalNotes,
+      initial: o.note,
+      multiline: true,
+      fieldKey: const Key('notes-field'),
+      saveKey: const Key('save-notes'),
+    );
+    if (text == null) return;
+    final clean = text.trim();
+    await _act(
+      (r) => r.updateOrder(
+        o.id,
+        OrdersCompanion(note: Value(clean.isEmpty ? null : clean)),
       ),
     );
   }
@@ -458,13 +517,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     ];
   }
 
-  Widget _line(LineView v, AppLocalizations l) {
+  Widget _line(LineView v, AppLocalizations l, Order order) {
     final line = v.line;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final editable = !line.rentalState.goneOut;
     void edit() async {
-      final changed = await showEditLine(context, v);
+      final changed = await showEditLine(context, v, order);
       if (changed == true) _reload();
     }
 

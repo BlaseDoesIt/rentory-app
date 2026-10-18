@@ -362,5 +362,110 @@
   "unitNameHint": "Type or scan, then Enter",
   "numberUnits": "Number them for me",
   "prefix": "Prefix",
-  "howMany": "How many"
+  "howMany": "How many",
+  "acquisition": "Acquisition",
+  "acquisitionDate": "Acquisition date",
+  "allowLinesOutside": "Allow lines outside the order dates",
+  "allowLinesOutsideHint": "Off: each line's own dates must sit inside the order's.",
+  "availableForRent": "Available for rent",
+  "availableForRentHint": "Off: kept as an asset only, never offered on orders.",
+  "backInService": "Back in service",
+  "barcodeSameAsCode": "Same as the code",
+  "conditionReceived": "Condition received",
+  "conditionReturned": "Condition returned",
+  "costPerDay": "Cost / day",
+  "costPerUnit": "Cost / unit",
+  "declaredValuePerUnit": "Declared value / unit",
+  "depositPaid": "Deposit paid",
+  "dueBack": "Due back",
+  "editAsset": "Edit asset",
+  "evaluationLink": "Evaluation link",
+  "examinedOn": "Examined {date}",
+  "@examinedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "followsOrderDates": "Follows the order's dates",
+  "giveBack": "Give back",
+  "giveBackTo": "Give back to {who}",
+  "@giveBackTo": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "givenBackOn": "Given back",
+  "heldFrom": "Held from",
+  "internalNotes": "Internal notes",
+  "internalReference": "Internal reference",
+  "itemsExamined": "Items examined",
+  "itemsExaminedHint": "Somebody went over what came back and confirmed its condition.",
+  "linkMustBeHttp": "The link must start with http:// or https://.",
+  "loan": "Loan",
+  "loanDueIn": "Due back to {who} in {span}.",
+  "@loanDueIn": {
+    "placeholders": {
+      "span": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "loanNoDueDate": "Rented in with no return date set. Add one.",
+  "loanNotes": "Loan notes",
+  "loanOverdueBy": "Overdue to {who} by {span}. Call them.",
+  "@loanOverdueBy": {
+    "placeholders": {
+      "span": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "noNotes": "No notes.",
+  "notForRent": "Not for rent",
+  "notesHint": "Anything the team should know",
+  "ownDates": "Own dates",
+  "owned": "Owned",
+  "ownedHint": "Ours: bought and kept.",
+  "ownership": "Ownership",
+  "photosLink": "Photos link",
+  "quantityOnHand": "Quantity on hand",
+  "rentedFrom": "Rented from",
+  "rentedIn": "Rented in",
+  "rentedInHint": "On loan from a supplier. Bookings must end before it is due back.",
+  "retireQuestion": "Retire {name}? Its free units retire too.",
+  "@retireQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "setMaintenance": "Send to maintenance",
+  "setRetired": "Retire",
+  "signs": "Signs",
+  "source": "Source",
+  "supplierPhone": "Supplier phone",
+  "theSupplier": "the supplier",
+  "theirReference": "Their reference",
+  "unit": "Unit",
+  "capturePhone": "Phone",
+  "captureMacro": "Macro",
+  "rentalContract": "Rental contract",
+  "pickupReturnReceiptDoc": "Pickup / return receipt",
+  "loanContractDoc": "Loan contract",
+  "loanUpcoming": "Not yet collected",
+  "loanInHouse": "In house",
+  "loanDueSoon": "Due back soon",
+  "loanOverdue": "Overdue to supplier",
+  "loanReturned": "Given back"
 }

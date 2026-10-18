@@ -17,12 +17,12 @@ Future<String?> showAddLine(BuildContext context, String orderId) =>
     );
 
 /// Edits or removes a line still in draft. Returns true when it changed.
-Future<bool?> showEditLine(BuildContext context, LineView view) =>
+Future<bool?> showEditLine(BuildContext context, LineView view, Order order) =>
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => Services.of(context).wrap(_EditLineSheet(view)),
+      builder: (_) => Services.of(context).wrap(_EditLineSheet(view, order)),
     );
 
 /// Something the add sheet can put on a line.
@@ -286,8 +286,9 @@ class _NumberFields extends StatelessWidget {
 }
 
 class _EditLineSheet extends StatefulWidget {
-  const _EditLineSheet(this.view);
+  const _EditLineSheet(this.view, this.order);
   final LineView view;
+  final Order order;
 
   @override
   State<_EditLineSheet> createState() => _EditLineSheetState();
@@ -299,6 +300,11 @@ class _EditLineSheetState extends State<_EditLineSheet> {
   late final _qty = TextEditingController(text: qty(_line.quantity));
   late final _price = TextEditingController(text: qty(_line.priceDay));
   late final _discount = TextEditingController(text: qty(_line.discount));
+
+  /// The line runs on its own dates instead of the order's.
+  late bool _ownDates = _line.dateStart != null || _line.dateEnd != null;
+  late DateTime? _start = _line.dateStart ?? widget.order.dateStart;
+  late DateTime? _end = _line.dateEnd ?? widget.order.dateEnd;
 
   @override
   void dispose() {
@@ -319,16 +325,22 @@ class _EditLineSheetState extends State<_EditLineSheet> {
       await showProblems(context, [l.checkNumbers]);
       return;
     }
-    final ok = await attempt(
-      context,
-      () => repo.updateLine(
+    final ok = await attempt(context, () async {
+      await repo.updateLine(
         _line.id,
         name: _name.text.trim(),
         quantity: section ? null : q,
         priceDay: section ? null : p,
         discount: section ? null : d,
-      ),
-    );
+      );
+      if (!section) {
+        await repo.setLineDates(
+          _line.id,
+          _ownDates ? _start : null,
+          _ownDates ? _end : null,
+        );
+      }
+    });
     if (ok && mounted) Navigator.pop(context, true);
   }
 
@@ -367,6 +379,52 @@ class _EditLineSheetState extends State<_EditLineSheet> {
           if (!section) ...[
             const SizedBox(height: 8),
             _NumberFields(qty: _qty, price: _price, discount: _discount),
+          ],
+          if (!section && editable) ...[
+            const SizedBox(height: 4),
+            SwitchListTile(
+              key: const Key('line-own-dates'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.ownDates),
+              subtitle: Text(
+                _ownDates
+                    ? l.dateRange(when(_start), when(_end))
+                    : l.followsOrderDates,
+              ),
+              value: _ownDates,
+              onChanged: (v) => setState(() => _ownDates = v),
+            ),
+            if (_ownDates)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const Key('line-start'),
+                      icon: const Icon(Icons.event_outlined, size: 18),
+                      onPressed: () async {
+                        final v = await pickDateTime(context, _start);
+                        if (v != null) setState(() => _start = v);
+                      },
+                      label: Text(when(_start)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const Key('line-end'),
+                      icon: const Icon(
+                        Icons.event_available_outlined,
+                        size: 18,
+                      ),
+                      onPressed: () async {
+                        final v = await pickDateTime(context, _end);
+                        if (v != null) setState(() => _end = v);
+                      },
+                      label: Text(when(_end)),
+                    ),
+                  ),
+                ],
+              ),
           ],
           if (!editable) ...[
             const SizedBox(height: 8),

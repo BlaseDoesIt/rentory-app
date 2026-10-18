@@ -727,4 +727,210 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get howMany => 'How many';
+
+  @override
+  String get acquisition => 'Acquisition';
+
+  @override
+  String get acquisitionDate => 'Acquisition date';
+
+  @override
+  String get allowLinesOutside => 'Allow lines outside the order dates';
+
+  @override
+  String get allowLinesOutsideHint =>
+      'Off: each line\'s own dates must sit inside the order\'s.';
+
+  @override
+  String get availableForRent => 'Available for rent';
+
+  @override
+  String get availableForRentHint =>
+      'Off: kept as an asset only, never offered on orders.';
+
+  @override
+  String get backInService => 'Back in service';
+
+  @override
+  String get barcodeSameAsCode => 'Same as the code';
+
+  @override
+  String get conditionReceived => 'Condition received';
+
+  @override
+  String get conditionReturned => 'Condition returned';
+
+  @override
+  String get costPerDay => 'Cost / day';
+
+  @override
+  String get costPerUnit => 'Cost / unit';
+
+  @override
+  String get declaredValuePerUnit => 'Declared value / unit';
+
+  @override
+  String get depositPaid => 'Deposit paid';
+
+  @override
+  String get dueBack => 'Due back';
+
+  @override
+  String get editAsset => 'Edit asset';
+
+  @override
+  String get evaluationLink => 'Evaluation link';
+
+  @override
+  String examinedOn(String date) {
+    return 'Examined $date';
+  }
+
+  @override
+  String get followsOrderDates => 'Follows the order\'s dates';
+
+  @override
+  String get giveBack => 'Give back';
+
+  @override
+  String giveBackTo(String who) {
+    return 'Give back to $who';
+  }
+
+  @override
+  String get givenBackOn => 'Given back';
+
+  @override
+  String get heldFrom => 'Held from';
+
+  @override
+  String get internalNotes => 'Internal notes';
+
+  @override
+  String get internalReference => 'Internal reference';
+
+  @override
+  String get itemsExamined => 'Items examined';
+
+  @override
+  String get itemsExaminedHint =>
+      'Somebody went over what came back and confirmed its condition.';
+
+  @override
+  String get linkMustBeHttp => 'The link must start with http:// or https://.';
+
+  @override
+  String get loan => 'Loan';
+
+  @override
+  String loanDueIn(String span, String who) {
+    return 'Due back to $who in $span.';
+  }
+
+  @override
+  String get loanNoDueDate => 'Rented in with no return date set. Add one.';
+
+  @override
+  String get loanNotes => 'Loan notes';
+
+  @override
+  String loanOverdueBy(String span, String who) {
+    return 'Overdue to $who by $span. Call them.';
+  }
+
+  @override
+  String get noNotes => 'No notes.';
+
+  @override
+  String get notForRent => 'Not for rent';
+
+  @override
+  String get notesHint => 'Anything the team should know';
+
+  @override
+  String get ownDates => 'Own dates';
+
+  @override
+  String get owned => 'Owned';
+
+  @override
+  String get ownedHint => 'Ours: bought and kept.';
+
+  @override
+  String get ownership => 'Ownership';
+
+  @override
+  String get photosLink => 'Photos link';
+
+  @override
+  String get quantityOnHand => 'Quantity on hand';
+
+  @override
+  String get rentedFrom => 'Rented from';
+
+  @override
+  String get rentedIn => 'Rented in';
+
+  @override
+  String get rentedInHint =>
+      'On loan from a supplier. Bookings must end before it is due back.';
+
+  @override
+  String retireQuestion(String name) {
+    return 'Retire $name? Its free units retire too.';
+  }
+
+  @override
+  String get setMaintenance => 'Send to maintenance';
+
+  @override
+  String get setRetired => 'Retire';
+
+  @override
+  String get signs => 'Signs';
+
+  @override
+  String get source => 'Source';
+
+  @override
+  String get supplierPhone => 'Supplier phone';
+
+  @override
+  String get theSupplier => 'the supplier';
+
+  @override
+  String get theirReference => 'Their reference';
+
+  @override
+  String get unit => 'Unit';
+
+  @override
+  String get capturePhone => 'Phone';
+
+  @override
+  String get captureMacro => 'Macro';
+
+  @override
+  String get rentalContract => 'Rental contract';
+
+  @override
+  String get pickupReturnReceiptDoc => 'Pickup / return receipt';
+
+  @override
+  String get loanContractDoc => 'Loan contract';
+
+  @override
+  String get loanUpcoming => 'Not yet collected';
+
+  @override
+  String get loanInHouse => 'In house';
+
+  @override
+  String get loanDueSoon => 'Due back soon';
+
+  @override
+  String get loanOverdue => 'Overdue to supplier';
+
+  @override
+  String get loanReturned => 'Given back';
 }
