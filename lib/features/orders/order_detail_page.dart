@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
@@ -10,15 +12,18 @@ import '../../data/local/database.dart';
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
 import '../../domain/rules/order_rules.dart';
+import '../scan/scan_page.dart';
 import 'customer_picker.dart';
 import 'line_sheets.dart';
+import 'order_photos.dart';
 import 'order_widgets.dart';
 import 'pickup_page.dart';
 import 'return_page.dart';
 import 'unit_picker.dart';
 
-/// One order: customer, dates, lines, money and the lifecycle buttons. A
-/// draft is edited here directly.
+/// One order: customer, dates, lines, money and the lifecycle buttons. Lines
+/// can be added, edited, moved, booked, picked up and returned one by one,
+/// whatever state the order is in.
 class OrderDetailPage extends StatefulWidget {
   const OrderDetailPage({super.key, required this.orderId});
   final String orderId;
@@ -31,6 +36,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Future<OrderDetail>? _detail;
   bool _busy = false;
 
+  /// Lines in the order just dragged, shown until the reload lands.
+  List<LineView>? _moved;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -42,6 +50,75 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     setState(() {
       _detail = next;
     });
+    next.whenComplete(() {
+      if (mounted && _detail == next) setState(() => _moved = null);
+    });
+  }
+
+  static bool get _phone => Platform.isAndroid || Platform.isIOS;
+
+  Future<void> _reorder(List<LineView> lines, int from, int to) async {
+    final next = [...lines];
+    final moved = next.removeAt(from);
+    next.insert(to, moved);
+    setState(() => _moved = next);
+    await _act(
+      (r) => r.moveLines(widget.orderId, [for (final v in next) v.line.id]),
+    );
+  }
+
+  /// Phones: scan a unit or an asset straight onto the order.
+  Future<void> _scanAdd(Order o) async {
+    final l = context.l10n;
+    final repo = Services.of(context).repo;
+    final messenger = ScaffoldMessenger.of(context);
+    final code = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => const CameraScanPage()));
+    if (code == null || !mounted) return;
+    ScanAdd? result;
+    await attempt(context, () async {
+      result = await repo.addScanned(o.id, code);
+    });
+    if (!mounted) return;
+    _reload();
+    final r = result;
+    if (r == null) return;
+    switch (r.outcome) {
+      case ScanOutcome.added:
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.scanAdded(r.name ?? code))),
+        );
+      case ScanOutcome.alreadyOnOrder:
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.scanAlready(r.name ?? code))),
+        );
+      case ScanOutcome.notFound:
+        messenger.showSnackBar(SnackBar(content: Text(l.notFound(code))));
+      case ScanOutcome.pickUnits:
+        await _open(UnitPickerPage(orderId: o.id, lineId: r.lineId!));
+    }
+  }
+
+  Future<void> _remove(Order o) async {
+    final l = context.l10n;
+    final repo = Services.of(context).repo;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    if (!await confirm(context, l.deleteOrderQuestion) || !mounted) return;
+    Removal? done;
+    await attempt(context, () async {
+      done = await repo.removeOrder(o.id);
+    });
+    if (done == null) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          done == Removal.deleted ? l.orderDeleted : l.orderArchived,
+        ),
+      ),
+    );
+    await navigator.maybePop();
   }
 
   Future<void> _act(Future<void> Function(RentoryRepository) action) async {
@@ -70,11 +147,40 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           appBar: AppBar(
             title: Text(d == null ? l.order : (d.order.number ?? l.stateDraft)),
             actions: [
-              if (d != null)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 16),
-                  child: OrderStatusPill(d.summary),
+              if (d != null) ...[
+                if (!d.order.active)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 8),
+                    child: Tag(l.archived),
+                  ),
+                OrderStatusPill(d.summary),
+                PopupMenuButton<String>(
+                  key: const Key('order-menu'),
+                  onSelected: (v) => v == 'delete'
+                      ? _remove(d.order)
+                      : _act((r) => r.restoreOrder(d.order.id)),
+                  itemBuilder: (_) => [
+                    if (d.order.active)
+                      PopupMenuItem(
+                        key: const Key('delete-order'),
+                        value: 'delete',
+                        child: ListTile(
+                          leading: const Icon(Icons.delete_outline),
+                          title: Text(l.deleteOrder),
+                        ),
+                      )
+                    else
+                      PopupMenuItem(
+                        key: const Key('restore-order'),
+                        value: 'restore',
+                        child: ListTile(
+                          leading: const Icon(Icons.unarchive_outlined),
+                          title: Text(l.restore),
+                        ),
+                      ),
+                  ],
                 ),
+              ],
             ],
           ),
           body: AnimatedSwitcher(
@@ -97,7 +203,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final l = context.l10n;
     final o = d.order;
     final draft = o.state == OrderState.draft;
-    final lines = d.lines;
+    final lines = _moved ?? d.lines;
     return ContentWidth(
       max: 880,
       child: ListView(
@@ -108,19 +214,31 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           SectionCard(
             title: l.items,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            trailing: draft
-                ? TextButton.icon(
-                    key: const Key('add-line'),
-                    icon: const Icon(Icons.add, size: 18),
-                    onPressed: _busy
-                        ? null
-                        : () async {
-                            final id = await showAddLine(context, o.id);
-                            if (id != null) _reload();
-                          },
-                    label: Text(l.addLine),
-                  )
-                : null,
+            trailing: o.state == OrderState.cancelled
+                ? null
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_phone)
+                        TextButton.icon(
+                          key: const Key('scan-add'),
+                          icon: const Icon(Icons.qr_code_scanner, size: 18),
+                          onPressed: _busy ? null : () => _scanAdd(o),
+                          label: Text(l.scan),
+                        ),
+                      TextButton.icon(
+                        key: const Key('add-line'),
+                        icon: const Icon(Icons.add, size: 18),
+                        onPressed: _busy
+                            ? null
+                            : () async {
+                                final id = await showAddLine(context, o.id);
+                                if (id != null) _reload();
+                              },
+                        label: Text(l.addLine),
+                      ),
+                    ],
+                  ),
             child: lines.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
@@ -132,18 +250,32 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       ),
                     ),
                   )
-                : Column(
-                    children: [
-                      for (final (i, v) in lines.indexed) ...[
-                        if (i > 0 &&
-                            v.line.lineType != LineType.section &&
-                            lines[i - 1].line.lineType != LineType.section)
-                          const Divider(height: 1),
-                        _line(v, l, d.order),
-                      ],
-                    ],
+                : ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    buildDefaultDragHandles: false,
+                    itemCount: lines.length,
+                    onReorderItem: (from, to) => _reorder(lines, from, to),
+                    itemBuilder: (context, i) {
+                      final v = lines[i];
+                      final divider =
+                          i > 0 &&
+                          v.line.lineType != LineType.section &&
+                          lines[i - 1].line.lineType != LineType.section;
+                      return Column(
+                        key: ValueKey(v.line.id),
+                        children: [
+                          if (divider) const Divider(height: 1),
+                          _line(v, l, d.order, i),
+                        ],
+                      );
+                    },
                   ),
           ),
+          if (OrderPhotosCard.available) ...[
+            const SizedBox(height: 12),
+            OrderPhotosCard(orderId: o.id),
+          ],
           const SizedBox(height: 12),
           _money(l, d),
           const SizedBox(height: 12),
@@ -471,6 +603,11 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     final s = o.state;
+    final unbooked = d.lines.any(
+      (v) =>
+          v.line.lineType != LineType.section &&
+          v.line.rentalState == RentalState.none,
+    );
     final out = d.lines.any((v) => v.line.rentalState == RentalState.pickedUp);
     final waiting = d.lines.any(
       (v) =>
@@ -493,14 +630,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           () => _act((r) => r.resetToDraft(o.id)),
           primary: false,
         ),
-      if (s == OrderState.draft || s == OrderState.cancelled)
+      if (unbooked || s == OrderState.draft || s == OrderState.cancelled)
         button(
           const Key('book'),
           l.book,
           Icons.event_available,
           () => _act((r) => r.book(o.id)),
         ),
-      if (OrderState.committed.contains(s) && waiting)
+      if (waiting)
         button(
           const Key('pickup'),
           l.pickup,
@@ -517,30 +654,48 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     ];
   }
 
-  Widget _line(LineView v, AppLocalizations l, Order order) {
+  Widget _line(LineView v, AppLocalizations l, Order order, int index) {
     final line = v.line;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final editable = !line.rentalState.goneOut;
+    final out = line.rentalState.goneOut;
     void edit() async {
       final changed = await showEditLine(context, v, order);
       if (changed == true) _reload();
     }
 
+    final handle = ReorderableDragStartListener(
+      index: index,
+      child: Tooltip(
+        message: l.moveLine,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(end: 4),
+          child: Icon(
+            Icons.drag_indicator,
+            key: Key('drag-${line.id}'),
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+    final menu = _lineMenu(v, l, edit);
+
     if (line.lineType == LineType.section) {
       return InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: editable && !_busy ? edit : null,
+        onTap: _busy ? null : edit,
         child: Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 6),
+          padding: const EdgeInsets.only(top: 12, bottom: 2),
           child: Row(
             children: [
+              handle,
               Text(
                 line.name.toUpperCase(),
                 style: text.labelSmall?.copyWith(color: scheme.onSurface),
               ),
               const SizedBox(width: 8),
               const Expanded(child: Divider(height: 1)),
+              menu,
             ],
           ),
         ),
@@ -550,99 +705,187 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final missing = byUnit && v.serials.length != line.quantity.round();
     final discount = line.discount > 0 ? '  -${qty(line.discount)}%' : '';
     final muted = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: editable && !_busy ? edit : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                line.lineType == LineType.service
-                    ? Icons.handyman_outlined
-                    : byUnit
-                    ? Icons.qr_code_2
-                    : Icons.inventory_2_outlined,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(line.name, style: text.titleSmall),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${qty(line.quantity)} × ${money(line.priceDay)} × '
-                    '${l.daysCount(v.days)}$discount',
-                    style: muted,
-                  ),
-                  if (v.serials.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        for (final s in v.serials)
-                          StatusPill(s.name, tone: PillTone.muted),
-                      ],
-                    ),
-                  ],
-                  if (byUnit && line.rentalState == RentalState.none) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if (missing) ...[
-                          StatusPill(
-                            l.unitsMissing,
-                            tone: PillTone.solid,
-                            icon: Icons.priority_high,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        TextButton.icon(
-                          key: Key('units-${line.id}'),
-                          style: TextButton.styleFrom(
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          icon: const Icon(Icons.qr_code_2, size: 18),
-                          onPressed: _busy
-                              ? null
-                              : () => _open(
-                                  UnitPickerPage(
-                                    orderId: v.line.orderId,
-                                    lineId: line.id,
-                                  ),
-                                ),
-                          label: Text(l.pickUnits),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+    // Full width under the line: on a phone the line's own column is narrow.
+    final units = byUnit && !out
+        ? Padding(
+            padding: const EdgeInsetsDirectional.only(start: 80, top: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text(money(v.subtotal), style: text.titleSmall),
-                const SizedBox(height: 6),
-                Text(l.rentalState(line.rentalState), style: muted),
+                if (missing)
+                  StatusPill(
+                    l.unitsMissing,
+                    tone: PillTone.solid,
+                    icon: Icons.priority_high,
+                  ),
+                // A framed button of its own, so a tap on it never falls
+                // through to the line's editor.
+                OutlinedButton.icon(
+                  key: Key('units-${line.id}'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    side: BorderSide(color: scheme.onSurface),
+                    foregroundColor: scheme.onSurface,
+                  ),
+                  icon: const Icon(Icons.qr_code_2, size: 18),
+                  onPressed: _busy
+                      ? null
+                      : () => _open(
+                          UnitPickerPage(
+                            orderId: v.line.orderId,
+                            lineId: line.id,
+                          ),
+                        ),
+                  label: Text(l.pickUnits),
+                ),
               ],
             ),
+          )
+        : null;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: _busy ? null : edit,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(padding: const EdgeInsets.only(top: 10), child: handle),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    line.lineType == LineType.service
+                        ? Icons.handyman_outlined
+                        : byUnit
+                        ? Icons.qr_code_2
+                        : Icons.inventory_2_outlined,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(line.name, style: text.titleSmall),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${qty(line.quantity)} × ${money(line.priceDay)} × '
+                        '${l.daysCount(v.days)}$discount',
+                        style: muted,
+                      ),
+                      if (v.serials.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [
+                            for (final s in v.serials)
+                              StatusPill(s.name, tone: PillTone.muted),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(money(v.subtotal), style: text.titleSmall),
+                    const SizedBox(height: 6),
+                    Text(l.rentalState(line.rentalState), style: muted),
+                  ],
+                ),
+                menu,
+              ],
+            ),
+            ?units,
           ],
         ),
       ),
+    );
+  }
+
+  /// What can be done to one line, whatever state the order is in.
+  Widget _lineMenu(LineView v, AppLocalizations l, VoidCallback edit) {
+    final line = v.line;
+    final item = line.lineType != LineType.section;
+    final state = line.rentalState;
+    final byUnit = v.asset?.tracking == Tracking.serial;
+    PopupMenuItem<VoidCallback> entry(
+      String key,
+      IconData icon,
+      String label,
+      VoidCallback action,
+    ) => PopupMenuItem(
+      key: Key('$key-${line.id}'),
+      value: action,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(icon),
+        title: Text(label),
+      ),
+    );
+    return PopupMenuButton<VoidCallback>(
+      key: Key('line-menu-${line.id}'),
+      enabled: !_busy,
+      icon: const Icon(Icons.more_vert),
+      onSelected: (action) => action(),
+      itemBuilder: (_) => [
+        if (item && state == RentalState.none)
+          entry(
+            'book-line',
+            Icons.event_available,
+            l.book,
+            () => _act((r) => r.book(line.orderId, lineIds: [line.id])),
+          ),
+        if (state == RentalState.booked) ...[
+          entry(
+            'pickup-line',
+            Icons.outbox_outlined,
+            l.pickup,
+            () => _open(PickupPage(orderId: line.orderId, lineIds: [line.id])),
+          ),
+          entry(
+            'unbook-line',
+            Icons.event_busy_outlined,
+            l.unbook,
+            () => _act((r) => r.unbookLine(line.id)),
+          ),
+        ],
+        if (state == RentalState.pickedUp && v.qtyOutstanding > 0)
+          entry(
+            'return-line',
+            Icons.move_to_inbox_outlined,
+            l.returnItems,
+            () => _open(ReturnPage(orderId: line.orderId, lineId: line.id)),
+          ),
+        if (byUnit && !state.goneOut)
+          entry(
+            'pick-units',
+            Icons.qr_code_2,
+            l.pickUnits,
+            () => _open(UnitPickerPage(orderId: line.orderId, lineId: line.id)),
+          ),
+        entry('edit-line', Icons.edit_outlined, l.editLine, edit),
+        if (!state.goneOut)
+          entry('remove-line', Icons.delete_outline, l.removeLine, () async {
+            if (await confirm(context, l.removeLineQuestion(line.name))) {
+              await _act((r) => r.removeLine(line.id));
+            }
+          }),
+      ],
     );
   }
 }

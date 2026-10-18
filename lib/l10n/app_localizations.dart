@@ -545,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @bookedLinesFixed.
   ///
   /// In en, this message translates to:
-  /// **'Booked lines are fixed. Put the order back to draft to change them.'**
+  /// **'Already out: only the name, price and discount can change.'**
   String get bookedLinesFixed;
 
   /// No description provided for @linesTotal.
@@ -1121,7 +1121,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchOrders.
   ///
   /// In en, this message translates to:
-  /// **'Customer, phone or order number'**
+  /// **'Name, number, item, note or date'**
   String get searchOrders;
 
   /// No description provided for @noOrdersHint.
@@ -1837,6 +1837,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this photo?'**
   String get deletePhotoQuestion;
+
+  /// No description provided for @unitsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Units'**
+  String get unitsLabel;
+
+  /// No description provided for @chooseUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose units'**
+  String get chooseUnits;
+
+  /// No description provided for @orderPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get orderPhotos;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @orderPhotosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to this phone\'s gallery. Only this phone has them.'**
+  String get orderPhotosHint;
+
+  /// No description provided for @removeOrderPhotoQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Take this photo off the order? It stays in the gallery.'**
+  String get removeOrderPhotoQuestion;
+
+  /// No description provided for @photoNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This photo is no longer on the phone.'**
+  String get photoNotFound;
+
+  /// No description provided for @scanAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added'**
+  String scanAdded(String name);
+
+  /// No description provided for @scanAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is already on this order'**
+  String scanAlready(String name);
+
+  /// No description provided for @unbook.
+  ///
+  /// In en, this message translates to:
+  /// **'Unbook'**
+  String get unbook;
+
+  /// No description provided for @deleteOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete order'**
+  String get deleteOrder;
+
+  /// No description provided for @deleteOrderQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this order? If items ever went out on it, it is archived instead.'**
+  String get deleteOrderQuestion;
+
+  /// No description provided for @orderDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Order deleted'**
+  String get orderDeleted;
+
+  /// No description provided for @orderArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Items went out on this order, so it was archived.'**
+  String get orderArchived;
+
+  /// No description provided for @archived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get archived;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @restored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored'**
+  String get restored;
+
+  /// No description provided for @deleteAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete asset'**
+  String get deleteAsset;
+
+  /// No description provided for @deleteAssetQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this asset? If it is on any order, it is archived instead.'**
+  String get deleteAssetQuestion;
+
+  /// No description provided for @assetDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset deleted'**
+  String get assetDeleted;
+
+  /// No description provided for @assetArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'This asset is on orders, so it was archived.'**
+  String get assetArchived;
+
+  /// No description provided for @newLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'New location'**
+  String get newLocation;
+
+  /// No description provided for @trackingChangeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching keeps its history. Units come back if you switch back.'**
+  String get trackingChangeHint;
+
+  /// No description provided for @moveLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move'**
+  String get moveLine;
+
+  /// No description provided for @chooseLinesOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick what goes out now.'**
+  String get chooseLinesOut;
 }
 
 class _AppLocalizationsDelegate

@@ -74,7 +74,7 @@ class _ScanPageState extends State<ScanPage> {
   Future<void> _openCamera() async {
     final code = await Navigator.of(
       context,
-    ).push<String>(MaterialPageRoute(builder: (_) => const _CameraScanPage()));
+    ).push<String>(MaterialPageRoute(builder: (_) => const CameraScanPage()));
     if (code != null) await _lookUp(code);
   }
 
@@ -360,14 +360,15 @@ class _Viewfinder extends CustomPainter {
       old.t != t || old.ink != ink || old.active != active;
 }
 
-class _CameraScanPage extends StatefulWidget {
-  const _CameraScanPage();
+/// The camera, full screen; pops with the first code it reads.
+class CameraScanPage extends StatefulWidget {
+  const CameraScanPage({super.key});
 
   @override
-  State<_CameraScanPage> createState() => _CameraScanPageState();
+  State<CameraScanPage> createState() => _CameraScanPageState();
 }
 
-class _CameraScanPageState extends State<_CameraScanPage> {
+class _CameraScanPageState extends State<CameraScanPage> {
   bool _done = false;
 
   @override

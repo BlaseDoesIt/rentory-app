@@ -24,6 +24,15 @@ class _AssetsPageState extends State<AssetsPage> {
   String? _category;
   Stream<List<AssetSummary>>? _stream;
 
+  /// Showing the archived assets instead of the working list.
+  bool _archived = false;
+
+  void _showArchived(bool on) => setState(() {
+    _archived = on;
+    _category = null;
+    _stream = Services.of(context).repo.watchAssets(archived: on);
+  });
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -73,6 +82,7 @@ class _AssetsPageState extends State<AssetsPage> {
               slivers: [
                 SliverToBoxAdapter(
                   child: PageHeader(
+                    logo: true,
                     title: l.assets,
                     subtitle: l.assetsSummary(all.length, out.round()),
                   ),
@@ -90,19 +100,25 @@ class _AssetsPageState extends State<AssetsPage> {
                     ),
                   ),
                 ),
-                if (categories.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                      child: Row(
-                        children: [
-                          _chip(l.all, null),
-                          for (final c in categories) _chip(c, c),
-                        ],
-                      ),
+                SliverToBoxAdapter(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                    child: Row(
+                      children: [
+                        _chip(l.all, null),
+                        for (final c in categories) _chip(c, c),
+                        MonoChip(
+                          key: const Key('assets-archived'),
+                          icon: Icons.inventory_outlined,
+                          label: l.archived,
+                          selected: _archived,
+                          onTap: () => _showArchived(!_archived),
+                        ),
+                      ],
                     ),
                   ),
+                ),
                 if (shown.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
@@ -149,8 +165,11 @@ class _AssetsPageState extends State<AssetsPage> {
     padding: const EdgeInsetsDirectional.only(end: 8),
     child: MonoChip(
       label: label,
-      selected: _category == category,
-      onTap: () => setState(() => _category = category),
+      selected: !_archived && _category == category,
+      onTap: () {
+        if (_archived) _showArchived(false);
+        setState(() => _category = category);
+      },
     ),
   );
 }

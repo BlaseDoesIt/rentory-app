@@ -4,6 +4,8 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan barcodes and photograph equipment condition.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Rentory saves order photos to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Attach condition photos to an order.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

@@ -269,7 +269,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bookedLinesFixed =>
-      'البنود المحجوزة ثابتة. أعد الطلب إلى مسودة لتعديلها.';
+      'خرج هذا البند: يمكن تغيير الاسم والسعر والخصم فقط.';
 
   @override
   String get linesTotal => 'البنود';
@@ -593,7 +593,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get searchOrders => 'الزبون أو الهاتف أو رقم الطلب';
+  String get searchOrders => 'الاسم أو الرقم أو البند أو الملاحظة أو التاريخ';
 
   @override
   String get noOrdersHint => 'اضغط طلب جديد لبدء تأجير.';
@@ -980,4 +980,88 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deletePhotoQuestion => 'حذف هذه الصورة؟';
+
+  @override
+  String get unitsLabel => 'الوحدات';
+
+  @override
+  String get chooseUnits => 'اختر الوحدات';
+
+  @override
+  String get orderPhotos => 'الصور';
+
+  @override
+  String get share => 'مشاركة';
+
+  @override
+  String get orderPhotosHint =>
+      'تُحفظ في معرض هذا الهاتف. هذا الهاتف فقط يحتفظ بها.';
+
+  @override
+  String get removeOrderPhotoQuestion =>
+      'إزالة هذه الصورة من الطلب؟ ستبقى في المعرض.';
+
+  @override
+  String get photoNotFound => 'لم تعد هذه الصورة موجودة على الهاتف.';
+
+  @override
+  String scanAdded(String name) {
+    return 'تمت إضافة $name';
+  }
+
+  @override
+  String scanAlready(String name) {
+    return '$name موجود في هذا الطلب مسبقًا';
+  }
+
+  @override
+  String get unbook => 'إلغاء الحجز';
+
+  @override
+  String get deleteOrder => 'حذف الطلب';
+
+  @override
+  String get deleteOrderQuestion =>
+      'حذف هذا الطلب؟ إذا خرجت عليه معدات من قبل فستتم أرشفته بدلًا من ذلك.';
+
+  @override
+  String get orderDeleted => 'تم حذف الطلب';
+
+  @override
+  String get orderArchived => 'خرجت معدات على هذا الطلب، لذا تمت أرشفته.';
+
+  @override
+  String get archived => 'المؤرشفة';
+
+  @override
+  String get restore => 'استعادة';
+
+  @override
+  String get restored => 'تمت الاستعادة';
+
+  @override
+  String get deleteAsset => 'حذف المعدّة';
+
+  @override
+  String get deleteAssetQuestion =>
+      'حذف هذه المعدّة؟ إذا كانت في أي طلب فستتم أرشفتها بدلًا من ذلك.';
+
+  @override
+  String get assetDeleted => 'تم حذف المعدّة';
+
+  @override
+  String get assetArchived => 'هذه المعدّة موجودة في طلبات، لذا تمت أرشفتها.';
+
+  @override
+  String get newLocation => 'موقع جديد';
+
+  @override
+  String get trackingChangeHint =>
+      'التبديل يحتفظ بالسجل. تعود الوحدات إذا عدت إلى العد بالوحدة.';
+
+  @override
+  String get moveLine => 'اسحب للنقل';
+
+  @override
+  String get chooseLinesOut => 'حدد ما يخرج الآن.';
 }

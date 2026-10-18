@@ -261,7 +261,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookedLinesFixed =>
-      'Booked lines are fixed. Put the order back to draft to change them.';
+      'Already out: only the name, price and discount can change.';
 
   @override
   String get linesTotal => 'Lines';
@@ -584,7 +584,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get searchOrders => 'Customer, phone or order number';
+  String get searchOrders => 'Name, number, item, note or date';
 
   @override
   String get noOrdersHint => 'Tap New order to start a rental.';
@@ -976,4 +976,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deletePhotoQuestion => 'Delete this photo?';
+
+  @override
+  String get unitsLabel => 'Units';
+
+  @override
+  String get chooseUnits => 'Choose units';
+
+  @override
+  String get orderPhotos => 'Photos';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get orderPhotosHint =>
+      'Saved to this phone\'s gallery. Only this phone has them.';
+
+  @override
+  String get removeOrderPhotoQuestion =>
+      'Take this photo off the order? It stays in the gallery.';
+
+  @override
+  String get photoNotFound => 'This photo is no longer on the phone.';
+
+  @override
+  String scanAdded(String name) {
+    return '$name added';
+  }
+
+  @override
+  String scanAlready(String name) {
+    return '$name is already on this order';
+  }
+
+  @override
+  String get unbook => 'Unbook';
+
+  @override
+  String get deleteOrder => 'Delete order';
+
+  @override
+  String get deleteOrderQuestion =>
+      'Delete this order? If items ever went out on it, it is archived instead.';
+
+  @override
+  String get orderDeleted => 'Order deleted';
+
+  @override
+  String get orderArchived =>
+      'Items went out on this order, so it was archived.';
+
+  @override
+  String get archived => 'Archived';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get restored => 'Restored';
+
+  @override
+  String get deleteAsset => 'Delete asset';
+
+  @override
+  String get deleteAssetQuestion =>
+      'Delete this asset? If it is on any order, it is archived instead.';
+
+  @override
+  String get assetDeleted => 'Asset deleted';
+
+  @override
+  String get assetArchived => 'This asset is on orders, so it was archived.';
+
+  @override
+  String get newLocation => 'New location';
+
+  @override
+  String get trackingChangeHint =>
+      'Switching keeps its history. Units come back if you switch back.';
+
+  @override
+  String get moveLine => 'Drag to move';
+
+  @override
+  String get chooseLinesOut => 'Tick what goes out now.';
 }

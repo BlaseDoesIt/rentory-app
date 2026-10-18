@@ -617,13 +617,14 @@ void main() {
     await tester.pump();
     await tapOn(tester, find.byKey(const Key('save-signature')));
     await settle(tester, 10);
-    await tapOn(tester, find.text('Macro'));
+    // Condition photos moved off the pickup page.
+    expect(find.byKey(const Key('capture-method')), findsNothing);
+    expect(find.text('Condition photos'), findsNothing);
 
     final order = (await tester.runAsync(() => repo.loadOrder(o)))!.order;
     expect(order.signatureTarget, SignatureTarget.loanContract);
     expect(order.sigLoanContract, isTrue);
     expect(order.sigRentalContract, isFalse);
-    expect(order.captureMethod, CaptureMethod.macro);
     await done(tester);
   });
 
@@ -638,6 +639,169 @@ void main() {
     expect(find.text('Call first'), findsOneWidget);
     final order = (await tester.runAsync(() => repo.loadOrder(o)))!.order;
     expect(order.note, 'Call first');
+    await done(tester);
+  });
+
+  testWidgets('add line: units chosen with the numbers, then booked alone', (
+    tester,
+  ) async {
+    final o = (await tester.runAsync(bookedOrder))!;
+    tall(tester);
+    await tester.pumpWidget(host(OrderDetailPage(orderId: o)));
+    await settle(tester);
+
+    await tapOn(tester, find.byKey(const Key('add-line')));
+    await tapOn(tester, find.text('Sony FX6').last);
+    await tapOn(tester, find.byKey(const Key('line-units')));
+    await tapOn(tester, find.byKey(const Key('unit-FX6-003')));
+    await tapOn(tester, find.byKey(const Key('units-done')));
+    expect(find.text('1 unit'), findsOneWidget);
+    await tapOn(tester, find.byKey(const Key('add-line-confirm')));
+
+    var d = (await tester.runAsync(() => repo.loadOrder(o)))!;
+    final added = d.lines.last;
+    expect(added.serials.single.name, 'FX6-003');
+    expect(added.line.rentalState, RentalState.none);
+    expect(find.text('FX6-003'), findsOneWidget);
+
+    // Booked on its own from the line's menu.
+    final id = added.line.id;
+    await tapOn(tester, find.byKey(Key('line-menu-$id')));
+    await tapOn(tester, find.byKey(Key('book-line-$id')));
+    d = (await tester.runAsync(() => repo.loadOrder(o)))!;
+    expect(d.lines.last.line.rentalState, RentalState.booked);
+
+    // Pick units is its own framed button and opens the picker.
+    await tapOn(tester, find.byKey(Key('units-$id')));
+    expect(find.byType(UnitPickerPage), findsOneWidget);
+    await done(tester);
+  });
+
+  testWidgets('orders are found by item, internal note and date', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final a = await repo.createOrder(
+        customerName: 'Grip Co',
+        start: day(10),
+        end: day(12),
+      );
+      await repo.addLine(a, type: LineType.asset, assetId: tripod);
+      await repo.updateOrder(
+        a,
+        const OrdersCompanion(note: Value('Gate code 4512')),
+      );
+      final b = await repo.createOrder(
+        customerName: 'Camera Co',
+        start: day(20),
+        end: day(22),
+      );
+      await repo.addLine(b, type: LineType.asset, assetId: camera);
+    });
+    await tester.pumpWidget(
+      RentoryApp(
+        config: const AppConfig(),
+        db: db,
+        language: LanguageController(const Locale('en')),
+        files: AppFiles(root: files.path),
+        backend: Backend(repo, null),
+      ),
+    );
+    await settle(tester);
+    Future<void> search(String q) async {
+      await tester.enterText(find.byKey(const Key('order-search')), q);
+      await settle(tester, 2);
+    }
+
+    await search('tripod');
+    expect(find.text('Grip Co'), findsOneWidget);
+    expect(find.text('Camera Co'), findsNothing);
+    await search('gate code');
+    expect(find.text('Grip Co'), findsOneWidget);
+    expect(find.text('Camera Co'), findsNothing);
+    final d = day(21).toLocal();
+    await search('${d.day}/${d.month}/${d.year}');
+    expect(find.text('Camera Co'), findsOneWidget);
+    expect(find.text('Grip Co'), findsNothing);
+    await done(tester);
+  });
+
+  testWidgets('a draft order is deleted from its menu', (tester) async {
+    final o = (await tester.runAsync(
+      () => repo.createOrder(
+        customerName: 'Gone Soon',
+        start: day(1),
+        end: day(2),
+      ),
+    ))!;
+    tall(tester);
+    await tester.pumpWidget(host(OrderDetailPage(orderId: o)));
+    await settle(tester);
+    await tapOn(tester, find.byKey(const Key('order-menu')));
+    await tapOn(tester, find.byKey(const Key('delete-order')));
+    await tapOn(tester, find.text('Yes'));
+    final left = (await tester.runAsync(() => repo.watchOrders().first))!;
+    expect(left, isEmpty);
+    await done(tester);
+  });
+
+  testWidgets('an asset on orders is archived, then restored', (tester) async {
+    await tester.runAsync(() async {
+      final o = await bookedOrder();
+      await repo.pickupAll(o, force: true);
+      await repo.returnAll(o);
+    });
+    tall(tester);
+    await tester.pumpWidget(host(AssetDetailPage(assetId: tripod)));
+    await settle(tester);
+    await tapOn(tester, find.byKey(const Key('asset-menu')));
+    await tapOn(tester, find.byKey(const Key('delete-asset')));
+    await tapOn(tester, find.text('Yes'));
+    var a = (await tester.runAsync(() => repo.loadAsset(tripod)))!.asset;
+    expect((a.active, a.deleted), (false, false));
+
+    // Opened again, it offers Restore.
+    await tester.pumpWidget(
+      host(AssetDetailPage(key: UniqueKey(), assetId: tripod)),
+    );
+    await settle(tester);
+    await tapOn(tester, find.byKey(const Key('asset-menu')));
+    await tapOn(tester, find.byKey(const Key('restore-asset')));
+    a = (await tester.runAsync(() => repo.loadAsset(tripod)))!.asset;
+    expect(a.active, isTrue);
+    await done(tester);
+  });
+
+  testWidgets('asset form: a new location, and units switched to a count', (
+    tester,
+  ) async {
+    final asset = (await tester.runAsync(
+      () =>
+          (db.select(db.assets)..where((a) => a.id.equals(camera))).getSingle(),
+    ))!;
+    tall(tester);
+    await tester.pumpWidget(host(AssetFormPage(asset: asset)));
+    await settle(tester);
+
+    await tapOn(tester, find.byKey(const Key('asset-location')));
+    await tapOn(tester, find.text('+ New location'));
+    await tester.enterText(find.byKey(const Key('prompt-field')), 'Shelf B');
+    await tapOn(tester, find.text('Save').last);
+    expect(find.text('Shelf B'), findsOneWidget);
+
+    await tapOn(tester, find.text('By quantity'));
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('asset-qty')))
+          .controller!
+          .text,
+      '3',
+    );
+    await tapOn(tester, find.byKey(const Key('save-asset')));
+    final saved = (await tester.runAsync(() => repo.loadAsset(camera)))!;
+    expect(saved.asset.tracking, Tracking.none);
+    expect(saved.asset.qtyManual, 3);
+    expect(saved.locationName, 'Shelf B');
     await done(tester);
   });
 }

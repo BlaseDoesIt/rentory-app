@@ -12,15 +12,18 @@ import '../../data/local/database.dart';
 import '../../data/local/tables.dart' show rowUuid;
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
-import 'photo_strip.dart';
+import 'photo_strip.dart' show PhotoNote;
 import 'signature_pad.dart';
 
-/// Handing the kit over: paperwork, signature, condition photos, then every
-/// booked line goes out. Only the signed rental contract is required; an
-/// admin may hand over without it.
+/// Handing the kit over: paperwork, signature, then the ticked booked lines
+/// go out. Only the signed rental contract is required; an admin may hand
+/// over without it.
 class PickupPage extends StatefulWidget {
-  const PickupPage({super.key, required this.orderId});
+  const PickupPage({super.key, required this.orderId, this.lineIds});
   final String orderId;
+
+  /// Lines ticked to begin with; null ticks every booked line.
+  final List<String>? lineIds;
 
   @override
   State<PickupPage> createState() => _PickupPageState();
@@ -35,8 +38,10 @@ class _PickupPageState extends State<PickupPage> {
 
   /// Which document the next signature signs.
   SignatureTarget _target = SignatureTarget.rentalContract;
-  final _photosUrl = TextEditingController();
   bool _busy = false;
+
+  /// Booked lines going out now. Filled once, on the first load.
+  Set<String>? _going;
   final _pad = SignaturePadController();
   final _signer = TextEditingController();
 
@@ -50,7 +55,6 @@ class _PickupPageState extends State<PickupPage> {
   void dispose() {
     _pad.dispose();
     _signer.dispose();
-    _photosUrl.dispose();
     super.dispose();
   }
 
@@ -71,8 +75,11 @@ class _PickupPageState extends State<PickupPage> {
             detail.order.signatureName ?? detail.summary.customerLabel;
         _target =
             detail.order.signatureTarget ?? SignatureTarget.rentalContract;
-        _photosUrl.text = detail.order.photosUrl ?? '';
       }
+      _going ??= {
+        for (final v in _booked(detail))
+          if (widget.lineIds?.contains(v.line.id) ?? true) v.line.id,
+      };
     });
   }
 
@@ -129,27 +136,29 @@ class _PickupPageState extends State<PickupPage> {
     await _load();
   }
 
-  /// The photos link is kept as typed; empty clears it.
-  Future<bool> _savePhotosUrl() async {
-    final l = context.l10n;
-    final url = _photosUrl.text.trim();
-    if (url == (_detail?.order.photosUrl ?? '')) return true;
-    if (url.isNotEmpty && !RegExp(r'^https?://').hasMatch(url)) {
-      await showProblems(context, [l.linkMustBeHttp]);
-      return false;
-    }
-    await _set(OrdersCompanion(photosUrl: Value(url.isEmpty ? null : url)));
-    return true;
-  }
+  static List<LineView> _booked(OrderDetail d) => [
+    for (final v in d.lines)
+      if (v.line.lineType != LineType.section &&
+          v.line.rentalState == RentalState.booked)
+        v,
+  ];
 
   Future<void> _handOver() async {
+    final l = context.l10n;
     final repo = Services.of(context).repo;
-    if (!await _savePhotosUrl()) return;
-    if (!mounted) return;
+    final going = _going ?? const {};
+    if (going.isEmpty) {
+      await showProblems(context, [l.nothingSelected]);
+      return;
+    }
     setState(() => _busy = true);
     final ok = await attempt(
       context,
-      () => repo.pickupAll(widget.orderId, force: _force),
+      () => repo.pickupAll(
+        widget.orderId,
+        force: _force,
+        lineIds: going.toList(),
+      ),
     );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -182,12 +191,8 @@ class _PickupPageState extends State<PickupPage> {
     final o = d.order;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final going = [
-      for (final v in d.lines)
-        if (v.line.lineType != LineType.section &&
-            v.line.rentalState == RentalState.booked)
-          v,
-    ];
+    final going = _booked(d);
+    final ticked = _going ?? const <String>{};
     final checks = [
       o.sigRentalContract,
       o.sigPickupReturnReceipt,
@@ -243,45 +248,38 @@ class _PickupPageState extends State<PickupPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                Text(
+                  l.chooseLinesOut,
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
                 for (final v in going)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 36,
-                          child: Text(
-                            '${qty(v.line.quantity)}×',
-                            style: text.titleSmall,
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(v.line.name),
-                              if (v.serials.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    children: [
-                                      for (final s in v.serials)
-                                        StatusPill(
-                                          s.name,
-                                          tone: PillTone.muted,
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  CheckboxListTile(
+                    key: Key('going-${v.line.id}'),
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: ticked.contains(v.line.id),
+                    onChanged: (on) => setState(
+                      () => on == true
+                          ? _going!.add(v.line.id)
+                          : _going!.remove(v.line.id),
                     ),
+                    title: Text('${qty(v.line.quantity)}×  ${v.line.name}'),
+                    subtitle: v.serials.isEmpty
+                        ? null
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: [
+                                for (final s in v.serials)
+                                  StatusPill(s.name, tone: PillTone.muted),
+                              ],
+                            ),
+                          ),
                   ),
               ],
             ),
@@ -415,51 +413,6 @@ class _PickupPageState extends State<PickupPage> {
                       label: Text(l.saveSignature),
                     ),
                   ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          SectionCard(
-            title: l.conditionPhotos,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SegmentedButton<CaptureMethod?>(
-                  key: const Key('capture-method'),
-                  showSelectedIcon: false,
-                  emptySelectionAllowed: true,
-                  segments: [
-                    for (final m in CaptureMethod.values)
-                      ButtonSegment(
-                        value: m,
-                        icon: Icon(
-                          m == CaptureMethod.phone
-                              ? Icons.smartphone
-                              : Icons.camera_outlined,
-                        ),
-                        label: Text(l.captureMethod(m)),
-                      ),
-                  ],
-                  selected: {?o.captureMethod},
-                  onSelectionChanged: (s) => _set(
-                    OrdersCompanion(captureMethod: Value(s.firstOrNull)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                PhotoStrip(orderId: o.id, note: PhotoNote.pickup),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('photos-url'),
-                  controller: _photosUrl,
-                  keyboardType: TextInputType.url,
-                  textDirection: TextDirection.ltr,
-                  decoration: InputDecoration(
-                    labelText: l.photosLink,
-                    hintText: 'https://',
-                    prefixIcon: const Icon(Icons.link),
-                  ),
-                  onSubmitted: (_) => _savePhotosUrl(),
                 ),
               ],
             ),

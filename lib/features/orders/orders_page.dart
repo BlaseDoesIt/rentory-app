@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/format.dart';
 import '../../app/services.dart';
 import '../../app/widgets.dart';
+import '../../data/local/database.dart';
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
 import 'new_order_page.dart';
@@ -55,6 +57,9 @@ class _OrdersPageState extends State<OrdersPage> {
   String _search = '';
   Stream<List<OrderSummary>>? _stream;
 
+  /// Showing the archived orders instead of the working list.
+  bool _archived = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -62,18 +67,77 @@ class _OrdersPageState extends State<OrdersPage> {
     _stream ??= Services.of(context).repo.watchOrders();
   }
 
+  void _showArchived(bool on) => setState(() {
+    _archived = on;
+    _filter = const _All();
+    _stream = Services.of(context).repo.watchOrders(archived: on);
+  });
+
   void _set(_Filter f) =>
       setState(() => _filter = _filter == f ? const _All() : f);
 
   bool _matches(OrderSummary s) {
-    final q = _search.trim().toLowerCase();
+    final q = latinDigits(_search.trim()).toLowerCase();
     if (q.isEmpty) return true;
     final o = s.order;
+    final day = _parseDay(q);
+    if (day != null && _covers(o, day)) return true;
     return [
       s.customerLabel,
       o.number ?? '',
       o.customerPhone ?? '',
+      o.note ?? '',
+      ...s.lineNames,
+      ..._dateTexts(o.dateStart),
+      ..._dateTexts(o.dateEnd),
     ].any((x) => x.toLowerCase().contains(q));
+  }
+
+  /// The ways a date may be typed: as shown in the app, or in numbers.
+  static List<String> _dateTexts(DateTime? d) {
+    if (d == null) return const [];
+    final local = d.toLocal();
+    return [
+      latinDigits(DateFormat('d MMM y').format(local)),
+      latinDigits(DateFormat('d MMMM y').format(local)),
+      DateFormat('yyyy-MM-dd', 'en').format(local),
+      DateFormat('d/M/yyyy', 'en').format(local),
+      DateFormat('dd/MM/yyyy', 'en').format(local),
+    ];
+  }
+
+  /// A typed calendar day: 2026-10-18, 18/10/2026, 18-10-2026 or 18/10
+  /// (this year). Null when [q] is not one.
+  static DateTime? _parseDay(String q) {
+    final iso = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$').firstMatch(q);
+    if (iso != null) {
+      return _day(iso.group(1)!, iso.group(2)!, iso.group(3)!);
+    }
+    final dmy = RegExp(r'^(\d{1,2})[/.-](\d{1,2})(?:[/.-](\d{4}))?$')
+        .firstMatch(q);
+    if (dmy != null) {
+      return _day(
+        dmy.group(3) ?? '${DateTime.now().year}',
+        dmy.group(2)!,
+        dmy.group(1)!,
+      );
+    }
+    return null;
+  }
+
+  static DateTime? _day(String y, String m, String d) {
+    final year = int.parse(y), month = int.parse(m), day = int.parse(d);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return DateTime(year, month, day);
+  }
+
+  /// The order runs on that day (local calendar).
+  static bool _covers(Order o, DateTime day) {
+    final start = o.dateStart?.toLocal();
+    final end = o.dateEnd?.toLocal();
+    if (start == null || end == null) return false;
+    final next = day.add(const Duration(days: 1));
+    return start.isBefore(next) && end.isAfter(day);
   }
 
   @override
@@ -158,6 +222,7 @@ class _OrdersPageState extends State<OrdersPage> {
         slivers: [
           SliverToBoxAdapter(
             child: PageHeader(
+              logo: true,
               title: l.orders,
               subtitle: l.ordersSummary(out, overdue),
             ),
@@ -196,6 +261,13 @@ class _OrdersPageState extends State<OrdersPage> {
                   _chip(l.all, const _All()),
                   for (final s in OrderState.values)
                     _chip(l.orderState(s), _ByState({s})),
+                  MonoChip(
+                    key: const Key('orders-archived'),
+                    icon: Icons.inventory_outlined,
+                    label: l.archived,
+                    selected: _archived,
+                    onTap: () => _showArchived(!_archived),
+                  ),
                 ],
               ),
             ),
@@ -237,8 +309,11 @@ class _OrdersPageState extends State<OrdersPage> {
     padding: const EdgeInsetsDirectional.only(end: 8),
     child: MonoChip(
       label: label,
-      selected: _filter == f,
-      onTap: () => setState(() => _filter = f),
+      selected: !_archived && _filter == f,
+      onTap: () {
+        if (_archived) _showArchived(false);
+        setState(() => _filter = f);
+      },
     ),
   );
 }

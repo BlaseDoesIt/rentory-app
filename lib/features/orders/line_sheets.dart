@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../app/format.dart';
 import '../../app/services.dart';
 import '../../app/ui.dart';
+import '../../app/widgets.dart';
 import '../../data/local/database.dart';
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
+import '../../domain/rules/availability.dart';
 
 /// Adds an asset, service or section line. Returns the new line id.
 Future<String?> showAddLine(BuildContext context, String orderId) =>
@@ -16,7 +18,7 @@ Future<String?> showAddLine(BuildContext context, String orderId) =>
       builder: (_) => Services.of(context).wrap(_AddLineSheet(orderId)),
     );
 
-/// Edits or removes a line still in draft. Returns true when it changed.
+/// Edits or removes a line. Returns true when it changed.
 Future<bool?> showEditLine(BuildContext context, LineView view, Order order) =>
     showModalBottomSheet<bool>(
       context: context,
@@ -47,6 +49,9 @@ class _AddLineSheetState extends State<_AddLineSheet> {
   String _search = '';
   Future<List<_Item>>? _items;
   _Item? _picked;
+
+  /// Units chosen for a by-unit asset, by id, with their names.
+  final Map<String, String> _units = {};
   final _name = TextEditingController();
   final _qty = TextEditingController(text: '1');
   final _price = TextEditingController(text: '0');
@@ -92,15 +97,36 @@ class _AddLineSheetState extends State<_AddLineSheet> {
   void _setType(LineType t) => setState(() {
     _type = t;
     _picked = null;
+    _units.clear();
     _search = '';
     _items = _load();
   });
 
   void _pick(_Item item) => setState(() {
     _picked = item;
+    _units.clear();
     _name.text = item.name;
     _price.text = qty(item.price);
   });
+
+  /// Choose the units of a by-unit asset; the quantity follows them.
+  Future<void> _chooseUnits() async {
+    final repo = Services.of(context).repo;
+    final options = await repo.serialOptionsFor(widget.orderId, _picked!.id);
+    if (!mounted) return;
+    final chosen = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (_) =>
+          _UnitsDialog(options: options, selected: {..._units.keys}),
+    );
+    if (chosen == null) return;
+    setState(() {
+      _units
+        ..clear()
+        ..addAll(chosen);
+      if (chosen.isNotEmpty) _qty.text = '${chosen.length}';
+    });
+  }
 
   Future<void> _add() async {
     final l = context.l10n;
@@ -136,6 +162,9 @@ class _AddLineSheetState extends State<_AddLineSheet> {
         quantity: quantity,
         priceDay: price,
         discount: discount,
+        serialIds: _type == LineType.asset && _picked!.byUnit
+            ? _units.keys.toList()
+            : const [],
       );
     });
     if (ok && mounted) Navigator.pop(context, id);
@@ -224,7 +253,10 @@ class _AddLineSheetState extends State<_AddLineSheet> {
             title: Text(_picked!.name),
             subtitle: _picked!.byUnit ? Text(l.byUnitHint) : null,
             trailing: TextButton(
-              onPressed: () => setState(() => _picked = null),
+              onPressed: () => setState(() {
+                _picked = null;
+                _units.clear();
+              }),
               child: Text(l.change),
             ),
           )
@@ -239,7 +271,35 @@ class _AddLineSheetState extends State<_AddLineSheet> {
           ),
         if (!section) ...[
           const SizedBox(height: 8),
-          _NumberFields(qty: _qty, price: _price, discount: _discount),
+          _NumberFields(
+            qty: _qty,
+            price: _price,
+            discount: _discount,
+            // Chosen units set the quantity.
+            qtyEnabled: _units.isEmpty,
+          ),
+        ],
+        if (picked && _picked!.byUnit) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            key: const Key('line-units'),
+            icon: const Icon(Icons.qr_code_2),
+            onPressed: _chooseUnits,
+            label: Text(
+              _units.isEmpty ? l.chooseUnits : l.unitsCount(_units.length),
+            ),
+          ),
+          if (_units.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final n in _units.values)
+                  StatusPill(n, tone: PillTone.muted),
+              ],
+            ),
+          ],
         ],
         const SizedBox(height: 16),
         FilledButton(
@@ -257,25 +317,33 @@ class _NumberFields extends StatelessWidget {
     required this.qty,
     required this.price,
     required this.discount,
+    this.qtyEnabled = true,
   });
   final TextEditingController qty;
   final TextEditingController price;
   final TextEditingController discount;
+  final bool qtyEnabled;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    Widget field(Key key, TextEditingController c, String label) => Expanded(
+    Widget field(
+      Key key,
+      TextEditingController c,
+      String label, {
+      bool enabled = true,
+    }) => Expanded(
       child: TextField(
         key: key,
         controller: c,
+        enabled: enabled,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(labelText: label),
       ),
     );
     return Row(
       children: [
-        field(const Key('line-qty'), qty, l.quantity),
+        field(const Key('line-qty'), qty, l.quantity, enabled: qtyEnabled),
         const SizedBox(width: 8),
         field(const Key('line-price'), price, l.pricePerDay),
         const SizedBox(width: 8),
@@ -325,15 +393,17 @@ class _EditLineSheetState extends State<_EditLineSheet> {
       await showProblems(context, [l.checkNumbers]);
       return;
     }
+    final out = _line.rentalState.goneOut;
     final ok = await attempt(context, () async {
       await repo.updateLine(
         _line.id,
         name: _name.text.trim(),
-        quantity: section ? null : q,
+        // Once out, the quantity and dates stay as they went.
+        quantity: section || out ? null : q,
         priceDay: section ? null : p,
         discount: section ? null : d,
       );
-      if (!section) {
+      if (!section && !out) {
         await repo.setLineDates(
           _line.id,
           _ownDates ? _start : null,
@@ -357,7 +427,9 @@ class _EditLineSheetState extends State<_EditLineSheet> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final section = _line.lineType == LineType.section;
-    final editable = _line.rentalState == RentalState.none;
+    // Booked lines can change too (they are booked again); lines already
+    // out keep their quantity and dates.
+    final editable = !_line.rentalState.goneOut;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -373,12 +445,16 @@ class _EditLineSheetState extends State<_EditLineSheet> {
           TextField(
             key: const Key('edit-name'),
             controller: _name,
-            enabled: editable,
             decoration: InputDecoration(labelText: l.description),
           ),
           if (!section) ...[
             const SizedBox(height: 8),
-            _NumberFields(qty: _qty, price: _price, discount: _discount),
+            _NumberFields(
+              qty: _qty,
+              price: _price,
+              discount: _discount,
+              qtyEnabled: editable,
+            ),
           ],
           if (!section && editable) ...[
             const SizedBox(height: 4),
@@ -442,13 +518,80 @@ class _EditLineSheetState extends State<_EditLineSheet> {
               const Spacer(),
               FilledButton(
                 key: const Key('save-line'),
-                onPressed: editable ? _save : null,
+                onPressed: _save,
                 child: Text(l.save),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Ticks the units for a line about to be added. Pops with the chosen ones
+/// (id to name), or null when cancelled.
+class _UnitsDialog extends StatefulWidget {
+  const _UnitsDialog({required this.options, required this.selected});
+  final List<SerialOption> options;
+  final Set<String> selected;
+
+  @override
+  State<_UnitsDialog> createState() => _UnitsDialogState();
+}
+
+class _UnitsDialogState extends State<_UnitsDialog> {
+  late final Set<String> _selected = {...widget.selected};
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AlertDialog(
+      title: Text(l.chooseUnits),
+      content: SizedBox(
+        width: 420,
+        child: widget.options.isEmpty
+            ? Text(l.noFreeUnits)
+            : ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final o in widget.options)
+                    CheckboxListTile(
+                      key: Key('unit-${o.serial.name}'),
+                      contentPadding: EdgeInsets.zero,
+                      value: _selected.contains(o.serial.id),
+                      title: Row(
+                        children: [
+                          Flexible(child: Text(o.serial.name)),
+                          if (o.overdue) ...[
+                            const SizedBox(width: 8),
+                            Tag(l.overdue, inverted: true),
+                          ],
+                        ],
+                      ),
+                      onChanged: (v) => setState(
+                        () => v == true
+                            ? _selected.add(o.serial.id)
+                            : _selected.remove(o.serial.id),
+                      ),
+                    ),
+                ],
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          key: const Key('units-done'),
+          onPressed: () => Navigator.pop(context, {
+            for (final o in widget.options)
+              if (_selected.contains(o.serial.id)) o.serial.id: o.serial.name,
+          }),
+          child: Text(l.ok),
+        ),
+      ],
     );
   }
 }

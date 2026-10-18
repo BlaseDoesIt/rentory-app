@@ -26,7 +26,7 @@ class AssetDetailPage extends StatefulWidget {
   State<AssetDetailPage> createState() => _AssetDetailPageState();
 }
 
-enum _Action { edit, maintenance, retire, reset }
+enum _Action { edit, maintenance, retire, reset, delete, restore }
 
 class _AssetDetailPageState extends State<AssetDetailPage> {
   Future<AssetDetail>? _detail;
@@ -69,6 +69,27 @@ class _AssetDetailPageState extends State<AssetDetailPage> {
         await _run((r) => r.setAssetStatus(asset.id, AssetManualState.retired));
       case _Action.reset:
         await _run((r) => r.setAssetStatus(asset.id, null));
+      case _Action.restore:
+        await _run((r) => r.restoreAsset(asset.id));
+      case _Action.delete:
+        final l = context.l10n;
+        final repo = Services.of(context).repo;
+        final messenger = ScaffoldMessenger.of(context);
+        final navigator = Navigator.of(context);
+        if (!await confirm(context, l.deleteAssetQuestion) || !mounted) return;
+        Removal? done;
+        await attempt(context, () async {
+          done = await repo.removeAsset(asset.id);
+        });
+        if (done == null) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              done == Removal.deleted ? l.assetDeleted : l.assetArchived,
+            ),
+          ),
+        );
+        await navigator.maybePop();
     }
   }
 
@@ -135,6 +156,19 @@ class _AssetDetailPageState extends State<AssetDetailPage> {
                       PopupMenuItem(
                         value: _Action.reset,
                         child: Text(l.backInService),
+                      ),
+                    const PopupMenuDivider(),
+                    if (d.asset.active)
+                      PopupMenuItem(
+                        key: const Key('delete-asset'),
+                        value: _Action.delete,
+                        child: Text(l.deleteAsset),
+                      )
+                    else
+                      PopupMenuItem(
+                        key: const Key('restore-asset'),
+                        value: _Action.restore,
+                        child: Text(l.restore),
                       ),
                   ],
                 ),

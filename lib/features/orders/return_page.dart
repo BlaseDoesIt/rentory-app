@@ -12,8 +12,11 @@ import 'photo_strip.dart';
 /// Checking kit back in: each unit gets its own condition and note, untracked
 /// lines one condition, and the customer's documents can be handed back.
 class ReturnPage extends StatefulWidget {
-  const ReturnPage({super.key, required this.orderId});
+  const ReturnPage({super.key, required this.orderId, this.lineId});
   final String orderId;
+
+  /// Tick only this line to begin with; null ticks everything out.
+  final String? lineId;
 
   @override
   State<ReturnPage> createState() => _ReturnPageState();
@@ -65,7 +68,9 @@ class _ReturnPageState extends State<ReturnPage> {
       _giveDocuments = docs.isNotEmpty && d.order.documentsReturnedAt == null;
       _examined = d.order.itemsExamined;
       for (final v in _out(d)) {
-        _lines.add(v.line.id);
+        if (widget.lineId == null || widget.lineId == v.line.id) {
+          _lines.add(v.line.id);
+        }
         for (final key in _keys(v)) {
           _units.putIfAbsent(key, _Unit.new);
         }

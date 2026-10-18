@@ -78,8 +78,13 @@ class _AssetFormPageState extends State<AssetFormPage> {
   bool _loaded = false;
   bool _busy = false;
 
-  /// Marks the "new category" entry of the dropdown.
+  /// Marks the "new category" and "new location" entries of the dropdowns.
   static const _newCategory = '__new__';
+  static const _newLocation = '__new_location__';
+
+  /// Units the asset can rent now, to start the quantity from when an
+  /// asset counted by unit switches to quantity.
+  double _unitCount = 0;
 
   @override
   void didChangeDependencies() {
@@ -121,6 +126,10 @@ class _AssetFormPageState extends State<AssetFormPage> {
     final categories = await repo.categories();
     final locations = await repo.locations();
     String? source;
+    final a = _a;
+    final units = a != null && a.tracking == Tracking.serial
+        ? (await repo.loadAsset(a.id)).summary.total
+        : 0.0;
     if (_sourceId != null) {
       source = (await repo.customers())
           .where((c) => c.id == _sourceId)
@@ -132,6 +141,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
       _categories = categories;
       _locations = locations;
       _sourceName = source;
+      _unitCount = units;
     });
   }
 
@@ -185,6 +195,40 @@ class _AssetFormPageState extends State<AssetFormPage> {
     await _loadLists();
     setState(() => _categoryId = created);
   }
+
+  Future<void> _pickLocation(String? id) async {
+    if (id != _newLocation) {
+      setState(() => _locationId = id);
+      return;
+    }
+    final l = context.l10n;
+    final name = await promptText(
+      context,
+      title: l.newLocation,
+      label: l.name,
+      fieldKey: const Key('prompt-field'),
+    );
+    if (name == null || !mounted) return;
+    final repo = Services.of(context).repo;
+    String? created;
+    await attempt(context, () async {
+      created = await repo.createLocation(name);
+    });
+    if (created == null) return;
+    await _loadLists();
+    setState(() => _locationId = created);
+  }
+
+  void _setTracking(Tracking t) => setState(() {
+    // Going from units to a count starts from how many units it has.
+    if (_editing &&
+        t == Tracking.none &&
+        _a!.tracking == Tracking.serial &&
+        _unitCount > 0) {
+      _qty.text = qty(_unitCount);
+    }
+    _tracking = t;
+  });
 
   Future<void> _pickSource() async {
     final c = await pickCustomer(context);
@@ -240,6 +284,15 @@ class _AssetFormPageState extends State<AssetFormPage> {
     String? id = _a?.id;
     final ok = await attempt(context, () async {
       if (_editing) {
+        final switched = _tracking != _a!.tracking;
+        if (switched) {
+          await services.repo.changeTracking(
+            id!,
+            _tracking,
+            units: _units,
+            quantity: _tracking == Tracking.none ? quantity : null,
+          );
+        }
         await services.repo.updateAsset(
           id!,
           more.copyWith(
@@ -248,7 +301,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
             barcode: Value(_opt(_barcode) ?? _opt(_code)),
             categoryId: Value(_categoryId),
             locationId: Value(_locationId),
-            qtyManual: _tracking == Tracking.none
+            qtyManual: _tracking == Tracking.none && !switched
                 ? Value(quantity!)
                 : const Value.absent(),
             rentalPriceDay: Value(price!),
@@ -349,19 +402,19 @@ class _AssetFormPageState extends State<AssetFormPage> {
                     ],
                     onSelected: _pickCategory,
                   ),
-                  if (_locations.isNotEmpty) ...[
-                    gap(),
-                    MonoDropdown<String?>(
-                      label: l.location,
-                      value: _locationId,
-                      leading: const Icon(Icons.place_outlined),
-                      options: [
-                        (null, l.none),
-                        for (final x in _locations) (x.id, x.name),
-                      ],
-                      onSelected: (v) => setState(() => _locationId = v),
-                    ),
-                  ],
+                  gap(),
+                  MonoDropdown<String?>(
+                    key: const Key('asset-location'),
+                    label: l.location,
+                    value: _locationId,
+                    leading: const Icon(Icons.place_outlined),
+                    options: [
+                      (null, l.none),
+                      for (final x in _locations) (x.id, x.name),
+                      (_newLocation, '+ ${l.newLocation}'),
+                    ],
+                    onSelected: _pickLocation,
+                  ),
                   const SizedBox(height: 4),
                   SwitchListTile(
                     key: const Key('asset-rental-ok'),
@@ -562,23 +615,10 @@ class _AssetFormPageState extends State<AssetFormPage> {
     final muted = TextStyle(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
     );
-    if (_editing) {
-      // How an asset is counted is fixed once it exists.
-      return _tracking == Tracking.serial
-          ? Row(
-              children: [
-                const Icon(Icons.qr_code_2),
-                const SizedBox(width: 12),
-                Expanded(child: Text(l.trackByUnitHint, style: muted)),
-              ],
-            )
-          : TextField(
-              key: const Key('asset-qty'),
-              controller: _qty,
-              keyboardType: number,
-              decoration: InputDecoration(labelText: l.quantityOnHand),
-            );
-    }
+    // An asset already counted by unit keeps its units on its own page; one
+    // switching to units gets new ones here.
+    final keepsUnits = _editing && _a!.tracking == Tracking.serial;
+    final switched = _editing && _tracking != _a!.tracking;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -598,11 +638,13 @@ class _AssetFormPageState extends State<AssetFormPage> {
             ),
           ],
           selected: {_tracking},
-          onSelectionChanged: (s) => setState(() => _tracking = s.first),
+          onSelectionChanged: (s) => _setTracking(s.first),
         ),
         const SizedBox(height: 8),
         Text(
-          _tracking == Tracking.serial
+          switched
+              ? l.trackingChangeHint
+              : _tracking == Tracking.serial
               ? l.trackByUnitHint
               : l.trackByQuantityHint,
           style: muted,
@@ -613,7 +655,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
           curve: Mono.ease,
           alignment: Alignment.topCenter,
           child: _tracking == Tracking.serial
-              ? _unitsEditor(l)
+              ? (keepsUnits ? const SizedBox.shrink() : _unitsEditor(l))
               : TextField(
                   key: const Key('asset-qty'),
                   controller: _qty,

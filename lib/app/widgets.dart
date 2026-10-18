@@ -27,10 +27,14 @@ class PageHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
+    this.logo = false,
   });
   final String title;
   final String? subtitle;
   final Widget? trailing;
+
+  /// Shows the Rentory logo before the title.
+  final bool logo;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +45,7 @@ class PageHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          if (logo) ...[const BrandMark(size: 44), const SizedBox(width: 12)],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
