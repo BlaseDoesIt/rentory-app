@@ -14,5 +14,12 @@ ThemeData rentoryTheme(Brightness brightness) {
         surface: dark ? Colors.black : Colors.white,
         onSurface: dark ? Colors.white : Colors.black,
       );
-  return ThemeData(colorScheme: scheme, useMaterial3: true);
+  return ThemeData(
+    colorScheme: scheme,
+    useMaterial3: true,
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: scheme.primary,
+      foregroundColor: scheme.onPrimary,
+    ),
+  );
 }
