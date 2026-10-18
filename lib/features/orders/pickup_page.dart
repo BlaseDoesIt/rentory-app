@@ -332,20 +332,11 @@ class _PickupPageState extends State<PickupPage> {
                 runSpacing: 8,
                 children: [
                   for (final t in _docTypes)
-                    FilterChip(
-                      avatar: _docs.contains(t.id)
-                          ? Icon(Icons.check, size: 16, color: scheme.onPrimary)
-                          : null,
-                      label: Text(
-                        t.name,
-                        style: TextStyle(
-                          color: _docs.contains(t.id)
-                              ? scheme.onPrimary
-                              : scheme.onSurface,
-                        ),
-                      ),
+                    MonoChip(
+                      icon: _docs.contains(t.id) ? Icons.check : null,
+                      label: t.name,
                       selected: _docs.contains(t.id),
-                      onSelected: (on) => _toggleDoc(t.id, on),
+                      onTap: () => _toggleDoc(t.id, !_docs.contains(t.id)),
                     ),
                 ],
               ),

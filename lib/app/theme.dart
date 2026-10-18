@@ -24,6 +24,31 @@ abstract final class Mono {
     );
   }
 
+  /// For buttons: a steeper ramp, so the gradient still reads on something
+  /// as small as a floating button.
+  static LinearGradient button(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: dark
+          ? const [Color(0xFFFFFFFF), Color(0xFF8E8E8E)]
+          : const [Color(0xFF000000), Color(0xFF5A5A5A)],
+    );
+  }
+
+  /// A card's face: a little lighter than the page, fading down.
+  static LinearGradient card(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: dark
+          ? const [Color(0xFF1E1E1E), Color(0xFF121212)]
+          : const [Color(0xFFFFFFFF), Color(0xFFF6F6F6)],
+    );
+  }
+
   /// A soft grey wash for tiles and avatars.
   static LinearGradient soft(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
@@ -31,7 +56,7 @@ abstract final class Mono {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: dark
-          ? const [Color(0xFF2A2A2A), Color(0xFF141414)]
+          ? const [Color(0xFF333333), Color(0xFF1C1C1C)]
           : const [Color(0xFFF3F3F3), Color(0xFFDCDCDC)],
     );
   }
@@ -43,8 +68,8 @@ abstract final class Mono {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: dark
-          ? const [Color(0xFF000000), Color(0xFF101010)]
-          : const [Color(0xFFF8F8F8), Color(0xFFEAEAEA)],
+          ? const [Color(0xFF000000), Color(0xFF0B0B0B)]
+          : const [Color(0xFFF3F3F3), Color(0xFFE6E6E6)],
     );
   }
 }
@@ -54,8 +79,9 @@ ThemeData rentoryTheme(Brightness brightness) {
   final ink = dark ? Colors.white : Colors.black;
   final paper = dark ? Colors.black : Colors.white;
   final background = dark ? Colors.black : const Color(0xFFF5F5F5);
-  final card = dark ? const Color(0xFF0F0F0F) : Colors.white;
-  final raised = dark ? const Color(0xFF181818) : const Color(0xFFF0F0F0);
+  // Cards sit a step above the page: grey on black, white on light grey.
+  final card = dark ? const Color(0xFF161616) : Colors.white;
+  final raised = dark ? const Color(0xFF242424) : const Color(0xFFF0F0F0);
   final line = dark ? const Color(0xFF262626) : const Color(0xFFE4E4E4);
   final muted = dark ? const Color(0xFF9A9A9A) : const Color(0xFF6B6B6B);
   // A step lighter than [line], for frames that must stand out.
@@ -132,7 +158,8 @@ ThemeData rentoryTheme(Brightness brightness) {
 
   final inputs = InputDecorationTheme(
     filled: true,
-    fillColor: raised,
+    // Light: white fields with a thin frame, so they read on the grey page.
+    fillColor: dark ? raised : Colors.white,
     isDense: false,
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     hintStyle: TextStyle(color: muted),
@@ -144,7 +171,7 @@ ThemeData rentoryTheme(Brightness brightness) {
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(Mono.radiusSmall),
-      borderSide: BorderSide.none,
+      borderSide: dark ? BorderSide.none : BorderSide(color: line),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(Mono.radiusSmall),
@@ -157,7 +184,11 @@ ThemeData rentoryTheme(Brightness brightness) {
     canvasColor: background,
     textTheme: text,
     dividerTheme: DividerThemeData(color: line, thickness: 1, space: 1),
-    splashFactory: InkSparkle.splashFactory,
+    // A soft, even ripple: no grainy sparkle before a selection lands.
+    splashFactory: InkRipple.splashFactory,
+    splashColor: ink.withValues(alpha: 0.06),
+    highlightColor: ink.withValues(alpha: 0.04),
+    hoverColor: ink.withValues(alpha: 0.04),
     visualDensity: VisualDensity.standard,
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: {
@@ -187,12 +218,28 @@ ThemeData rentoryTheme(Brightness brightness) {
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: buttonSize,
-        padding: buttonPadding,
-        shape: rounded,
-        textStyle: const TextStyle(fontWeight: FontWeight.w600),
-      ),
+      style:
+          FilledButton.styleFrom(
+            minimumSize: buttonSize,
+            padding: buttonPadding,
+            shape: rounded,
+            textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          ).copyWith(
+            // Every filled button wears the button gradient; disabled ones
+            // stay flat grey.
+            backgroundBuilder: (context, states, child) => AnimatedContainer(
+              duration: Mono.medium,
+              curve: Mono.ease,
+              decoration: BoxDecoration(
+                gradient: states.contains(WidgetState.disabled)
+                    ? null
+                    : Mono.button(context),
+                color: states.contains(WidgetState.disabled) ? raised : null,
+                borderRadius: BorderRadius.circular(Mono.radiusSmall),
+              ),
+              child: child,
+            ),
+          ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(

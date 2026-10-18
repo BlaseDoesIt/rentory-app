@@ -84,8 +84,7 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return MonoCard(
       child: Padding(
         padding: padding,
         child: Column(
@@ -228,8 +227,7 @@ class StatTile extends StatelessWidget {
       duration: Mono.medium,
       curve: Mono.ease,
       decoration: BoxDecoration(
-        color: selected ? null : scheme.surface,
-        gradient: selected ? Mono.ink(context) : null,
+        gradient: selected ? Mono.ink(context) : Mono.card(context),
         borderRadius: BorderRadius.circular(Mono.radius),
         border: Border.all(
           color: selected ? Colors.transparent : scheme.outline,
@@ -423,35 +421,39 @@ class LabeledValue extends StatelessWidget {
   }
 }
 
-/// The Rentory logo (a box with a key) on a white rounded tile, so the
-/// black line art reads the same in light and dark mode.
+/// The Rentory logo (a box with a key), drawn straight on the page: black
+/// lines in light mode, inverted to white lines in dark mode.
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key, this.size = 36});
   final double size;
 
+  /// Swaps black and white, keeps transparency.
+  static const _invert = ColorFilter.matrix([
+    -1, 0, 0, 0, 255, //
+    0, -1, 0, 0, 255, //
+    0, 0, -1, 0, 255, //
+    0, 0, 0, 1, 0, //
+  ]);
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final logo = Image.asset(
+      'assets/logo.png',
       width: size,
       height: size,
-      padding: EdgeInsets.all(size * 0.12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(size * 0.26),
-        border: Border.all(color: scheme.outline),
-      ),
-      child: Image.asset(
-        'assets/logo.png',
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.medium,
-        semanticLabel: 'Rentory',
-      ),
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+      semanticLabel: 'Rentory',
+    );
+    return SizedBox(
+      width: size,
+      height: size,
+      child: dark ? ColorFiltered(colorFilter: _invert, child: logo) : logo,
     );
   }
 }
 
-/// The bar at the bottom of a task page holding its main button.
 class BottomActionBar extends StatelessWidget {
   const BottomActionBar({super.key, required this.child});
   final Widget child;
@@ -550,4 +552,154 @@ class FieldPair extends StatelessWidget {
             ],
           ),
   );
+}
+
+/// A card a step brighter than the page, with a soft gradient and a thin
+/// frame. Ink (taps) shows on it.
+class MonoCard extends StatelessWidget {
+  const MonoCard({super.key, required this.child, this.onTap});
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(Mono.radius);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: Mono.card(context),
+        borderRadius: radius,
+        border: Border.all(color: scheme.outline),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: onTap == null ? child : InkWell(onTap: onTap, child: child),
+      ),
+    );
+  }
+}
+
+/// A filter chip that fades from the card face to the ink gradient when
+/// picked, instead of snapping.
+class MonoChip extends StatelessWidget {
+  const MonoChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(999);
+    final fg = selected ? scheme.onPrimary : scheme.onSurface;
+    return AnimatedContainer(
+      duration: Mono.medium,
+      curve: Mono.ease,
+      decoration: BoxDecoration(
+        gradient: selected ? Mono.button(context) : Mono.card(context),
+        borderRadius: radius,
+        border: Border.all(
+          color: selected ? Colors.transparent : scheme.outline,
+        ),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: fg),
+                  const SizedBox(width: 6),
+                ],
+                AnimatedDefaultTextStyle(
+                  duration: Mono.medium,
+                  curve: Mono.ease,
+                  style: TextStyle(
+                    color: fg,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                  child: Text(label),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The floating "new" button, wearing the button gradient so it reads even
+/// at this size.
+class GradientFab extends StatelessWidget {
+  const GradientFab({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final radius = BorderRadius.circular(Mono.radius);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: Mono.button(context),
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: dark ? 0.5 : 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: scheme.onPrimary),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: scheme.onPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

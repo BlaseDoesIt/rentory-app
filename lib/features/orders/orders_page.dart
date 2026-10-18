@@ -81,10 +81,10 @@ class _OrdersPageState extends State<OrdersPage> {
     final l = context.l10n;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: GradientFab(
         key: const Key('new-order'),
-        icon: const Icon(Icons.add),
-        label: Text(l.newOrder),
+        icon: Icons.add,
+        label: l.newOrder,
         onPressed: () => Services.push<void>(context, const NewOrderPage()),
       ),
       body: StreamBuilder<List<OrderSummary>>(
@@ -235,10 +235,10 @@ class _OrdersPageState extends State<OrdersPage> {
 
   Widget _chip(String label, _Filter f) => Padding(
     padding: const EdgeInsetsDirectional.only(end: 8),
-    child: ChoiceChip(
-      label: Text(label),
+    child: MonoChip(
+      label: label,
       selected: _filter == f,
-      onSelected: (_) => setState(() => _filter = f),
+      onTap: () => setState(() => _filter = f),
     ),
   );
 }
