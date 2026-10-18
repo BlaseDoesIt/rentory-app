@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rentory/app/app.dart';
+import 'package:rentory/app/appearance.dart';
 import 'package:rentory/app/services.dart';
 import 'package:rentory/data/demo_seed.dart';
 import 'package:rentory/data/local/database.dart';
@@ -60,6 +61,32 @@ void main() {
     await tester.pump();
     expect(find.textContaining('without the server address'), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    await tester.runAsync(db.close);
+  });
+
+  testWidgets('Settings switches light and dark', (tester) async {
+    final db = RentoryDatabase.memory(NativeDatabase.memory());
+    final repo = LocalRepository(db, gateway: LocalBookingGateway(db));
+    final appearance = AppearanceController(ThemeMode.light);
+    await tester.pumpWidget(
+      RentoryApp(
+        config: const AppConfig(),
+        db: db,
+        appearance: appearance,
+        backend: Backend(repo, null),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Settings').last);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text('Dark'));
+    // Light and dark cross-fade.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(appearance.value, ThemeMode.dark);
+    final context = tester.element(find.byType(AppShell));
+    expect(Theme.of(context).brightness, Brightness.dark);
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(db.close);
   });

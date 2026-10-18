@@ -12,6 +12,7 @@ import '../features/auth/sign_in_page.dart';
 import '../features/orders/orders_page.dart';
 import '../features/scan/scan_page.dart';
 import '../features/settings/settings_page.dart';
+import 'appearance.dart';
 import 'connection_gate.dart';
 import 'format.dart';
 import 'language.dart';
@@ -27,6 +28,7 @@ class RentoryApp extends StatefulWidget {
     required this.config,
     required this.db,
     this.language,
+    this.appearance,
     this.files = const AppFiles(),
     this.backend,
   });
@@ -36,6 +38,9 @@ class RentoryApp extends StatefulWidget {
 
   /// The Settings language choice. Null follows the device.
   final LanguageController? language;
+
+  /// Light, dark or system, from Settings.
+  final AppearanceController? appearance;
   final AppFiles files;
 
   /// Skips sign-in and uses this backend as is (tests).
@@ -49,6 +54,8 @@ class RentoryApp extends StatefulWidget {
 class _RentoryAppState extends State<RentoryApp> {
   late final LanguageController _language =
       widget.language ?? LanguageController();
+  late final AppearanceController _appearance =
+      widget.appearance ?? AppearanceController();
 
   /// The signed-in session's sync engine, watched by [ConnectionGate].
   final _sync = ValueNotifier<SyncEngine?>(null);
@@ -67,11 +74,14 @@ class _RentoryAppState extends State<RentoryApp> {
 
   @override
   Widget build(BuildContext context) {
-    return LanguageScope(
-      controller: _language,
-      child: ValueListenableBuilder<Locale?>(
-        valueListenable: _language,
-        builder: (context, locale, _) => _app(locale),
+    return AppearanceScope(
+      controller: _appearance,
+      child: LanguageScope(
+        controller: _language,
+        child: ListenableBuilder(
+          listenable: Listenable.merge([_language, _appearance]),
+          builder: (context, _) => _app(_language.value),
+        ),
       ),
     );
   }
@@ -98,6 +108,10 @@ class _RentoryAppState extends State<RentoryApp> {
       debugShowCheckedModeBanner: false,
       theme: rentoryTheme(Brightness.light),
       darkTheme: rentoryTheme(Brightness.dark),
+      themeMode: _appearance.value,
+      // Light and dark cross-fade instead of flipping.
+      themeAnimationDuration: Mono.medium,
+      themeAnimationCurve: Mono.ease,
       locale: locale,
       supportedLocales: LanguageController.supported,
       localizationsDelegates: const [

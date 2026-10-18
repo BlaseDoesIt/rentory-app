@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
+import '../../app/appearance.dart';
 import '../../app/language.dart';
 import '../../app/services.dart';
 import '../../app/widgets.dart';
@@ -38,6 +39,7 @@ class SettingsPage extends StatelessWidget {
     final sync = services.sync;
     final l = context.l10n;
     final language = LanguageScope.of(context);
+    final appearance = AppearanceScope.of(context);
     final email = services.userEmail ?? '';
     return ContentWidth(
       max: 720,
@@ -62,6 +64,33 @@ class SettingsPage extends StatelessWidget {
                       ),
                       if (sync != null) _SyncTile(sync),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SectionCard(
+                  title: l.appearance,
+                  child: SegmentedButton<ThemeMode>(
+                    key: const Key('theme-mode'),
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(
+                        value: ThemeMode.system,
+                        icon: const Icon(Icons.brightness_auto_outlined),
+                        label: Text(l.languageDevice),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        icon: const Icon(Icons.light_mode_outlined),
+                        label: Text(l.themeLight),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.dark,
+                        icon: const Icon(Icons.dark_mode_outlined),
+                        label: Text(l.themeDark),
+                      ),
+                    ],
+                    selected: {appearance.value},
+                    onSelectionChanged: (s) => appearance.choose(s.first),
                   ),
                 ),
                 const SizedBox(height: 12),
