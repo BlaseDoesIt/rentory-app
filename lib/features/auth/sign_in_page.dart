@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../app/format.dart';
+import '../../app/widgets.dart';
 
 /// Email and password against Supabase Auth. Each team member has their own
 /// account; the first one ever created becomes the admin.
@@ -75,7 +76,12 @@ class _SignInPageState extends State<SignInPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Rentory', style: text.headlineMedium),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: BrandMark(size: 56),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(l.appName, style: text.headlineMedium),
                   const SizedBox(height: 4),
                   Text(l.signInToTeam, style: text.bodyMedium),
                   const SizedBox(height: 24),

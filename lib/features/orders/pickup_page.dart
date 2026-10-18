@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
 import '../../app/services.dart';
+import '../../app/theme.dart';
 import '../../app/ui.dart';
+import '../../app/widgets.dart';
 import '../../data/local/database.dart';
 import '../../data/local/tables.dart' show rowUuid;
 import '../../data/repository.dart';
@@ -131,15 +133,12 @@ class _PickupPageState extends State<PickupPage> {
           : _body(l, d),
       bottomNavigationBar: d == null
           ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: FilledButton.icon(
-                  key: const Key('hand-over'),
-                  icon: const Icon(Icons.outbox_outlined),
-                  onPressed: _busy ? null : _handOver,
-                  label: Text(l.handOver),
-                ),
+          : BottomActionBar(
+              child: FilledButton.icon(
+                key: const Key('hand-over'),
+                icon: const Icon(Icons.outbox_outlined),
+                onPressed: _busy ? null : _handOver,
+                label: Text(l.handOver),
               ),
             ),
     );
@@ -147,6 +146,7 @@ class _PickupPageState extends State<PickupPage> {
 
   Widget _body(AppLocalizations l, OrderDetail d) {
     final o = d.order;
+    final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final going = [
       for (final v in d.lines)
@@ -154,116 +154,255 @@ class _PickupPageState extends State<PickupPage> {
             v.line.rentalState == RentalState.booked)
           v,
     ];
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          '${o.number ?? ''}  ${d.summary.customerLabel}',
-          style: text.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        for (final v in going)
-          Text(
-            '${qty(v.line.quantity)} × ${v.line.name}'
-            '${v.serials.isEmpty ? '' : '  (${v.serials.map((s) => s.name).join(', ')})'}',
-          ),
-        const Divider(height: 32),
-        Text(l.checklist, style: text.titleMedium),
-        CheckboxListTile(
-          key: const Key('check-contract'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l.rentalContractSigned),
-          subtitle: Text(l.requiredForPickup),
-          value: o.sigRentalContract,
-          onChanged: (v) =>
-              _set(OrdersCompanion(sigRentalContract: Value(v ?? false))),
-        ),
-        CheckboxListTile(
-          key: const Key('check-receipt'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l.pickupReturnReceipt),
-          value: o.sigPickupReturnReceipt,
-          onChanged: (v) =>
-              _set(OrdersCompanion(sigPickupReturnReceipt: Value(v ?? false))),
-        ),
-        CheckboxListTile(
-          key: const Key('check-loan'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l.loanContract),
-          value: o.sigLoanContract,
-          onChanged: (v) =>
-              _set(OrdersCompanion(sigLoanContract: Value(v ?? false))),
-        ),
-        CheckboxListTile(
-          key: const Key('check-captured'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l.itemsCaptured),
-          value: o.itemsCaptured,
-          onChanged: (v) =>
-              _set(OrdersCompanion(itemsCaptured: Value(v ?? false))),
-        ),
-        if (_docTypes.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(l.documentsLeft, style: text.titleSmall),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final t in _docTypes)
-                FilterChip(
-                  label: Text(t.name),
-                  selected: _docs.contains(t.id),
-                  onSelected: (on) => _toggleDoc(t.id, on),
+    final checks = [
+      o.sigRentalContract,
+      o.sigPickupReturnReceipt,
+      o.sigLoanContract,
+      o.itemsCaptured,
+    ];
+    final done = checks.where((c) => c).length;
+    Widget check(
+      Key key,
+      String title,
+      bool value,
+      OrdersCompanion Function(bool) set, {
+      String? subtitle,
+    }) => CheckboxListTile(
+      key: key,
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      title: Text(title),
+      subtitle: subtitle == null ? null : Text(subtitle),
+      value: value,
+      onChanged: (v) => _set(set(v ?? false)),
+    );
+    return ContentWidth(
+      max: 760,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        children: [
+          SectionCard(
+            title: l.goingOut,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Monogram(d.summary.customerLabel, size: 40),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            d.summary.customerLabel,
+                            style: text.titleMedium,
+                          ),
+                          Text(
+                            o.number ?? '',
+                            style: text.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-            ],
+                const SizedBox(height: 12),
+                for (final v in going)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 36,
+                          child: Text(
+                            '${qty(v.line.quantity)}×',
+                            style: text.titleSmall,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(v.line.name),
+                              if (v.serials.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    children: [
+                                      for (final s in v.serials)
+                                        StatusPill(
+                                          s.name,
+                                          tone: PillTone.muted,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ],
-        const Divider(height: 32),
-        Text(l.signature, style: text.titleMedium),
-        if (o.signaturePath != null) ...[
-          const SizedBox(height: 8),
-          if (File(o.signaturePath!).existsSync())
-            Image.file(File(o.signaturePath!), height: 100),
-          Text(
-            l.signedBy(o.signatureName ?? '', when(o.signatureDate)),
-            style: text.bodySmall,
+          const SizedBox(height: 12),
+          SectionCard(
+            title: l.checklist,
+            trailing: StatusPill(
+              '$done / ${checks.length}',
+              tone: done == checks.length ? PillTone.solid : PillTone.muted,
+            ),
+            child: Column(
+              children: [
+                check(
+                  const Key('check-contract'),
+                  l.rentalContractSigned,
+                  o.sigRentalContract,
+                  (v) => OrdersCompanion(sigRentalContract: Value(v)),
+                  subtitle: l.requiredForPickup,
+                ),
+                check(
+                  const Key('check-receipt'),
+                  l.pickupReturnReceipt,
+                  o.sigPickupReturnReceipt,
+                  (v) => OrdersCompanion(sigPickupReturnReceipt: Value(v)),
+                ),
+                check(
+                  const Key('check-loan'),
+                  l.loanContract,
+                  o.sigLoanContract,
+                  (v) => OrdersCompanion(sigLoanContract: Value(v)),
+                ),
+                check(
+                  const Key('check-captured'),
+                  l.itemsCaptured,
+                  o.itemsCaptured,
+                  (v) => OrdersCompanion(itemsCaptured: Value(v)),
+                ),
+              ],
+            ),
           ),
-        ],
-        const SizedBox(height: 8),
-        TextField(
-          key: const Key('signer-name'),
-          controller: _signer,
-          decoration: InputDecoration(labelText: l.signerName),
-        ),
-        const SizedBox(height: 8),
-        SignaturePad(key: const Key('signature-pad'), controller: _pad),
-        Row(
-          children: [
-            TextButton(onPressed: _pad.clear, child: Text(l.clear)),
-            const Spacer(),
-            OutlinedButton(
-              key: const Key('save-signature'),
-              onPressed: _saveSignature,
-              child: Text(l.saveSignature),
+          if (_docTypes.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SectionCard(
+              title: l.documentsLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final t in _docTypes)
+                    FilterChip(
+                      avatar: _docs.contains(t.id)
+                          ? Icon(Icons.check, size: 16, color: scheme.onPrimary)
+                          : null,
+                      label: Text(
+                        t.name,
+                        style: TextStyle(
+                          color: _docs.contains(t.id)
+                              ? scheme.onPrimary
+                              : scheme.onSurface,
+                        ),
+                      ),
+                      selected: _docs.contains(t.id),
+                      onSelected: (on) => _toggleDoc(t.id, on),
+                    ),
+                ],
+              ),
             ),
           ],
-        ),
-        const Divider(height: 32),
-        Text(l.conditionPhotos, style: text.titleMedium),
-        const SizedBox(height: 8),
-        PhotoStrip(orderId: o.id, note: PhotoNote.pickup),
-        if (_role == Role.admin && !o.sigRentalContract) ...[
-          const Divider(height: 32),
-          SwitchListTile(
-            key: const Key('force-pickup'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(l.forcePickup),
-            subtitle: Text(l.forcePickupHint),
-            value: _force,
-            onChanged: (v) => setState(() => _force = v),
+          const SizedBox(height: 12),
+          SectionCard(
+            title: l.signature,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (o.signaturePath != null) ...[
+                  if (File(o.signaturePath!).existsSync())
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(Mono.radiusSmall),
+                      child: Container(
+                        color: Colors.white,
+                        height: 100,
+                        child: Image.file(File(o.signaturePath!)),
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.verified_outlined,
+                        size: 16,
+                        color: scheme.onSurface,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          l.signedBy(
+                            o.signatureName ?? '',
+                            when(o.signatureDate),
+                          ),
+                          style: text.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextField(
+                  key: const Key('signer-name'),
+                  controller: _signer,
+                  decoration: InputDecoration(labelText: l.signerName),
+                ),
+                const SizedBox(height: 12),
+                SignaturePad(key: const Key('signature-pad'), controller: _pad),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: _pad.clear,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: Text(l.clear),
+                    ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      key: const Key('save-signature'),
+                      onPressed: _saveSignature,
+                      icon: const Icon(Icons.draw_outlined, size: 18),
+                      label: Text(l.saveSignature),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 12),
+          SectionCard(
+            title: l.conditionPhotos,
+            child: PhotoStrip(orderId: o.id, note: PhotoNote.pickup),
+          ),
+          if (_role == Role.admin && !o.sigRentalContract) ...[
+            const SizedBox(height: 12),
+            SectionCard(
+              child: SwitchListTile(
+                key: const Key('force-pickup'),
+                contentPadding: EdgeInsets.zero,
+                secondary: const Icon(Icons.admin_panel_settings_outlined),
+                title: Text(l.forcePickup),
+                subtitle: Text(l.forcePickupHint),
+                value: _force,
+                onChanged: (v) => setState(() => _force = v),
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

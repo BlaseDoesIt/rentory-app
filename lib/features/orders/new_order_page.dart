@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/format.dart';
 import '../../app/services.dart';
 import '../../app/ui.dart';
+import '../../app/widgets.dart';
 import '../../domain/rules/order_rules.dart';
 import 'customer_picker.dart';
 import 'order_detail_page.dart';
@@ -62,54 +63,76 @@ class _NewOrderPageState extends State<NewOrderPage> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final c = _customer;
     return Scaffold(
       appBar: AppBar(title: Text(l.newOrder)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ListTile(
-            key: const Key('pick-customer'),
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.person_outline),
-            title: Text(_customer?.name ?? l.chooseCustomer),
-            subtitle: Text(l.customer),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              final c = await pickCustomer(context);
-              if (c != null) setState(() => _customer = c);
-            },
-          ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.event_outlined),
-            title: Text(when(_start)),
-            subtitle: Text(l.start),
-            onTap: () async {
-              final d = await pickDateTime(context, _start);
-              if (d == null) return;
-              setState(() {
-                final length = _end.difference(_start);
-                _start = d;
-                if (!_end.isAfter(_start)) _end = _start.add(length);
-              });
-            },
-          ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.event_available_outlined),
-            title: Text(when(_end)),
-            subtitle: Text(l.end),
-            onTap: () async {
-              final d = await pickDateTime(context, _end);
-              if (d != null) setState(() => _end = d);
-            },
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _busy ? null : _create,
-            child: Text(l.createOrder),
-          ),
-        ],
+      body: ContentWidth(
+        max: 640,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          children: [
+            SectionCard(
+              title: l.customer,
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+              child: ListTile(
+                key: const Key('pick-customer'),
+                leading: c == null
+                    ? const CircleAvatar(child: Icon(Icons.person_add_alt))
+                    : Monogram(c.name),
+                title: Text(c?.name ?? l.chooseCustomer),
+                subtitle: c?.phone == null
+                    ? null
+                    : Text(c!.phone!, textDirection: TextDirection.ltr),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final picked = await pickCustomer(context);
+                  if (picked != null) setState(() => _customer = picked);
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
+              title: l.dates,
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.event_outlined),
+                    title: Text(when(_start)),
+                    subtitle: Text(l.start),
+                    trailing: const Icon(Icons.edit_calendar_outlined),
+                    onTap: () async {
+                      final d = await pickDateTime(context, _start);
+                      if (d == null) return;
+                      setState(() {
+                        final length = _end.difference(_start);
+                        _start = d;
+                        if (!_end.isAfter(_start)) _end = _start.add(length);
+                      });
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.event_available_outlined),
+                    title: Text(when(_end)),
+                    subtitle: Text(l.end),
+                    trailing: const Icon(Icons.edit_calendar_outlined),
+                    onTap: () async {
+                      final d = await pickDateTime(context, _end);
+                      if (d != null) setState(() => _end = d);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        child: FilledButton.icon(
+          onPressed: _busy ? null : _create,
+          icon: const Icon(Icons.arrow_forward),
+          label: Text(l.createOrder),
+        ),
       ),
     );
   }

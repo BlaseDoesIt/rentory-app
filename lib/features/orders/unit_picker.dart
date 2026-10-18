@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/format.dart';
 import '../../app/services.dart';
 import '../../app/ui.dart';
+import '../../app/widgets.dart';
 import '../../data/repository.dart';
 import '../../domain/rules/availability.dart';
 
@@ -157,14 +158,11 @@ class _UnitPickerPageState extends State<UnitPickerPage> {
                   ),
               ],
             ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            key: const Key('save-units'),
-            onPressed: _busy || options == null ? null : _save,
-            child: Text(l.save),
-          ),
+      bottomNavigationBar: BottomActionBar(
+        child: FilledButton(
+          key: const Key('save-units'),
+          onPressed: _busy || options == null ? null : _save,
+          child: Text(l.save),
         ),
       ),
     );

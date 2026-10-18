@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
 import '../../app/services.dart';
+import '../../app/theme.dart';
 import '../../app/ui.dart';
+import '../../app/widgets.dart';
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
 import 'photo_strip.dart';
@@ -134,15 +136,12 @@ class _ReturnPageState extends State<ReturnPage> {
           : _body(l, d),
       bottomNavigationBar: d == null
           ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: FilledButton.icon(
-                  key: const Key('check-in'),
-                  icon: const Icon(Icons.move_to_inbox_outlined),
-                  onPressed: _busy ? null : _checkIn,
-                  label: Text(l.checkIn),
-                ),
+          : BottomActionBar(
+              child: FilledButton.icon(
+                key: const Key('check-in'),
+                icon: const Icon(Icons.move_to_inbox_outlined),
+                onPressed: _busy ? null : _checkIn,
+                label: Text(l.checkIn),
               ),
             ),
     );
@@ -150,64 +149,115 @@ class _ReturnPageState extends State<ReturnPage> {
 
   Widget _body(AppLocalizations l, OrderDetail d) {
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     final o = d.order;
     final serialNames = {
       for (final v in d.lines)
         for (final s in v.serials) s.id: s.name,
     };
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          '${o.number ?? ''}  ${d.summary.customerLabel}',
-          style: text.titleMedium,
-        ),
-        if (d.summary.overdue) ...[
-          const SizedBox(height: 4),
-          Tag(l.daysLate(d.summary.daysLate), inverted: true),
-        ],
-        for (final v in _out(d)) ...[
-          const Divider(height: 32),
-          CheckboxListTile(
-            key: Key('return-line-${v.line.id}'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(v.line.name, style: text.titleSmall),
-            subtitle: Text(l.stillOut(qty(v.qtyOutstanding))),
-            value: _lines.contains(v.line.id),
-            onChanged: (on) => setState(
-              () =>
-                  on == true ? _lines.add(v.line.id) : _lines.remove(v.line.id),
+    return ContentWidth(
+      max: 760,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        children: [
+          SectionCard(
+            child: Row(
+              children: [
+                Monogram(d.summary.customerLabel, size: 40),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(d.summary.customerLabel, style: text.titleMedium),
+                      Text(
+                        o.number ?? '',
+                        style: text.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (d.summary.overdue)
+                  StatusPill(
+                    l.daysLate(d.summary.daysLate),
+                    tone: PillTone.solid,
+                    icon: Icons.schedule,
+                  ),
+              ],
             ),
           ),
-          if (_lines.contains(v.line.id))
-            for (final key in _keys(v))
-              _unitRow(
-                l,
-                key,
-                v.serials.isEmpty ? null : serialNames[key],
-                withNote: v.serials.isNotEmpty,
+          for (final v in _out(d)) ...[
+            const SizedBox(height: 12),
+            SectionCard(
+              padding: const EdgeInsets.fromLTRB(8, 4, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CheckboxListTile(
+                    key: Key('return-line-${v.line.id}'),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(v.line.name, style: text.titleSmall),
+                    subtitle: Text(l.stillOut(qty(v.qtyOutstanding))),
+                    value: _lines.contains(v.line.id),
+                    onChanged: (on) => setState(
+                      () => on == true
+                          ? _lines.add(v.line.id)
+                          : _lines.remove(v.line.id),
+                    ),
+                  ),
+                  AnimatedSize(
+                    duration: Mono.medium,
+                    curve: Mono.ease,
+                    alignment: Alignment.topCenter,
+                    child: _lines.contains(v.line.id)
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              for (final key in _keys(v))
+                                _unitRow(
+                                  l,
+                                  key,
+                                  v.serials.isEmpty ? null : serialNames[key],
+                                  withNote: v.serials.isNotEmpty,
+                                ),
+                            ],
+                          )
+                        : const SizedBox(width: double.infinity),
+                  ),
+                ],
               ),
-        ],
-        const Divider(height: 32),
-        if (o.documentsReturnedAt != null)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.assignment_turned_in_outlined),
-            title: Text(l.documentsReturnedOn(when(o.documentsReturnedAt))),
-          )
-        else if (_hasDocuments)
-          CheckboxListTile(
-            key: const Key('documents-returned'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(l.documentsReturned),
-            value: _giveDocuments,
-            onChanged: (v) => setState(() => _giveDocuments = v ?? false),
+            ),
+          ],
+          if (o.documentsReturnedAt != null || _hasDocuments) ...[
+            const SizedBox(height: 12),
+            SectionCard(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: o.documentsReturnedAt != null
+                  ? ListTile(
+                      leading: const Icon(Icons.assignment_turned_in_outlined),
+                      title: Text(
+                        l.documentsReturnedOn(when(o.documentsReturnedAt)),
+                      ),
+                    )
+                  : CheckboxListTile(
+                      key: const Key('documents-returned'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(l.documentsReturned),
+                      value: _giveDocuments,
+                      onChanged: (v) =>
+                          setState(() => _giveDocuments = v ?? false),
+                    ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          SectionCard(
+            title: l.conditionPhotos,
+            child: PhotoStrip(orderId: o.id, note: PhotoNote.returned),
           ),
-        const SizedBox(height: 8),
-        Text(l.conditionPhotos, style: text.titleMedium),
-        const SizedBox(height: 8),
-        PhotoStrip(orderId: o.id, note: PhotoNote.returned),
-      ],
+        ],
+      ),
     );
   }
 
@@ -249,12 +299,14 @@ class _ReturnPageState extends State<ReturnPage> {
               onSelectionChanged: (s) => setState(() => u.condition = s.first),
             ),
           ),
-          if (withNote)
+          if (withNote) ...[
+            const SizedBox(height: 8),
             TextField(
               key: Key('note-$key'),
               controller: u.note,
               decoration: InputDecoration(labelText: l.note),
             ),
+          ],
         ],
       ),
     );

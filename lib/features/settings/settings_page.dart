@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/format.dart';
 import '../../app/language.dart';
 import '../../app/services.dart';
+import '../../app/widgets.dart';
 import '../../data/demo_seed.dart';
 import '../../data/sync/sync_engine.dart';
 
@@ -37,52 +38,75 @@ class SettingsPage extends StatelessWidget {
     final sync = services.sync;
     final l = context.l10n;
     final language = LanguageScope.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(l.settings, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 16),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.cloud_outlined),
-          title: Text(l.sharedWithTeam),
-          subtitle: Text(l.signedInAs(services.userEmail ?? '')),
-        ),
-        if (sync != null) _SyncTile(sync),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.translate),
-          title: Text(l.language),
-          trailing: DropdownButton<String>(
-            key: const Key('language'),
-            value: language.value?.languageCode ?? '',
-            underline: const SizedBox(),
-            items: [
-              DropdownMenuItem(value: '', child: Text(l.languageDevice)),
-              const DropdownMenuItem(value: 'en', child: Text('English')),
-              const DropdownMenuItem(value: 'ar', child: Text('العربية')),
-            ],
-            onChanged: (code) => language.choose(
-              code == null || code.isEmpty ? null : Locale(code),
+    final email = services.userEmail ?? '';
+    return ContentWidth(
+      max: 720,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
+        children: [
+          PageHeader(title: l.settings),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SectionCard(
+                  title: l.account,
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Monogram(email.isEmpty ? '?' : email),
+                        title: Text(l.sharedWithTeam),
+                        subtitle: Text(l.signedInAs(email)),
+                      ),
+                      if (sync != null) _SyncTile(sync),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SectionCard(
+                  title: l.language,
+                  child: SegmentedButton<String>(
+                    key: const Key('language'),
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(value: '', label: Text(l.languageDevice)),
+                      const ButtonSegment(value: 'en', label: Text('English')),
+                      const ButtonSegment(value: 'ar', label: Text('العربية')),
+                    ],
+                    selected: {language.value?.languageCode ?? ''},
+                    onSelectionChanged: (s) => language.choose(
+                      s.first.isEmpty ? null : Locale(s.first),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SectionCard(
+                  title: l.data,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.auto_awesome_outlined),
+                    title: Text(l.loadDemo),
+                    subtitle: Text(l.loadDemoHint),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _loadDemo(context),
+                  ),
+                ),
+                if (services.onSignOut != null) ...[
+                  const SizedBox(height: 20),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.logout),
+                    onPressed: services.onSignOut,
+                    label: Text(l.signOut),
+                  ),
+                ],
+              ],
             ),
           ),
-        ),
-        const Divider(height: 32),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.inventory_outlined),
-          title: Text(l.loadDemo),
-          subtitle: Text(l.loadDemoHint),
-          onTap: () => _loadDemo(context),
-        ),
-        if (services.onSignOut != null)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.logout),
-            title: Text(l.signOut),
-            onTap: services.onSignOut,
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -108,7 +132,16 @@ class _SyncTile extends StatelessWidget {
         };
         return ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.sync),
+          leading: s.phase == SyncPhase.syncing
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Padding(
+                    padding: EdgeInsets.all(3),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : const Icon(Icons.cloud_done_outlined),
           title: Text(label),
           trailing: TextButton(
             onPressed: s.phase == SyncPhase.syncing ? null : sync.syncNow,
