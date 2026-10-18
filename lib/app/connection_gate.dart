@@ -67,7 +67,7 @@ class _Blocker extends StatelessWidget {
     return Positioned.fill(
       child: Material(
         key: const Key('connection-gate'),
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: SafeArea(
           child: Center(
             child: Padding(
@@ -77,7 +77,15 @@ class _Blocker extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 48),
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, size: 36),
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       title,

@@ -17,6 +17,7 @@ import 'format.dart';
 import 'language.dart';
 import 'services.dart';
 import 'theme.dart';
+import 'widgets.dart';
 
 /// The whole app. Rentory works online only: it needs the server's address
 /// (build flags or env vars, see [AppConfig]) and a signed-in user.
@@ -217,9 +218,10 @@ class _SignedInRootState extends State<_SignedInRoot> {
 }
 
 class _Destination {
-  const _Destination(this.label, this.icon, this.page);
+  const _Destination(this.label, this.icon, this.selectedIcon, this.page);
   final String Function(AppLocalizations) label;
   final IconData icon;
+  final IconData selectedIcon;
   final Widget page;
 }
 
@@ -227,18 +229,31 @@ final _destinations = [
   _Destination(
     (l) => l.orders,
     Icons.receipt_long_outlined,
+    Icons.receipt_long,
     const OrdersPage(),
   ),
-  _Destination((l) => l.scan, Icons.qr_code_scanner, const ScanPage()),
-  _Destination((l) => l.assets, Icons.inventory_2_outlined, const AssetsPage()),
+  _Destination(
+    (l) => l.scan,
+    Icons.qr_code_scanner_outlined,
+    Icons.qr_code_scanner,
+    const ScanPage(),
+  ),
+  _Destination(
+    (l) => l.assets,
+    Icons.inventory_2_outlined,
+    Icons.inventory_2,
+    const AssetsPage(),
+  ),
   _Destination(
     (l) => l.settings,
     Icons.settings_outlined,
+    Icons.settings,
     const SettingsPage(),
   ),
 ];
 
-/// Bottom tabs on phones, a side rail on PC and tablets.
+/// Bottom tabs on phones, a side navigation on PC and tablets (with labels
+/// once there is room).
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -249,21 +264,50 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
 
+  void _go(int i) {
+    if (i != _index) setState(() => _index = i);
+  }
+
+  /// Tabs cross-fade with a slight rise instead of snapping.
+  Widget _page() => AnimatedSwitcher(
+    duration: Mono.medium,
+    switchInCurve: Mono.ease,
+    switchOutCurve: Curves.easeIn,
+    transitionBuilder: (child, a) => FadeTransition(
+      opacity: a,
+      child: SlideTransition(
+        position: Tween(
+          begin: const Offset(0, 0.015),
+          end: Offset.zero,
+        ).animate(a),
+        child: child,
+      ),
+    ),
+    child: KeyedSubtree(
+      key: ValueKey(_index),
+      child: _destinations[_index].page,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final wide = MediaQuery.sizeOf(context).width >= 720;
-    final page = _destinations[_index].page;
+    final width = MediaQuery.sizeOf(context).width;
 
-    if (!wide) {
+    if (width < 720) {
       return Scaffold(
-        body: SafeArea(child: page),
+        body: SafeArea(bottom: false, child: _page()),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
+          onDestinationSelected: _go,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
             for (final d in _destinations)
-              NavigationDestination(icon: Icon(d.icon), label: d.label(l)),
+              NavigationDestination(
+                icon: Icon(d.icon),
+                selectedIcon: Icon(d.selectedIcon),
+                label: d.label(l),
+              ),
           ],
         ),
       );
@@ -272,32 +316,187 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
-            labelType: NavigationRailLabelType.all,
-            leading: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                l.appName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-            destinations: [
-              for (final d in _destinations)
-                NavigationRailDestination(
-                  icon: Icon(d.icon),
-                  label: Text(d.label(l)),
-                ),
-            ],
+          _SideNav(extended: width >= 1100, index: _index, onSelect: _go),
+          VerticalDivider(
+            width: 1,
+            color: Theme.of(context).colorScheme.outline,
           ),
-          const VerticalDivider(width: 1),
-          Expanded(child: page),
+          Expanded(child: _page()),
         ],
       ),
+    );
+  }
+}
+
+class _SideNav extends StatelessWidget {
+  const _SideNav({
+    required this.extended,
+    required this.index,
+    required this.onSelect,
+  });
+  final bool extended;
+  final int index;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return AnimatedContainer(
+      duration: Mono.medium,
+      curve: Mono.ease,
+      width: extended ? 232 : 88,
+      color: scheme.surface,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+          child: Column(
+            crossAxisAlignment: extended
+                ? CrossAxisAlignment.stretch
+                : CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: EdgeInsetsDirectional.only(
+                  start: extended ? 8 : 0,
+                  bottom: 28,
+                ),
+                child: Row(
+                  mainAxisAlignment: extended
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
+                  children: [
+                    const BrandMark(),
+                    if (extended) ...[
+                      const SizedBox(width: 12),
+                      Text(l.appName, style: text.titleLarge),
+                    ],
+                  ],
+                ),
+              ),
+              for (final (i, d) in _destinations.indexed)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: _NavItem(
+                    icon: i == index ? d.selectedIcon : d.icon,
+                    label: d.label(l),
+                    selected: i == index,
+                    extended: extended,
+                    onTap: () => onSelect(i),
+                  ),
+                ),
+              const Spacer(),
+              const _SyncDot(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.extended,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final bool extended;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = selected ? scheme.onPrimary : scheme.onSurfaceVariant;
+    final weight = selected ? FontWeight.w700 : FontWeight.w500;
+    final item = AnimatedContainer(
+      duration: Mono.medium,
+      curve: Mono.ease,
+      decoration: BoxDecoration(
+        color: selected ? scheme.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(Mono.radiusSmall),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Mono.radiusSmall),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: extended ? 14 : 0,
+              vertical: extended ? 12 : 10,
+            ),
+            child: extended
+                ? Row(
+                    children: [
+                      Icon(icon, color: fg, size: 22),
+                      const SizedBox(width: 14),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: selected ? scheme.onPrimary : scheme.onSurface,
+                          fontWeight: weight,
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Icon(icon, color: fg, size: 22),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: fg,
+                          fontWeight: weight,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+    return SizedBox(width: extended ? null : 64, child: item);
+  }
+}
+
+/// Small sync indicator at the bottom of the side navigation.
+class _SyncDot extends StatelessWidget {
+  const _SyncDot();
+
+  @override
+  Widget build(BuildContext context) {
+    final sync = Services.of(context).sync;
+    if (sync == null) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    return StreamBuilder<SyncStatus>(
+      stream: sync.status,
+      initialData: sync.lastStatus,
+      builder: (context, snap) {
+        final s = snap.data!;
+        final syncing = s.phase == SyncPhase.syncing;
+        return Tooltip(
+          message: syncing
+              ? context.l10n.syncing
+              : context.l10n.synced(when(s.lastSynced)),
+          child: AnimatedContainer(
+            duration: Mono.medium,
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: syncing ? scheme.onSurfaceVariant : scheme.primary,
+            ),
+          ),
+        );
+      },
     );
   }
 }

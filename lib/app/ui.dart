@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/repository.dart';
 import 'format.dart';
+import 'widgets.dart';
 
 /// Runs [action] and tells the user if a rule said no. Returns true when it
 /// went through.
@@ -92,22 +93,8 @@ class Tag extends StatelessWidget {
   final bool inverted;
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final fg = inverted ? scheme.onPrimary : scheme.primary;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: inverted ? scheme.primary : null,
-        border: Border.all(color: scheme.primary),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      StatusPill(label, tone: inverted ? PillTone.solid : PillTone.outline);
 }
 
 /// Label on the start side, value on the end side (flips in Arabic).
