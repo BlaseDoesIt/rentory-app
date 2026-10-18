@@ -275,5 +275,16 @@
   "loanInHouse": "لدينا",
   "loanDueSoon": "موعد إرجاعها قريب",
   "loanOverdue": "متأخرة على المورّد",
-  "loanReturned": "أُرجعت"
+  "loanReturned": "أُرجعت",
+  "appearance": "المظهر",
+  "themeLight": "فاتح",
+  "themeDark": "داكن",
+  "takePhoto": "التقاط صورة",
+  "fromGallery": "اختيار من المعرض",
+  "photos": "الصور",
+  "noPhotosYet": "لا صور بعد. اضغط لإضافة صورة.",
+  "cover": "الغلاف",
+  "setAsCover": "تعيين كغلاف",
+  "delete": "حذف",
+  "deletePhotoQuestion": "حذف هذه الصورة؟"
 }

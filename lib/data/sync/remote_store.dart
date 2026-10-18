@@ -22,6 +22,9 @@ abstract interface class RemoteStore {
   Future<String> bookOrder(String orderId);
 
   Future<void> uploadPhoto(String path, Uint8List bytes);
+
+  /// A photo another device uploaded.
+  Future<Uint8List> downloadPhoto(String path);
 }
 
 class SupabaseRemoteStore implements RemoteStore {
@@ -79,4 +82,8 @@ class SupabaseRemoteStore implements RemoteStore {
           ),
         );
   }
+
+  @override
+  Future<Uint8List> downloadPhoto(String path) =>
+      client.storage.from('photos').download(path);
 }

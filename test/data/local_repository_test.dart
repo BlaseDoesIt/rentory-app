@@ -487,4 +487,19 @@ void main() {
     final row = (await repo.loadOrder(o)).order;
     expect((row.itemsExamined, row.itemsExaminedBy), (true, 'u1'));
   });
+
+  test('asset photos: gallery order, cover, removal', () async {
+    final a = await repo.addPhoto(localPath: 'a.jpg', assetId: camera);
+    final b = await repo.addPhoto(localPath: 'b.jpg', assetId: camera);
+    expect((await repo.assetPhotos(camera)).map((p) => p.id), [a, b]);
+    expect((await repo.loadAsset(camera)).summary.cover?.id, a);
+
+    await repo.setCoverPhoto(b);
+    expect((await repo.assetPhotos(camera)).map((p) => p.id), [b, a]);
+    final cards = await repo.watchAssets().first;
+    expect(cards.firstWhere((c) => c.asset.id == camera).cover?.id, b);
+
+    await repo.removePhoto(b);
+    expect((await repo.loadAsset(camera)).photos.map((p) => p.id), [a]);
+  });
 }

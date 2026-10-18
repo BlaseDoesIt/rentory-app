@@ -140,15 +140,37 @@ class AppFiles {
     return target;
   }
 
-  /// The camera on a phone, a file picker on PC. Null when cancelled.
-  Future<String?> pickPhoto() async {
+  /// A picture from the camera (phones) or the gallery / a file picker.
+  /// Null when cancelled. [camera] null means camera on phones, files on PC.
+  Future<String?> pickPhoto({bool? camera}) async {
     final phone = Platform.isAndroid || Platform.isIOS;
+    final useCamera = camera ?? phone;
     final shot = await ImagePicker().pickImage(
-      source: phone ? ImageSource.camera : ImageSource.gallery,
+      source: useCamera && phone ? ImageSource.camera : ImageSource.gallery,
       maxWidth: 2000,
       imageQuality: 85,
     );
     return shot?.path;
+  }
+
+  /// A file for [photo]: the one taken on this device, or a cached copy of
+  /// the upload (fetched with [download] the first time). Null when there
+  /// is neither.
+  Future<File?> photoFile(
+    Photo photo,
+    Future<Uint8List> Function(String storagePath)? download,
+  ) async {
+    final local = photo.localPath;
+    if (local != null && await File(local).exists()) return File(local);
+    final stored = photo.storagePath;
+    if (stored == null || download == null) return null;
+    final cache = Directory(p.join((await _dir()).path, 'cache'));
+    await cache.create(recursive: true);
+    final file = File(p.join(cache.path, '${photo.id}${p.extension(stored)}'));
+    if (await file.exists()) return file;
+    final bytes = await download(stored);
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
   }
 
   Future<String> write(Uint8List bytes, String fileName) async {

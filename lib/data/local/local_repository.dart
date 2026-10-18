@@ -76,25 +76,31 @@ class LocalRepository implements RentoryRepository {
   );
 
   @override
-  Stream<List<AssetSummary>> watchAssets({String? search}) =>
-      _watch({db.assets, db.serials, db.orderLines, db.categories}, () async {
-        final query = db.select(db.assets)
-          ..where((a) => _alive(a) & a.active.equals(true))
-          ..orderBy([(a) => OrderingTerm.asc(a.name)]);
-        final term = search?.trim();
-        if (term != null && term.isNotEmpty) {
-          final like = '%$term%';
-          query.where(
-            (a) => a.name.like(like) | a.code.like(like) | a.barcode.like(like),
-          );
-        }
-        final assets = await query.get();
-        final categories = {
-          for (final c in await db.select(db.categories).get()) c.id: c.name,
-        };
-        final out = await _qtyOutByAsset();
-        return [for (final a in assets) await _summary(a, categories, out)];
-      });
+  Stream<List<AssetSummary>> watchAssets({String? search}) => _watch(
+    {db.assets, db.serials, db.orderLines, db.categories, db.photos},
+    () async {
+      final query = db.select(db.assets)
+        ..where((a) => _alive(a) & a.active.equals(true))
+        ..orderBy([(a) => OrderingTerm.asc(a.name)]);
+      final term = search?.trim();
+      if (term != null && term.isNotEmpty) {
+        final like = '%$term%';
+        query.where(
+          (a) => a.name.like(like) | a.code.like(like) | a.barcode.like(like),
+        );
+      }
+      final assets = await query.get();
+      final categories = {
+        for (final c in await db.select(db.categories).get()) c.id: c.name,
+      };
+      final out = await _qtyOutByAsset();
+      final covers = await _covers();
+      return [
+        for (final a in assets)
+          await _summary(a, categories, out, cover: covers[a.id]),
+      ];
+    },
+  );
 
   @override
   Future<OrderDetail> loadOrder(String orderId) async =>
@@ -961,9 +967,11 @@ class LocalRepository implements RentoryRepository {
   Future<AssetSummary> _summary(
     Asset a,
     Map<String, String> categories,
-    Map<String, double> out,
-  ) async => AssetSummary(
+    Map<String, double> out, {
+    Photo? cover,
+  }) async => AssetSummary(
     asset: a,
+    cover: cover,
     categoryName: categories[a.categoryId],
     // Parked by hand, or a loan already given back: nothing to promise.
     total: a.stateManual != null || a.rentedInReturnedAt != null
@@ -997,13 +1005,20 @@ class LocalRepository implements RentoryRepository {
         : await (db.select(
             db.locations,
           )..where((l) => l.id.equals(a.locationId!))).getSingleOrNull();
+    final photos = await assetPhotos(assetId);
     final source = a.sourceId == null
         ? null
         : await (db.select(
             db.customers,
           )..where((c) => c.id.equals(a.sourceId!))).getSingleOrNull();
     return AssetDetail(
-      summary: await _summary(a, categories, await _qtyOutByAsset()),
+      summary: await _summary(
+        a,
+        categories,
+        await _qtyOutByAsset(),
+        cover: photos.firstOrNull,
+      ),
+      photos: photos,
       serials: serials,
       locationName: location?.name,
       sourceName: source?.name,
@@ -1551,16 +1566,25 @@ class LocalRepository implements RentoryRepository {
   @override
   Future<String> addPhoto({
     required String localPath,
+    String? assetId,
     String? orderId,
     String? lineId,
     String? serialId,
     String? note,
   }) async {
+    // A new asset photo goes to the end of the gallery.
+    var sequence = 10;
+    if (assetId != null) {
+      final have = await assetPhotos(assetId);
+      if (have.isNotEmpty) sequence = have.last.sequence + 10;
+    }
     final row = await db
         .into(db.photos)
         .insertReturning(
           PhotosCompanion.insert(
             localPath: Value(localPath),
+            assetId: Value(assetId),
+            sequence: Value(sequence),
             orderId: Value(orderId),
             lineId: Value(lineId),
             serialId: Value(serialId),
@@ -1570,6 +1594,58 @@ class LocalRepository implements RentoryRepository {
           ),
         );
     return row.id;
+  }
+
+  @override
+  Future<List<Photo>> assetPhotos(String assetId) =>
+      (db.select(db.photos)
+            ..where((p) => p.assetId.equals(assetId) & _alive(p))
+            ..orderBy([
+              (p) => OrderingTerm.asc(p.sequence),
+              (p) => OrderingTerm.asc(p.takenAt),
+            ]))
+          .get();
+
+  /// Each asset's first photo.
+  Future<Map<String, Photo>> _covers() async {
+    final all =
+        await (db.select(db.photos)
+              ..where((p) => p.assetId.isNotNull() & _alive(p))
+              ..orderBy([
+                (p) => OrderingTerm.desc(p.sequence),
+                (p) => OrderingTerm.desc(p.takenAt),
+              ]))
+            .get();
+    // Later rows overwrite earlier ones: what is left is the first.
+    return {for (final p in all) p.assetId!: p};
+  }
+
+  @override
+  Future<void> setCoverPhoto(String photoId) async {
+    final p = await (db.select(
+      db.photos,
+    )..where((x) => x.id.equals(photoId))).getSingle();
+    if (p.assetId == null) return;
+    final first = (await assetPhotos(p.assetId!)).firstOrNull;
+    if (first == null || first.id == photoId) return;
+    await (db.update(db.photos)..where((x) => x.id.equals(photoId))).write(
+      PhotosCompanion(
+        sequence: Value(first.sequence - 10),
+        updatedAt: _ts,
+        dirty: _dirty,
+      ),
+    );
+  }
+
+  @override
+  Future<void> removePhoto(String photoId) async {
+    await (db.update(db.photos)..where((x) => x.id.equals(photoId))).write(
+      PhotosCompanion(
+        deleted: const Value(true),
+        updatedAt: _ts,
+        dirty: _dirty,
+      ),
+    );
   }
 
   @override

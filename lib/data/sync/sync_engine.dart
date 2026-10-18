@@ -325,6 +325,10 @@ class SyncEngine {
 
   // ----------------------------------------------------------- photos
 
+  /// The bytes of an uploaded photo, for a device that did not take it.
+  Future<Uint8List> downloadPhoto(String storagePath) =>
+      remote.downloadPhoto(storagePath);
+
   Future<void> uploadPhotos() async {
     final pending =
         await (db.select(db.photos)..where(

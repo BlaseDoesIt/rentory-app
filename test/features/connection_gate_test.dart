@@ -40,6 +40,9 @@ class _Server implements RemoteStore {
 
   @override
   Future<void> uploadPhoto(String path, Uint8List bytes) async => _check();
+
+  @override
+  Future<Uint8List> downloadPhoto(String path) async => Uint8List(0);
 }
 
 Future<void> settle(WidgetTester tester) async {

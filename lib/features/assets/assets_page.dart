@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
+import '../../app/photo_image.dart';
 import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
@@ -47,10 +48,10 @@ class _AssetsPageState extends State<AssetsPage> {
     final l = context.l10n;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: GradientFab(
         key: const Key('new-asset'),
-        icon: const Icon(Icons.add),
-        label: Text(l.newAsset),
+        icon: Icons.add,
+        label: l.newAsset,
         onPressed: () => Services.push<void>(context, const NewAssetPage()),
       ),
       body: StreamBuilder<List<AssetSummary>>(
@@ -146,10 +147,10 @@ class _AssetsPageState extends State<AssetsPage> {
 
   Widget _chip(String label, String? category) => Padding(
     padding: const EdgeInsetsDirectional.only(end: 8),
-    child: ChoiceChip(
-      label: Text(label),
+    child: MonoChip(
+      label: label,
       selected: _category == category,
-      onSelected: (_) => setState(() => _category = category),
+      onTap: () => setState(() => _category = category),
     ),
   );
 }
@@ -201,74 +202,77 @@ class AssetCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final byUnit = a.tracking == Tracking.serial;
     final details = [?a.code, ?s.categoryName].join('  ·  ');
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      gradient: Mono.soft(context),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      byUnit ? Icons.qr_code_2 : Icons.inventory_2_outlined,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          a.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.titleSmall,
-                        ),
-                        if (details.isNotEmpty)
-                          Text(
-                            details,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: text.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
+    return MonoCard(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: s.cover != null
+                      ? PhotoImage(s.cover!, width: 44, height: 44)
+                      : Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            gradient: Mono.soft(context),
                           ),
-                      ],
-                    ),
+                          child: Icon(
+                            byUnit
+                                ? Icons.qr_code_2
+                                : Icons.inventory_2_outlined,
+                            size: 22,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        a.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.titleSmall,
+                      ),
+                      if (details.isNotEmpty)
+                        Text(
+                          details,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
-              const Spacer(),
-              Row(
-                children: [
-                  Text(money(a.rentalPriceDay), style: text.titleMedium),
-                  const SizedBox(width: 4),
-                  Text(
-                    l.perDay,
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                Text(money(a.rentalPriceDay), style: text.titleMedium),
+                const SizedBox(width: 4),
+                Text(
+                  l.perDay,
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
-                  const Spacer(),
-                  _pill(context, l, a, byUnit),
-                ],
-              ),
-              const SizedBox(height: 10),
-              AvailabilityBar(s),
-            ],
-          ),
+                ),
+                const Spacer(),
+                _pill(context, l, a, byUnit),
+              ],
+            ),
+            const SizedBox(height: 10),
+            AvailabilityBar(s),
+          ],
         ),
       ),
     );

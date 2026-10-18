@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
+import '../../app/photo_image.dart';
+import '../../app/theme.dart';
 import '../../app/services.dart';
 import '../../app/ui.dart';
 import '../../data/local/database.dart';
@@ -43,7 +43,7 @@ class _PhotoStripState extends State<PhotoStrip> {
   Future<void> _add() async {
     final services = Services.of(context);
     await attempt(context, () async {
-      final picked = await services.files.pickPhoto();
+      final picked = await choosePhoto(context);
       if (picked == null) return;
       final path = await services.files.keep(picked, rowUuid.v4());
       await services.repo.addPhoto(
@@ -95,23 +95,8 @@ class _PhotoStripState extends State<PhotoStrip> {
                 Padding(
                   padding: const EdgeInsetsDirectional.only(start: 8),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child:
-                        p.localPath != null && File(p.localPath!).existsSync()
-                        ? Image.file(
-                            File(p.localPath!),
-                            width: 96,
-                            height: 96,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            width: 96,
-                            height: 96,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                            child: const Icon(Icons.cloud_done_outlined),
-                          ),
+                    borderRadius: BorderRadius.circular(Mono.radiusSmall),
+                    child: PhotoImage(p, width: 96, height: 96),
                   ),
                 ),
             ],

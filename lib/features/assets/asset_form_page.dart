@@ -1,12 +1,16 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
+import '../../app/photo_image.dart';
 import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../app/ui.dart';
 import '../../app/widgets.dart';
 import '../../data/local/database.dart';
+import '../../data/local/tables.dart' show rowUuid;
 import '../../domain/enums.dart';
 import '../orders/customer_picker.dart';
 import 'asset_detail_page.dart';
@@ -66,6 +70,9 @@ class _AssetFormPageState extends State<AssetFormPage> {
       _a?.rentedInConditionIn ?? LoanCondition.good;
 
   final List<String> _units = [];
+
+  /// Pictures picked before the asset exists; attached on save.
+  final List<String> _newPhotos = [];
   List<Category> _categories = const [];
   List<Location> _locations = const [];
   bool _loaded = false;
@@ -264,6 +271,10 @@ class _AssetFormPageState extends State<AssetFormPage> {
           notes: _notes.text,
           more: more,
         );
+        for (final picked in _newPhotos) {
+          final path = await services.files.keep(picked, rowUuid.v4());
+          await services.repo.addPhoto(localPath: path, assetId: id);
+        }
       }
     });
     if (!mounted) return;
@@ -363,6 +374,7 @@ class _AssetFormPageState extends State<AssetFormPage> {
                 ],
               ),
             ),
+            if (!_editing) ...[gap(), _photosSection(l)],
             gap(),
             SectionCard(title: l.stock, child: _stock(l, number)),
             gap(),
@@ -463,6 +475,55 @@ class _AssetFormPageState extends State<AssetFormPage> {
           icon: const Icon(Icons.check),
           label: Text(_editing ? l.save : l.createAsset),
         ),
+      ),
+    );
+  }
+
+  Widget _photosSection(AppLocalizations l) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget tile(Widget child) => ClipRRect(
+      borderRadius: BorderRadius.circular(Mono.radiusSmall),
+      child: SizedBox(width: 88, height: 88, child: child),
+    );
+    return SectionCard(
+      title: l.photos,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final path in _newPhotos)
+            Stack(
+              children: [
+                tile(Image.file(File(path), fit: BoxFit.cover)),
+                PositionedDirectional(
+                  end: 2,
+                  top: 2,
+                  child: IconButton.filled(
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 16,
+                    onPressed: () => setState(() => _newPhotos.remove(path)),
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+              ],
+            ),
+          tile(
+            Material(
+              color: scheme.surfaceContainer,
+              child: InkWell(
+                key: const Key('form-add-photo'),
+                onTap: () async {
+                  final picked = await choosePhoto(context);
+                  if (picked != null) setState(() => _newPhotos.add(picked));
+                },
+                child: Icon(
+                  Icons.add_a_photo_outlined,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

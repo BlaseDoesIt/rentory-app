@@ -937,4 +937,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get loanReturned => 'أُرجعت';
+
+  @override
+  String get appearance => 'المظهر';
+
+  @override
+  String get themeLight => 'فاتح';
+
+  @override
+  String get themeDark => 'داكن';
+
+  @override
+  String get takePhoto => 'التقاط صورة';
+
+  @override
+  String get fromGallery => 'اختيار من المعرض';
+
+  @override
+  String get photos => 'الصور';
+
+  @override
+  String get noPhotosYet => 'لا صور بعد. اضغط لإضافة صورة.';
+
+  @override
+  String get cover => 'الغلاف';
+
+  @override
+  String get setAsCover => 'تعيين كغلاف';
+
+  @override
+  String get delete => 'حذف';
+
+  @override
+  String get deletePhotoQuestion => 'حذف هذه الصورة؟';
 }

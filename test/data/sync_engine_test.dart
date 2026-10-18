@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rentory/app/services.dart';
 import 'package:rentory/data/local/database.dart';
 import 'package:rentory/data/local/local_repository.dart';
 import 'package:rentory/data/repository.dart';
@@ -100,7 +101,14 @@ class FakeServer implements RemoteStore {
   }
 
   @override
-  Future<void> uploadPhoto(String path, Uint8List bytes) async {}
+  Future<void> uploadPhoto(String path, Uint8List bytes) async =>
+      files[path] = bytes;
+
+  /// The photo bucket.
+  final files = <String, Uint8List>{};
+
+  @override
+  Future<Uint8List> downloadPhoto(String path) async => files[path]!;
 }
 
 /// A server that can lose its connection.
@@ -326,5 +334,30 @@ void main() {
     expect(sync.lastStatus.phase, SyncPhase.idle);
     await sync.dispose();
     await db.close();
+  });
+
+  test('a photo taken on one device shows on the other', () async {
+    final dir = await Directory.systemTemp.createTemp('rentory_photo');
+    final shot = File('${dir.path}/shot.jpg')..writeAsBytesSync([1, 2, 3]);
+    final asset = await a.repo.createAsset(
+      name: 'Pictured',
+      tracking: Tracking.none,
+    );
+    await a.repo.addPhoto(localPath: shot.path, assetId: asset);
+    await a.sync.syncNow();
+    await b.sync.syncNow();
+
+    final photo = (await b.repo.assetPhotos(asset)).single;
+    expect(photo.storagePath, isNotNull);
+    // B never had the file: it downloads it once, then reads the cache.
+    final files = AppFiles(root: '${dir.path}/b');
+    final first = await files.photoFile(photo, b.sync.downloadPhoto);
+    expect(first!.readAsBytesSync(), [1, 2, 3]);
+    final again = await files.photoFile(
+      photo,
+      (_) => throw StateError('should come from the cache'),
+    );
+    expect(again!.path, first.path);
+    await dir.delete(recursive: true);
   });
 }

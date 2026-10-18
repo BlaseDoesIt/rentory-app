@@ -933,4 +933,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loanReturned => 'Given back';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get takePhoto => 'Take a photo';
+
+  @override
+  String get fromGallery => 'Choose from gallery';
+
+  @override
+  String get photos => 'Photos';
+
+  @override
+  String get noPhotosYet => 'No photos yet. Tap to add one.';
+
+  @override
+  String get cover => 'Cover';
+
+  @override
+  String get setAsCover => 'Set as cover';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get deletePhotoQuestion => 'Delete this photo?';
 }

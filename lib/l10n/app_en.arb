@@ -467,5 +467,16 @@
   "loanInHouse": "In house",
   "loanDueSoon": "Due back soon",
   "loanOverdue": "Overdue to supplier",
-  "loanReturned": "Given back"
+  "loanReturned": "Given back",
+  "appearance": "Appearance",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "takePhoto": "Take a photo",
+  "fromGallery": "Choose from gallery",
+  "photos": "Photos",
+  "noPhotosYet": "No photos yet. Tap to add one.",
+  "cover": "Cover",
+  "setAsCover": "Set as cover",
+  "delete": "Delete",
+  "deletePhotoQuestion": "Delete this photo?"
 }

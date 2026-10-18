@@ -74,10 +74,14 @@ class AssetSummary {
     required this.categoryName,
     required this.total,
     required this.out,
+    this.cover,
   });
 
   final Asset asset;
   final String? categoryName;
+
+  /// The first of its photos, shown on its card.
+  final Photo? cover;
 
   /// Units that can be rented at all (fit serials, or the manual stock).
   final double total;
@@ -95,7 +99,11 @@ class AssetDetail {
     required this.locationName,
     required this.sourceName,
     required this.liveLines,
+    this.photos = const [],
   });
+
+  /// Its gallery, cover first.
+  final List<Photo> photos;
 
   final AssetSummary summary;
 
@@ -261,12 +269,20 @@ abstract interface class RentoryRepository {
   /// uploads it later.
   Future<String> addPhoto({
     required String localPath,
+    String? assetId,
     String? orderId,
     String? lineId,
     String? serialId,
     String? note,
   });
   Future<List<Photo>> photos(String orderId);
+
+  /// Photos of an asset, cover first.
+  Future<List<Photo>> assetPhotos(String assetId);
+
+  /// Makes [photoId] the first of its asset's photos.
+  Future<void> setCoverPhoto(String photoId);
+  Future<void> removePhoto(String photoId);
 }
 
 /// Confirms a booking and hands out its number. Locally a counter; with

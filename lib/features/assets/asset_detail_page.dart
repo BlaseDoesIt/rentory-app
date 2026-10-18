@@ -2,11 +2,13 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
+import '../../app/photo_image.dart';
 import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../app/ui.dart';
 import '../../app/widgets.dart';
 import '../../data/local/database.dart';
+import '../../data/local/tables.dart' show rowUuid;
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
 import '../../domain/rules/rented_in.dart';
@@ -174,19 +176,26 @@ class _AssetDetailPageState extends State<AssetDetailPage> {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: Mono.ink(context),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        byUnit ? Icons.qr_code_2 : Icons.inventory_2_outlined,
-                        color: scheme.onPrimary,
-                        size: 28,
-                      ),
-                    ),
+                    s.cover != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: PhotoImage(s.cover!, width: 56, height: 56),
+                          )
+                        : Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: Mono.ink(context),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              byUnit
+                                  ? Icons.qr_code_2
+                                  : Icons.inventory_2_outlined,
+                              color: scheme.onPrimary,
+                              size: 28,
+                            ),
+                          ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
@@ -253,6 +262,8 @@ class _AssetDetailPageState extends State<AssetDetailPage> {
               ],
             ),
           ),
+          gap,
+          _gallery(l, d),
           if (rentedIn) ...[gap, _loan(l, a)],
           gap,
           SectionCard(
@@ -322,6 +333,113 @@ class _AssetDetailPageState extends State<AssetDetailPage> {
           ],
         ],
       ),
+    );
+  }
+
+  Future<void> _addPhoto(String assetId) async {
+    final services = Services.of(context);
+    final picked = await choosePhoto(context);
+    if (picked == null || !mounted) return;
+    await _run((r) async {
+      final path = await services.files.keep(picked, rowUuid.v4());
+      await r.addPhoto(localPath: path, assetId: assetId);
+    });
+  }
+
+  Future<void> _viewPhoto(Photo p, bool isCover) async {
+    final services = Services.of(context);
+    final action = await Navigator.of(context).push<_PhotoAction>(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        transitionDuration: Mono.medium,
+        pageBuilder: (_, a, _) => FadeTransition(
+          opacity: a,
+          child: services.wrap(_PhotoViewer(p, isCover: isCover)),
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _PhotoAction.cover:
+        await _run((r) => r.setCoverPhoto(p.id));
+      case _PhotoAction.delete:
+        if (!await confirm(context, context.l10n.deletePhotoQuestion)) return;
+        await _run((r) => r.removePhoto(p.id));
+    }
+  }
+
+  /// The asset's photos: the first is its cover, on its card and here.
+  Widget _gallery(AppLocalizations l, AssetDetail d) {
+    final scheme = Theme.of(context).colorScheme;
+    return SectionCard(
+      title: l.photos,
+      trailing: TextButton.icon(
+        key: const Key('add-asset-photo'),
+        icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+        onPressed: () => _addPhoto(d.asset.id),
+        label: Text(l.addPhoto),
+      ),
+      child: d.photos.isEmpty
+          ? InkWell(
+              borderRadius: BorderRadius.circular(Mono.radiusSmall),
+              onTap: () => _addPhoto(d.asset.id),
+              child: Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  gradient: Mono.soft(context),
+                  borderRadius: BorderRadius.circular(Mono.radiusSmall),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 32,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l.noPhotosYet,
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SizedBox(
+              height: 140,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: d.photos.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, i) {
+                  final p = d.photos[i];
+                  return GestureDetector(
+                    onTap: () => _viewPhoto(p, i == 0),
+                    child: Stack(
+                      children: [
+                        Hero(
+                          tag: 'photo-${p.id}',
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              Mono.radiusSmall,
+                            ),
+                            child: PhotoImage(p, width: 140, height: 140),
+                          ),
+                        ),
+                        if (i == 0)
+                          PositionedDirectional(
+                            start: 8,
+                            top: 8,
+                            child: StatusPill(l.cover, tone: PillTone.solid),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -550,11 +668,11 @@ class _UnitSheetState extends State<_UnitSheet> {
                 runSpacing: 8,
                 children: [
                   for (final s in _manual)
-                    ChoiceChip(
+                    MonoChip(
                       key: Key('unit-state-${s.key}'),
-                      label: Text(l.serialState(s)),
+                      label: l.serialState(s),
                       selected: _state == s,
-                      onSelected: (_) => setState(() => _state = s),
+                      onTap: () => setState(() => _state = s),
                     ),
                 ],
               )
@@ -747,6 +865,55 @@ class _AddUnitsDialogState extends State<_AddUnitsDialog> {
           child: Text(l.add),
         ),
       ],
+    );
+  }
+}
+
+enum _PhotoAction { cover, delete }
+
+/// One photo, full screen, with "set as cover" and "delete".
+class _PhotoViewer extends StatelessWidget {
+  const _PhotoViewer(this.photo, {required this.isCover});
+  final Photo photo;
+  final bool isCover;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        actions: [
+          if (!isCover)
+            TextButton.icon(
+              key: const Key('photo-cover'),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              icon: const Icon(Icons.star_outline),
+              onPressed: () => Navigator.pop(context, _PhotoAction.cover),
+              label: Text(l.setAsCover),
+            ),
+          IconButton(
+            key: const Key('photo-delete'),
+            color: Colors.white,
+            tooltip: l.delete,
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => Navigator.pop(context, _PhotoAction.delete),
+          ),
+        ],
+      ),
+      body: GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Center(
+          child: InteractiveViewer(
+            child: Hero(
+              tag: 'photo-${photo.id}',
+              child: PhotoImage(photo, fit: BoxFit.contain),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
