@@ -108,17 +108,13 @@ class SerialFacts {
     required this.id,
     required this.name,
     required this.state,
-    this.blockedByPart = false,
   });
 
   final String id;
   final String name;
   final SerialState state;
 
-  /// A mandatory part is missing or out on its own.
-  final bool blockedByPart;
-
-  bool get fitToPromise => !state.unfit && !blockedByPart;
+  bool get fitToPromise => !state.unfit;
 }
 
 class SerialOption {

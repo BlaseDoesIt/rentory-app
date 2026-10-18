@@ -26,7 +26,7 @@ lib/
 
 ## Screens
 
-Orders (new order, draft editing with asset/part/service/section lines, unit
+Orders (new order, draft editing with asset/service/section lines, unit
 picker with Autofill), pickup (checklist, documents left, signature, condition
 photos; admins may hand over without the contract), return (condition and note
 per unit, documents handed back) and Scan (camera on phones, USB scanner or

@@ -17,12 +17,10 @@ const syncedTables = [
   'locations',
   'assets',
   'serials',
-  'parts',
   'orders',
   'order_documents',
   'order_lines',
   'order_line_serials',
-  'order_line_parts',
   'return_checks',
   'photos',
 ];
@@ -37,12 +35,10 @@ const syncedTables = [
     Locations,
     Assets,
     Serials,
-    Parts,
     Orders,
     OrderDocuments,
     OrderLines,
     OrderLineSerials,
-    OrderLineParts,
     ReturnChecks,
     Photos,
     SyncCursors,
@@ -56,10 +52,23 @@ class RentoryDatabase extends _$RentoryDatabase {
   RentoryDatabase.memory(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    // The server holds the data; this database is only its cache. On a
+    // schema change, start clean and pull everything again. Version 2
+    // dropped parts.
+    onUpgrade: (m, from, to) async {
+      final tables = await customSelect(
+        "SELECT name FROM sqlite_master WHERE type = 'table' "
+        "AND name NOT LIKE 'sqlite_%'",
+      ).get();
+      for (final t in tables) {
+        await customStatement('DROP TABLE "${t.read<String>('name')}"');
+      }
+      await m.createAll();
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

@@ -118,9 +118,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lineAsset => 'Asset';
 
   @override
-  String get linePart => 'Part';
-
-  @override
   String get lineService => 'Service';
 
   @override

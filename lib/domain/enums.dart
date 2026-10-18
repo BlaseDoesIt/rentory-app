@@ -32,7 +32,6 @@ enum OrderState implements Keyed {
 
 enum LineType implements Keyed {
   asset('asset'),
-  part('part'),
   service('service'),
   section('section');
 
@@ -86,29 +85,7 @@ enum SerialState implements Keyed {
   bool get unfit => this == maintenance || this == lost || this == retired;
 }
 
-enum PartKind implements Keyed {
-  mandatory('mandatory'),
-  supply('supply'),
-  none('none');
-
-  const PartKind(this.key);
-  @override
-  final String key;
-  static PartKind fromKey(String key) => _byKey(values, key, (e) => e.key);
-}
-
-enum PartState implements Keyed {
-  available('available'),
-  reserved('reserved'),
-  out('out');
-
-  const PartState(this.key);
-  @override
-  final String key;
-  static PartState fromKey(String key) => _byKey(values, key, (e) => e.key);
-}
-
-/// Condition of a unit or part when it comes back. Ranked worst first.
+/// Condition of a unit when it comes back. Ranked worst first.
 enum Condition implements Keyed {
   missing('missing'),
   damaged('damaged'),

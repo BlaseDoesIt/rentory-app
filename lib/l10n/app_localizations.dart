@@ -314,12 +314,6 @@ abstract class AppLocalizations {
   /// **'Asset'**
   String get lineAsset;
 
-  /// No description provided for @linePart.
-  ///
-  /// In en, this message translates to:
-  /// **'Part'**
-  String get linePart;
-
   /// No description provided for @lineService.
   ///
   /// In en, this message translates to:

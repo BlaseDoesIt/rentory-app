@@ -7,7 +7,7 @@ import '../../data/local/database.dart';
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
 
-/// Adds an asset, part, service or section line. Returns the new line id.
+/// Adds an asset, service or section line. Returns the new line id.
 Future<String?> showAddLine(BuildContext context, String orderId) =>
     showModalBottomSheet<String>(
       context: context,
@@ -83,18 +83,6 @@ class _AddLineSheetState extends State<_AddLineSheet> {
                 byUnit: a.asset.tracking == Tracking.serial,
               ),
         ];
-      case LineType.part:
-        final parts = await repo.rentableParts(search: _search);
-        return [
-          for (final p in parts)
-            (
-              id: p.id,
-              name: p.name,
-              detail: p.code,
-              price: p.rentalPriceDay,
-              byUnit: false,
-            ),
-        ];
       case LineType.service:
       case LineType.section:
         return const [];
@@ -129,7 +117,7 @@ class _AddLineSheetState extends State<_AddLineSheet> {
       await showProblems(context, [l.quantityPositive]);
       return;
     }
-    final needsPick = _type == LineType.asset || _type == LineType.part;
+    final needsPick = _type == LineType.asset;
     if (needsPick && _picked == null) {
       await showProblems(context, [l.pickItemFirst]);
       return;
@@ -144,7 +132,6 @@ class _AddLineSheetState extends State<_AddLineSheet> {
         widget.orderId,
         type: _type,
         assetId: _type == LineType.asset ? _picked!.id : null,
-        partId: _type == LineType.part ? _picked!.id : null,
         name: _name.text.trim(),
         quantity: quantity,
         priceDay: price,
@@ -157,7 +144,7 @@ class _AddLineSheetState extends State<_AddLineSheet> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final pickList = _type == LineType.asset || _type == LineType.part;
+    final pickList = _type == LineType.asset;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,

@@ -124,28 +124,6 @@ class Serials extends Table with SyncColumns {
   BoolColumn get active => boolean().withDefault(const Constant(true))();
 }
 
-class Parts extends Table with SyncColumns {
-  TextColumn get name => text()();
-  TextColumn get code => text().nullable()();
-  TextColumn get assetId => text().references(Assets, #id)();
-  TextColumn get serialId => text().nullable().references(Serials, #id)();
-  IntColumn get sequence => integer().withDefault(const Constant(10))();
-  TextColumn get kind => text()
-      .map(const KeyConverter(PartKind.values))
-      .withDefault(const Constant('mandatory'))();
-
-  /// good / damaged / lost (the part's own vocabulary).
-  TextColumn get condition => text().withDefault(const Constant('good'))();
-  TextColumn get state => text()
-      .map(const KeyConverter(PartState.values))
-      .withDefault(const Constant('available'))();
-  RealColumn get rentalPriceDay => real().withDefault(const Constant(0))();
-  TextColumn get currentOrderId => text().nullable()();
-  TextColumn get currentLineId => text().nullable()();
-  TextColumn get note => text().nullable()();
-  BoolColumn get active => boolean().withDefault(const Constant(true))();
-}
-
 // ---------------------------------------------------------------- orders
 
 class Orders extends Table with SyncColumns {
@@ -211,7 +189,6 @@ class OrderLines extends Table with SyncColumns {
       .map(const KeyConverter(LineType.values))
       .withDefault(const Constant('asset'))();
   TextColumn get assetId => text().nullable().references(Assets, #id)();
-  TextColumn get partId => text().nullable().references(Parts, #id)();
   TextColumn get name => text().withDefault(const Constant(''))();
   RealColumn get quantity => real().withDefault(const Constant(1))();
   RealColumn get priceDay => real().withDefault(const Constant(0))();
@@ -243,17 +220,10 @@ class OrderLineSerials extends Table with SyncColumns {
   TextColumn get serialId => text().references(Serials, #id)();
 }
 
-/// Parts travelling with an asset line (many to many).
-class OrderLineParts extends Table with SyncColumns {
-  TextColumn get lineId => text().references(OrderLines, #id)();
-  TextColumn get partId => text().references(Parts, #id)();
-}
-
 class ReturnChecks extends Table with SyncColumns {
   TextColumn get lineId => text().references(OrderLines, #id)();
   TextColumn get orderId => text().references(Orders, #id)();
   TextColumn get serialId => text().nullable().references(Serials, #id)();
-  TextColumn get partId => text().nullable().references(Parts, #id)();
   TextColumn get condition => text()
       .map(const KeyConverter(Condition.values))
       .withDefault(const Constant('good'))();

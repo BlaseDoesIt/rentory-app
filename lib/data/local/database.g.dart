@@ -5171,1006 +5171,6 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
   }
 }
 
-class $PartsTable extends Parts with TableInfo<$PartsTable, Part> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $PartsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    clientDefault: () => rowUuid.v4(),
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    clientDefault: () => DateTime.now().toUtc(),
-  );
-  static const VerificationMeta _deletedMeta = const VerificationMeta(
-    'deleted',
-  );
-  @override
-  late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
-    'deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
-  @override
-  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
-    'dirty',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("dirty" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _odooIdMeta = const VerificationMeta('odooId');
-  @override
-  late final GeneratedColumn<int> odooId = GeneratedColumn<int>(
-    'odoo_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _codeMeta = const VerificationMeta('code');
-  @override
-  late final GeneratedColumn<String> code = GeneratedColumn<String>(
-    'code',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _assetIdMeta = const VerificationMeta(
-    'assetId',
-  );
-  @override
-  late final GeneratedColumn<String> assetId = GeneratedColumn<String>(
-    'asset_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES assets (id)',
-    ),
-  );
-  static const VerificationMeta _serialIdMeta = const VerificationMeta(
-    'serialId',
-  );
-  @override
-  late final GeneratedColumn<String> serialId = GeneratedColumn<String>(
-    'serial_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES serials (id)',
-    ),
-  );
-  static const VerificationMeta _sequenceMeta = const VerificationMeta(
-    'sequence',
-  );
-  @override
-  late final GeneratedColumn<int> sequence = GeneratedColumn<int>(
-    'sequence',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(10),
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<PartKind, String> kind =
-      GeneratedColumn<String>(
-        'kind',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: const Constant('mandatory'),
-      ).withConverter<PartKind>($PartsTable.$converterkind);
-  static const VerificationMeta _conditionMeta = const VerificationMeta(
-    'condition',
-  );
-  @override
-  late final GeneratedColumn<String> condition = GeneratedColumn<String>(
-    'condition',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('good'),
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<PartState, String> state =
-      GeneratedColumn<String>(
-        'state',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: const Constant('available'),
-      ).withConverter<PartState>($PartsTable.$converterstate);
-  static const VerificationMeta _rentalPriceDayMeta = const VerificationMeta(
-    'rentalPriceDay',
-  );
-  @override
-  late final GeneratedColumn<double> rentalPriceDay = GeneratedColumn<double>(
-    'rental_price_day',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  static const VerificationMeta _currentOrderIdMeta = const VerificationMeta(
-    'currentOrderId',
-  );
-  @override
-  late final GeneratedColumn<String> currentOrderId = GeneratedColumn<String>(
-    'current_order_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _currentLineIdMeta = const VerificationMeta(
-    'currentLineId',
-  );
-  @override
-  late final GeneratedColumn<String> currentLineId = GeneratedColumn<String>(
-    'current_line_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _activeMeta = const VerificationMeta('active');
-  @override
-  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
-    'active',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("active" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    updatedAt,
-    deleted,
-    dirty,
-    odooId,
-    name,
-    code,
-    assetId,
-    serialId,
-    sequence,
-    kind,
-    condition,
-    state,
-    rentalPriceDay,
-    currentOrderId,
-    currentLineId,
-    note,
-    active,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'parts';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Part> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    }
-    if (data.containsKey('deleted')) {
-      context.handle(
-        _deletedMeta,
-        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
-      );
-    }
-    if (data.containsKey('dirty')) {
-      context.handle(
-        _dirtyMeta,
-        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
-      );
-    }
-    if (data.containsKey('odoo_id')) {
-      context.handle(
-        _odooIdMeta,
-        odooId.isAcceptableOrUnknown(data['odoo_id']!, _odooIdMeta),
-      );
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('code')) {
-      context.handle(
-        _codeMeta,
-        code.isAcceptableOrUnknown(data['code']!, _codeMeta),
-      );
-    }
-    if (data.containsKey('asset_id')) {
-      context.handle(
-        _assetIdMeta,
-        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_assetIdMeta);
-    }
-    if (data.containsKey('serial_id')) {
-      context.handle(
-        _serialIdMeta,
-        serialId.isAcceptableOrUnknown(data['serial_id']!, _serialIdMeta),
-      );
-    }
-    if (data.containsKey('sequence')) {
-      context.handle(
-        _sequenceMeta,
-        sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
-      );
-    }
-    if (data.containsKey('condition')) {
-      context.handle(
-        _conditionMeta,
-        condition.isAcceptableOrUnknown(data['condition']!, _conditionMeta),
-      );
-    }
-    if (data.containsKey('rental_price_day')) {
-      context.handle(
-        _rentalPriceDayMeta,
-        rentalPriceDay.isAcceptableOrUnknown(
-          data['rental_price_day']!,
-          _rentalPriceDayMeta,
-        ),
-      );
-    }
-    if (data.containsKey('current_order_id')) {
-      context.handle(
-        _currentOrderIdMeta,
-        currentOrderId.isAcceptableOrUnknown(
-          data['current_order_id']!,
-          _currentOrderIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('current_line_id')) {
-      context.handle(
-        _currentLineIdMeta,
-        currentLineId.isAcceptableOrUnknown(
-          data['current_line_id']!,
-          _currentLineIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
-    }
-    if (data.containsKey('active')) {
-      context.handle(
-        _activeMeta,
-        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Part map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Part(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      deleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}deleted'],
-      )!,
-      dirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}dirty'],
-      )!,
-      odooId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}odoo_id'],
-      ),
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      code: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}code'],
-      ),
-      assetId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}asset_id'],
-      )!,
-      serialId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}serial_id'],
-      ),
-      sequence: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}sequence'],
-      )!,
-      kind: $PartsTable.$converterkind.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}kind'],
-        )!,
-      ),
-      condition: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}condition'],
-      )!,
-      state: $PartsTable.$converterstate.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}state'],
-        )!,
-      ),
-      rentalPriceDay: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}rental_price_day'],
-      )!,
-      currentOrderId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}current_order_id'],
-      ),
-      currentLineId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}current_line_id'],
-      ),
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      ),
-      active: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}active'],
-      )!,
-    );
-  }
-
-  @override
-  $PartsTable createAlias(String alias) {
-    return $PartsTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<PartKind, String> $converterkind = const KeyConverter(
-    PartKind.values,
-  );
-  static TypeConverter<PartState, String> $converterstate = const KeyConverter(
-    PartState.values,
-  );
-}
-
-class Part extends DataClass implements Insertable<Part> {
-  final String id;
-  final DateTime updatedAt;
-  final bool deleted;
-  final bool dirty;
-  final int? odooId;
-  final String name;
-  final String? code;
-  final String assetId;
-  final String? serialId;
-  final int sequence;
-  final PartKind kind;
-
-  /// good / damaged / lost (the part's own vocabulary).
-  final String condition;
-  final PartState state;
-  final double rentalPriceDay;
-  final String? currentOrderId;
-  final String? currentLineId;
-  final String? note;
-  final bool active;
-  const Part({
-    required this.id,
-    required this.updatedAt,
-    required this.deleted,
-    required this.dirty,
-    this.odooId,
-    required this.name,
-    this.code,
-    required this.assetId,
-    this.serialId,
-    required this.sequence,
-    required this.kind,
-    required this.condition,
-    required this.state,
-    required this.rentalPriceDay,
-    this.currentOrderId,
-    this.currentLineId,
-    this.note,
-    required this.active,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['deleted'] = Variable<bool>(deleted);
-    map['dirty'] = Variable<bool>(dirty);
-    if (!nullToAbsent || odooId != null) {
-      map['odoo_id'] = Variable<int>(odooId);
-    }
-    map['name'] = Variable<String>(name);
-    if (!nullToAbsent || code != null) {
-      map['code'] = Variable<String>(code);
-    }
-    map['asset_id'] = Variable<String>(assetId);
-    if (!nullToAbsent || serialId != null) {
-      map['serial_id'] = Variable<String>(serialId);
-    }
-    map['sequence'] = Variable<int>(sequence);
-    {
-      map['kind'] = Variable<String>($PartsTable.$converterkind.toSql(kind));
-    }
-    map['condition'] = Variable<String>(condition);
-    {
-      map['state'] = Variable<String>($PartsTable.$converterstate.toSql(state));
-    }
-    map['rental_price_day'] = Variable<double>(rentalPriceDay);
-    if (!nullToAbsent || currentOrderId != null) {
-      map['current_order_id'] = Variable<String>(currentOrderId);
-    }
-    if (!nullToAbsent || currentLineId != null) {
-      map['current_line_id'] = Variable<String>(currentLineId);
-    }
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
-    }
-    map['active'] = Variable<bool>(active);
-    return map;
-  }
-
-  PartsCompanion toCompanion(bool nullToAbsent) {
-    return PartsCompanion(
-      id: Value(id),
-      updatedAt: Value(updatedAt),
-      deleted: Value(deleted),
-      dirty: Value(dirty),
-      odooId: odooId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(odooId),
-      name: Value(name),
-      code: code == null && nullToAbsent ? const Value.absent() : Value(code),
-      assetId: Value(assetId),
-      serialId: serialId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(serialId),
-      sequence: Value(sequence),
-      kind: Value(kind),
-      condition: Value(condition),
-      state: Value(state),
-      rentalPriceDay: Value(rentalPriceDay),
-      currentOrderId: currentOrderId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(currentOrderId),
-      currentLineId: currentLineId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(currentLineId),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
-      active: Value(active),
-    );
-  }
-
-  factory Part.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Part(
-      id: serializer.fromJson<String>(json['id']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      deleted: serializer.fromJson<bool>(json['deleted']),
-      dirty: serializer.fromJson<bool>(json['dirty']),
-      odooId: serializer.fromJson<int?>(json['odooId']),
-      name: serializer.fromJson<String>(json['name']),
-      code: serializer.fromJson<String?>(json['code']),
-      assetId: serializer.fromJson<String>(json['assetId']),
-      serialId: serializer.fromJson<String?>(json['serialId']),
-      sequence: serializer.fromJson<int>(json['sequence']),
-      kind: serializer.fromJson<PartKind>(json['kind']),
-      condition: serializer.fromJson<String>(json['condition']),
-      state: serializer.fromJson<PartState>(json['state']),
-      rentalPriceDay: serializer.fromJson<double>(json['rentalPriceDay']),
-      currentOrderId: serializer.fromJson<String?>(json['currentOrderId']),
-      currentLineId: serializer.fromJson<String?>(json['currentLineId']),
-      note: serializer.fromJson<String?>(json['note']),
-      active: serializer.fromJson<bool>(json['active']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'deleted': serializer.toJson<bool>(deleted),
-      'dirty': serializer.toJson<bool>(dirty),
-      'odooId': serializer.toJson<int?>(odooId),
-      'name': serializer.toJson<String>(name),
-      'code': serializer.toJson<String?>(code),
-      'assetId': serializer.toJson<String>(assetId),
-      'serialId': serializer.toJson<String?>(serialId),
-      'sequence': serializer.toJson<int>(sequence),
-      'kind': serializer.toJson<PartKind>(kind),
-      'condition': serializer.toJson<String>(condition),
-      'state': serializer.toJson<PartState>(state),
-      'rentalPriceDay': serializer.toJson<double>(rentalPriceDay),
-      'currentOrderId': serializer.toJson<String?>(currentOrderId),
-      'currentLineId': serializer.toJson<String?>(currentLineId),
-      'note': serializer.toJson<String?>(note),
-      'active': serializer.toJson<bool>(active),
-    };
-  }
-
-  Part copyWith({
-    String? id,
-    DateTime? updatedAt,
-    bool? deleted,
-    bool? dirty,
-    Value<int?> odooId = const Value.absent(),
-    String? name,
-    Value<String?> code = const Value.absent(),
-    String? assetId,
-    Value<String?> serialId = const Value.absent(),
-    int? sequence,
-    PartKind? kind,
-    String? condition,
-    PartState? state,
-    double? rentalPriceDay,
-    Value<String?> currentOrderId = const Value.absent(),
-    Value<String?> currentLineId = const Value.absent(),
-    Value<String?> note = const Value.absent(),
-    bool? active,
-  }) => Part(
-    id: id ?? this.id,
-    updatedAt: updatedAt ?? this.updatedAt,
-    deleted: deleted ?? this.deleted,
-    dirty: dirty ?? this.dirty,
-    odooId: odooId.present ? odooId.value : this.odooId,
-    name: name ?? this.name,
-    code: code.present ? code.value : this.code,
-    assetId: assetId ?? this.assetId,
-    serialId: serialId.present ? serialId.value : this.serialId,
-    sequence: sequence ?? this.sequence,
-    kind: kind ?? this.kind,
-    condition: condition ?? this.condition,
-    state: state ?? this.state,
-    rentalPriceDay: rentalPriceDay ?? this.rentalPriceDay,
-    currentOrderId: currentOrderId.present
-        ? currentOrderId.value
-        : this.currentOrderId,
-    currentLineId: currentLineId.present
-        ? currentLineId.value
-        : this.currentLineId,
-    note: note.present ? note.value : this.note,
-    active: active ?? this.active,
-  );
-  Part copyWithCompanion(PartsCompanion data) {
-    return Part(
-      id: data.id.present ? data.id.value : this.id,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      deleted: data.deleted.present ? data.deleted.value : this.deleted,
-      dirty: data.dirty.present ? data.dirty.value : this.dirty,
-      odooId: data.odooId.present ? data.odooId.value : this.odooId,
-      name: data.name.present ? data.name.value : this.name,
-      code: data.code.present ? data.code.value : this.code,
-      assetId: data.assetId.present ? data.assetId.value : this.assetId,
-      serialId: data.serialId.present ? data.serialId.value : this.serialId,
-      sequence: data.sequence.present ? data.sequence.value : this.sequence,
-      kind: data.kind.present ? data.kind.value : this.kind,
-      condition: data.condition.present ? data.condition.value : this.condition,
-      state: data.state.present ? data.state.value : this.state,
-      rentalPriceDay: data.rentalPriceDay.present
-          ? data.rentalPriceDay.value
-          : this.rentalPriceDay,
-      currentOrderId: data.currentOrderId.present
-          ? data.currentOrderId.value
-          : this.currentOrderId,
-      currentLineId: data.currentLineId.present
-          ? data.currentLineId.value
-          : this.currentLineId,
-      note: data.note.present ? data.note.value : this.note,
-      active: data.active.present ? data.active.value : this.active,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Part(')
-          ..write('id: $id, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deleted: $deleted, ')
-          ..write('dirty: $dirty, ')
-          ..write('odooId: $odooId, ')
-          ..write('name: $name, ')
-          ..write('code: $code, ')
-          ..write('assetId: $assetId, ')
-          ..write('serialId: $serialId, ')
-          ..write('sequence: $sequence, ')
-          ..write('kind: $kind, ')
-          ..write('condition: $condition, ')
-          ..write('state: $state, ')
-          ..write('rentalPriceDay: $rentalPriceDay, ')
-          ..write('currentOrderId: $currentOrderId, ')
-          ..write('currentLineId: $currentLineId, ')
-          ..write('note: $note, ')
-          ..write('active: $active')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    updatedAt,
-    deleted,
-    dirty,
-    odooId,
-    name,
-    code,
-    assetId,
-    serialId,
-    sequence,
-    kind,
-    condition,
-    state,
-    rentalPriceDay,
-    currentOrderId,
-    currentLineId,
-    note,
-    active,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Part &&
-          other.id == this.id &&
-          other.updatedAt == this.updatedAt &&
-          other.deleted == this.deleted &&
-          other.dirty == this.dirty &&
-          other.odooId == this.odooId &&
-          other.name == this.name &&
-          other.code == this.code &&
-          other.assetId == this.assetId &&
-          other.serialId == this.serialId &&
-          other.sequence == this.sequence &&
-          other.kind == this.kind &&
-          other.condition == this.condition &&
-          other.state == this.state &&
-          other.rentalPriceDay == this.rentalPriceDay &&
-          other.currentOrderId == this.currentOrderId &&
-          other.currentLineId == this.currentLineId &&
-          other.note == this.note &&
-          other.active == this.active);
-}
-
-class PartsCompanion extends UpdateCompanion<Part> {
-  final Value<String> id;
-  final Value<DateTime> updatedAt;
-  final Value<bool> deleted;
-  final Value<bool> dirty;
-  final Value<int?> odooId;
-  final Value<String> name;
-  final Value<String?> code;
-  final Value<String> assetId;
-  final Value<String?> serialId;
-  final Value<int> sequence;
-  final Value<PartKind> kind;
-  final Value<String> condition;
-  final Value<PartState> state;
-  final Value<double> rentalPriceDay;
-  final Value<String?> currentOrderId;
-  final Value<String?> currentLineId;
-  final Value<String?> note;
-  final Value<bool> active;
-  final Value<int> rowid;
-  const PartsCompanion({
-    this.id = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.deleted = const Value.absent(),
-    this.dirty = const Value.absent(),
-    this.odooId = const Value.absent(),
-    this.name = const Value.absent(),
-    this.code = const Value.absent(),
-    this.assetId = const Value.absent(),
-    this.serialId = const Value.absent(),
-    this.sequence = const Value.absent(),
-    this.kind = const Value.absent(),
-    this.condition = const Value.absent(),
-    this.state = const Value.absent(),
-    this.rentalPriceDay = const Value.absent(),
-    this.currentOrderId = const Value.absent(),
-    this.currentLineId = const Value.absent(),
-    this.note = const Value.absent(),
-    this.active = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  PartsCompanion.insert({
-    this.id = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.deleted = const Value.absent(),
-    this.dirty = const Value.absent(),
-    this.odooId = const Value.absent(),
-    required String name,
-    this.code = const Value.absent(),
-    required String assetId,
-    this.serialId = const Value.absent(),
-    this.sequence = const Value.absent(),
-    this.kind = const Value.absent(),
-    this.condition = const Value.absent(),
-    this.state = const Value.absent(),
-    this.rentalPriceDay = const Value.absent(),
-    this.currentOrderId = const Value.absent(),
-    this.currentLineId = const Value.absent(),
-    this.note = const Value.absent(),
-    this.active = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : name = Value(name),
-       assetId = Value(assetId);
-  static Insertable<Part> custom({
-    Expression<String>? id,
-    Expression<DateTime>? updatedAt,
-    Expression<bool>? deleted,
-    Expression<bool>? dirty,
-    Expression<int>? odooId,
-    Expression<String>? name,
-    Expression<String>? code,
-    Expression<String>? assetId,
-    Expression<String>? serialId,
-    Expression<int>? sequence,
-    Expression<String>? kind,
-    Expression<String>? condition,
-    Expression<String>? state,
-    Expression<double>? rentalPriceDay,
-    Expression<String>? currentOrderId,
-    Expression<String>? currentLineId,
-    Expression<String>? note,
-    Expression<bool>? active,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (deleted != null) 'deleted': deleted,
-      if (dirty != null) 'dirty': dirty,
-      if (odooId != null) 'odoo_id': odooId,
-      if (name != null) 'name': name,
-      if (code != null) 'code': code,
-      if (assetId != null) 'asset_id': assetId,
-      if (serialId != null) 'serial_id': serialId,
-      if (sequence != null) 'sequence': sequence,
-      if (kind != null) 'kind': kind,
-      if (condition != null) 'condition': condition,
-      if (state != null) 'state': state,
-      if (rentalPriceDay != null) 'rental_price_day': rentalPriceDay,
-      if (currentOrderId != null) 'current_order_id': currentOrderId,
-      if (currentLineId != null) 'current_line_id': currentLineId,
-      if (note != null) 'note': note,
-      if (active != null) 'active': active,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  PartsCompanion copyWith({
-    Value<String>? id,
-    Value<DateTime>? updatedAt,
-    Value<bool>? deleted,
-    Value<bool>? dirty,
-    Value<int?>? odooId,
-    Value<String>? name,
-    Value<String?>? code,
-    Value<String>? assetId,
-    Value<String?>? serialId,
-    Value<int>? sequence,
-    Value<PartKind>? kind,
-    Value<String>? condition,
-    Value<PartState>? state,
-    Value<double>? rentalPriceDay,
-    Value<String?>? currentOrderId,
-    Value<String?>? currentLineId,
-    Value<String?>? note,
-    Value<bool>? active,
-    Value<int>? rowid,
-  }) {
-    return PartsCompanion(
-      id: id ?? this.id,
-      updatedAt: updatedAt ?? this.updatedAt,
-      deleted: deleted ?? this.deleted,
-      dirty: dirty ?? this.dirty,
-      odooId: odooId ?? this.odooId,
-      name: name ?? this.name,
-      code: code ?? this.code,
-      assetId: assetId ?? this.assetId,
-      serialId: serialId ?? this.serialId,
-      sequence: sequence ?? this.sequence,
-      kind: kind ?? this.kind,
-      condition: condition ?? this.condition,
-      state: state ?? this.state,
-      rentalPriceDay: rentalPriceDay ?? this.rentalPriceDay,
-      currentOrderId: currentOrderId ?? this.currentOrderId,
-      currentLineId: currentLineId ?? this.currentLineId,
-      note: note ?? this.note,
-      active: active ?? this.active,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (deleted.present) {
-      map['deleted'] = Variable<bool>(deleted.value);
-    }
-    if (dirty.present) {
-      map['dirty'] = Variable<bool>(dirty.value);
-    }
-    if (odooId.present) {
-      map['odoo_id'] = Variable<int>(odooId.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (code.present) {
-      map['code'] = Variable<String>(code.value);
-    }
-    if (assetId.present) {
-      map['asset_id'] = Variable<String>(assetId.value);
-    }
-    if (serialId.present) {
-      map['serial_id'] = Variable<String>(serialId.value);
-    }
-    if (sequence.present) {
-      map['sequence'] = Variable<int>(sequence.value);
-    }
-    if (kind.present) {
-      map['kind'] = Variable<String>(
-        $PartsTable.$converterkind.toSql(kind.value),
-      );
-    }
-    if (condition.present) {
-      map['condition'] = Variable<String>(condition.value);
-    }
-    if (state.present) {
-      map['state'] = Variable<String>(
-        $PartsTable.$converterstate.toSql(state.value),
-      );
-    }
-    if (rentalPriceDay.present) {
-      map['rental_price_day'] = Variable<double>(rentalPriceDay.value);
-    }
-    if (currentOrderId.present) {
-      map['current_order_id'] = Variable<String>(currentOrderId.value);
-    }
-    if (currentLineId.present) {
-      map['current_line_id'] = Variable<String>(currentLineId.value);
-    }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
-    }
-    if (active.present) {
-      map['active'] = Variable<bool>(active.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PartsCompanion(')
-          ..write('id: $id, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deleted: $deleted, ')
-          ..write('dirty: $dirty, ')
-          ..write('odooId: $odooId, ')
-          ..write('name: $name, ')
-          ..write('code: $code, ')
-          ..write('assetId: $assetId, ')
-          ..write('serialId: $serialId, ')
-          ..write('sequence: $sequence, ')
-          ..write('kind: $kind, ')
-          ..write('condition: $condition, ')
-          ..write('state: $state, ')
-          ..write('rentalPriceDay: $rentalPriceDay, ')
-          ..write('currentOrderId: $currentOrderId, ')
-          ..write('currentLineId: $currentLineId, ')
-          ..write('note: $note, ')
-          ..write('active: $active, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -8674,18 +7674,6 @@ class $OrderLinesTable extends OrderLines
       'REFERENCES assets (id)',
     ),
   );
-  static const VerificationMeta _partIdMeta = const VerificationMeta('partId');
-  @override
-  late final GeneratedColumn<String> partId = GeneratedColumn<String>(
-    'part_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES parts (id)',
-    ),
-  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -8849,7 +7837,6 @@ class $OrderLinesTable extends OrderLines
     sequence,
     lineType,
     assetId,
-    partId,
     name,
     quantity,
     priceDay,
@@ -8922,12 +7909,6 @@ class $OrderLinesTable extends OrderLines
       context.handle(
         _assetIdMeta,
         assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
-      );
-    }
-    if (data.containsKey('part_id')) {
-      context.handle(
-        _partIdMeta,
-        partId.isAcceptableOrUnknown(data['part_id']!, _partIdMeta),
       );
     }
     if (data.containsKey('name')) {
@@ -9052,10 +8033,6 @@ class $OrderLinesTable extends OrderLines
         DriftSqlType.string,
         data['${effectivePrefix}asset_id'],
       ),
-      partId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}part_id'],
-      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -9148,7 +8125,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
   final int sequence;
   final LineType lineType;
   final String? assetId;
-  final String? partId;
   final String name;
   final double quantity;
   final double priceDay;
@@ -9177,7 +8153,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
     required this.sequence,
     required this.lineType,
     this.assetId,
-    this.partId,
     required this.name,
     required this.quantity,
     required this.priceDay,
@@ -9212,9 +8187,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
     }
     if (!nullToAbsent || assetId != null) {
       map['asset_id'] = Variable<String>(assetId);
-    }
-    if (!nullToAbsent || partId != null) {
-      map['part_id'] = Variable<String>(partId);
     }
     map['name'] = Variable<String>(name);
     map['quantity'] = Variable<double>(quantity);
@@ -9274,9 +8246,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
       assetId: assetId == null && nullToAbsent
           ? const Value.absent()
           : Value(assetId),
-      partId: partId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(partId),
       name: Value(name),
       quantity: Value(quantity),
       priceDay: Value(priceDay),
@@ -9325,7 +8294,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
       sequence: serializer.fromJson<int>(json['sequence']),
       lineType: serializer.fromJson<LineType>(json['lineType']),
       assetId: serializer.fromJson<String?>(json['assetId']),
-      partId: serializer.fromJson<String?>(json['partId']),
       name: serializer.fromJson<String>(json['name']),
       quantity: serializer.fromJson<double>(json['quantity']),
       priceDay: serializer.fromJson<double>(json['priceDay']),
@@ -9355,7 +8323,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
       'sequence': serializer.toJson<int>(sequence),
       'lineType': serializer.toJson<LineType>(lineType),
       'assetId': serializer.toJson<String?>(assetId),
-      'partId': serializer.toJson<String?>(partId),
       'name': serializer.toJson<String>(name),
       'quantity': serializer.toJson<double>(quantity),
       'priceDay': serializer.toJson<double>(priceDay),
@@ -9383,7 +8350,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
     int? sequence,
     LineType? lineType,
     Value<String?> assetId = const Value.absent(),
-    Value<String?> partId = const Value.absent(),
     String? name,
     double? quantity,
     double? priceDay,
@@ -9408,7 +8374,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
     sequence: sequence ?? this.sequence,
     lineType: lineType ?? this.lineType,
     assetId: assetId.present ? assetId.value : this.assetId,
-    partId: partId.present ? partId.value : this.partId,
     name: name ?? this.name,
     quantity: quantity ?? this.quantity,
     priceDay: priceDay ?? this.priceDay,
@@ -9437,7 +8402,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
       sequence: data.sequence.present ? data.sequence.value : this.sequence,
       lineType: data.lineType.present ? data.lineType.value : this.lineType,
       assetId: data.assetId.present ? data.assetId.value : this.assetId,
-      partId: data.partId.present ? data.partId.value : this.partId,
       name: data.name.present ? data.name.value : this.name,
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
       priceDay: data.priceDay.present ? data.priceDay.value : this.priceDay,
@@ -9483,7 +8447,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
           ..write('sequence: $sequence, ')
           ..write('lineType: $lineType, ')
           ..write('assetId: $assetId, ')
-          ..write('partId: $partId, ')
           ..write('name: $name, ')
           ..write('quantity: $quantity, ')
           ..write('priceDay: $priceDay, ')
@@ -9513,7 +8476,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
     sequence,
     lineType,
     assetId,
-    partId,
     name,
     quantity,
     priceDay,
@@ -9542,7 +8504,6 @@ class OrderLine extends DataClass implements Insertable<OrderLine> {
           other.sequence == this.sequence &&
           other.lineType == this.lineType &&
           other.assetId == this.assetId &&
-          other.partId == this.partId &&
           other.name == this.name &&
           other.quantity == this.quantity &&
           other.priceDay == this.priceDay &&
@@ -9569,7 +8530,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
   final Value<int> sequence;
   final Value<LineType> lineType;
   final Value<String?> assetId;
-  final Value<String?> partId;
   final Value<String> name;
   final Value<double> quantity;
   final Value<double> priceDay;
@@ -9595,7 +8555,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
     this.sequence = const Value.absent(),
     this.lineType = const Value.absent(),
     this.assetId = const Value.absent(),
-    this.partId = const Value.absent(),
     this.name = const Value.absent(),
     this.quantity = const Value.absent(),
     this.priceDay = const Value.absent(),
@@ -9622,7 +8581,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
     this.sequence = const Value.absent(),
     this.lineType = const Value.absent(),
     this.assetId = const Value.absent(),
-    this.partId = const Value.absent(),
     this.name = const Value.absent(),
     this.quantity = const Value.absent(),
     this.priceDay = const Value.absent(),
@@ -9649,7 +8607,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
     Expression<int>? sequence,
     Expression<String>? lineType,
     Expression<String>? assetId,
-    Expression<String>? partId,
     Expression<String>? name,
     Expression<double>? quantity,
     Expression<double>? priceDay,
@@ -9676,7 +8633,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
       if (sequence != null) 'sequence': sequence,
       if (lineType != null) 'line_type': lineType,
       if (assetId != null) 'asset_id': assetId,
-      if (partId != null) 'part_id': partId,
       if (name != null) 'name': name,
       if (quantity != null) 'quantity': quantity,
       if (priceDay != null) 'price_day': priceDay,
@@ -9705,7 +8661,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
     Value<int>? sequence,
     Value<LineType>? lineType,
     Value<String?>? assetId,
-    Value<String?>? partId,
     Value<String>? name,
     Value<double>? quantity,
     Value<double>? priceDay,
@@ -9732,7 +8687,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
       sequence: sequence ?? this.sequence,
       lineType: lineType ?? this.lineType,
       assetId: assetId ?? this.assetId,
-      partId: partId ?? this.partId,
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
       priceDay: priceDay ?? this.priceDay,
@@ -9782,9 +8736,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
     }
     if (assetId.present) {
       map['asset_id'] = Variable<String>(assetId.value);
-    }
-    if (partId.present) {
-      map['part_id'] = Variable<String>(partId.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -9852,7 +8803,6 @@ class OrderLinesCompanion extends UpdateCompanion<OrderLine> {
           ..write('sequence: $sequence, ')
           ..write('lineType: $lineType, ')
           ..write('assetId: $assetId, ')
-          ..write('partId: $partId, ')
           ..write('name: $name, ')
           ..write('quantity: $quantity, ')
           ..write('priceDay: $priceDay, ')
@@ -10329,460 +9279,6 @@ class OrderLineSerialsCompanion extends UpdateCompanion<OrderLineSerial> {
   }
 }
 
-class $OrderLinePartsTable extends OrderLineParts
-    with TableInfo<$OrderLinePartsTable, OrderLinePart> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $OrderLinePartsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    clientDefault: () => rowUuid.v4(),
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    clientDefault: () => DateTime.now().toUtc(),
-  );
-  static const VerificationMeta _deletedMeta = const VerificationMeta(
-    'deleted',
-  );
-  @override
-  late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
-    'deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
-  @override
-  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
-    'dirty',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("dirty" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _odooIdMeta = const VerificationMeta('odooId');
-  @override
-  late final GeneratedColumn<int> odooId = GeneratedColumn<int>(
-    'odoo_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _lineIdMeta = const VerificationMeta('lineId');
-  @override
-  late final GeneratedColumn<String> lineId = GeneratedColumn<String>(
-    'line_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES order_lines (id)',
-    ),
-  );
-  static const VerificationMeta _partIdMeta = const VerificationMeta('partId');
-  @override
-  late final GeneratedColumn<String> partId = GeneratedColumn<String>(
-    'part_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES parts (id)',
-    ),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    updatedAt,
-    deleted,
-    dirty,
-    odooId,
-    lineId,
-    partId,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'order_line_parts';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<OrderLinePart> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    }
-    if (data.containsKey('deleted')) {
-      context.handle(
-        _deletedMeta,
-        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
-      );
-    }
-    if (data.containsKey('dirty')) {
-      context.handle(
-        _dirtyMeta,
-        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
-      );
-    }
-    if (data.containsKey('odoo_id')) {
-      context.handle(
-        _odooIdMeta,
-        odooId.isAcceptableOrUnknown(data['odoo_id']!, _odooIdMeta),
-      );
-    }
-    if (data.containsKey('line_id')) {
-      context.handle(
-        _lineIdMeta,
-        lineId.isAcceptableOrUnknown(data['line_id']!, _lineIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_lineIdMeta);
-    }
-    if (data.containsKey('part_id')) {
-      context.handle(
-        _partIdMeta,
-        partId.isAcceptableOrUnknown(data['part_id']!, _partIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_partIdMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  OrderLinePart map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return OrderLinePart(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      deleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}deleted'],
-      )!,
-      dirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}dirty'],
-      )!,
-      odooId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}odoo_id'],
-      ),
-      lineId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}line_id'],
-      )!,
-      partId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}part_id'],
-      )!,
-    );
-  }
-
-  @override
-  $OrderLinePartsTable createAlias(String alias) {
-    return $OrderLinePartsTable(attachedDatabase, alias);
-  }
-}
-
-class OrderLinePart extends DataClass implements Insertable<OrderLinePart> {
-  final String id;
-  final DateTime updatedAt;
-  final bool deleted;
-  final bool dirty;
-  final int? odooId;
-  final String lineId;
-  final String partId;
-  const OrderLinePart({
-    required this.id,
-    required this.updatedAt,
-    required this.deleted,
-    required this.dirty,
-    this.odooId,
-    required this.lineId,
-    required this.partId,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['deleted'] = Variable<bool>(deleted);
-    map['dirty'] = Variable<bool>(dirty);
-    if (!nullToAbsent || odooId != null) {
-      map['odoo_id'] = Variable<int>(odooId);
-    }
-    map['line_id'] = Variable<String>(lineId);
-    map['part_id'] = Variable<String>(partId);
-    return map;
-  }
-
-  OrderLinePartsCompanion toCompanion(bool nullToAbsent) {
-    return OrderLinePartsCompanion(
-      id: Value(id),
-      updatedAt: Value(updatedAt),
-      deleted: Value(deleted),
-      dirty: Value(dirty),
-      odooId: odooId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(odooId),
-      lineId: Value(lineId),
-      partId: Value(partId),
-    );
-  }
-
-  factory OrderLinePart.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return OrderLinePart(
-      id: serializer.fromJson<String>(json['id']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      deleted: serializer.fromJson<bool>(json['deleted']),
-      dirty: serializer.fromJson<bool>(json['dirty']),
-      odooId: serializer.fromJson<int?>(json['odooId']),
-      lineId: serializer.fromJson<String>(json['lineId']),
-      partId: serializer.fromJson<String>(json['partId']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'deleted': serializer.toJson<bool>(deleted),
-      'dirty': serializer.toJson<bool>(dirty),
-      'odooId': serializer.toJson<int?>(odooId),
-      'lineId': serializer.toJson<String>(lineId),
-      'partId': serializer.toJson<String>(partId),
-    };
-  }
-
-  OrderLinePart copyWith({
-    String? id,
-    DateTime? updatedAt,
-    bool? deleted,
-    bool? dirty,
-    Value<int?> odooId = const Value.absent(),
-    String? lineId,
-    String? partId,
-  }) => OrderLinePart(
-    id: id ?? this.id,
-    updatedAt: updatedAt ?? this.updatedAt,
-    deleted: deleted ?? this.deleted,
-    dirty: dirty ?? this.dirty,
-    odooId: odooId.present ? odooId.value : this.odooId,
-    lineId: lineId ?? this.lineId,
-    partId: partId ?? this.partId,
-  );
-  OrderLinePart copyWithCompanion(OrderLinePartsCompanion data) {
-    return OrderLinePart(
-      id: data.id.present ? data.id.value : this.id,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      deleted: data.deleted.present ? data.deleted.value : this.deleted,
-      dirty: data.dirty.present ? data.dirty.value : this.dirty,
-      odooId: data.odooId.present ? data.odooId.value : this.odooId,
-      lineId: data.lineId.present ? data.lineId.value : this.lineId,
-      partId: data.partId.present ? data.partId.value : this.partId,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('OrderLinePart(')
-          ..write('id: $id, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deleted: $deleted, ')
-          ..write('dirty: $dirty, ')
-          ..write('odooId: $odooId, ')
-          ..write('lineId: $lineId, ')
-          ..write('partId: $partId')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, updatedAt, deleted, dirty, odooId, lineId, partId);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is OrderLinePart &&
-          other.id == this.id &&
-          other.updatedAt == this.updatedAt &&
-          other.deleted == this.deleted &&
-          other.dirty == this.dirty &&
-          other.odooId == this.odooId &&
-          other.lineId == this.lineId &&
-          other.partId == this.partId);
-}
-
-class OrderLinePartsCompanion extends UpdateCompanion<OrderLinePart> {
-  final Value<String> id;
-  final Value<DateTime> updatedAt;
-  final Value<bool> deleted;
-  final Value<bool> dirty;
-  final Value<int?> odooId;
-  final Value<String> lineId;
-  final Value<String> partId;
-  final Value<int> rowid;
-  const OrderLinePartsCompanion({
-    this.id = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.deleted = const Value.absent(),
-    this.dirty = const Value.absent(),
-    this.odooId = const Value.absent(),
-    this.lineId = const Value.absent(),
-    this.partId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  OrderLinePartsCompanion.insert({
-    this.id = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.deleted = const Value.absent(),
-    this.dirty = const Value.absent(),
-    this.odooId = const Value.absent(),
-    required String lineId,
-    required String partId,
-    this.rowid = const Value.absent(),
-  }) : lineId = Value(lineId),
-       partId = Value(partId);
-  static Insertable<OrderLinePart> custom({
-    Expression<String>? id,
-    Expression<DateTime>? updatedAt,
-    Expression<bool>? deleted,
-    Expression<bool>? dirty,
-    Expression<int>? odooId,
-    Expression<String>? lineId,
-    Expression<String>? partId,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (deleted != null) 'deleted': deleted,
-      if (dirty != null) 'dirty': dirty,
-      if (odooId != null) 'odoo_id': odooId,
-      if (lineId != null) 'line_id': lineId,
-      if (partId != null) 'part_id': partId,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  OrderLinePartsCompanion copyWith({
-    Value<String>? id,
-    Value<DateTime>? updatedAt,
-    Value<bool>? deleted,
-    Value<bool>? dirty,
-    Value<int?>? odooId,
-    Value<String>? lineId,
-    Value<String>? partId,
-    Value<int>? rowid,
-  }) {
-    return OrderLinePartsCompanion(
-      id: id ?? this.id,
-      updatedAt: updatedAt ?? this.updatedAt,
-      deleted: deleted ?? this.deleted,
-      dirty: dirty ?? this.dirty,
-      odooId: odooId ?? this.odooId,
-      lineId: lineId ?? this.lineId,
-      partId: partId ?? this.partId,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (deleted.present) {
-      map['deleted'] = Variable<bool>(deleted.value);
-    }
-    if (dirty.present) {
-      map['dirty'] = Variable<bool>(dirty.value);
-    }
-    if (odooId.present) {
-      map['odoo_id'] = Variable<int>(odooId.value);
-    }
-    if (lineId.present) {
-      map['line_id'] = Variable<String>(lineId.value);
-    }
-    if (partId.present) {
-      map['part_id'] = Variable<String>(partId.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('OrderLinePartsCompanion(')
-          ..write('id: $id, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deleted: $deleted, ')
-          ..write('dirty: $dirty, ')
-          ..write('odooId: $odooId, ')
-          ..write('lineId: $lineId, ')
-          ..write('partId: $partId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $ReturnChecksTable extends ReturnChecks
     with TableInfo<$ReturnChecksTable, ReturnCheck> {
   @override
@@ -10888,18 +9384,6 @@ class $ReturnChecksTable extends ReturnChecks
       'REFERENCES serials (id)',
     ),
   );
-  static const VerificationMeta _partIdMeta = const VerificationMeta('partId');
-  @override
-  late final GeneratedColumn<String> partId = GeneratedColumn<String>(
-    'part_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES parts (id)',
-    ),
-  );
   @override
   late final GeneratedColumnWithTypeConverter<Condition, String> condition =
       GeneratedColumn<String>(
@@ -10951,7 +9435,6 @@ class $ReturnChecksTable extends ReturnChecks
     lineId,
     orderId,
     serialId,
-    partId,
     condition,
     note,
     returnedAt,
@@ -11018,12 +9501,6 @@ class $ReturnChecksTable extends ReturnChecks
         serialId.isAcceptableOrUnknown(data['serial_id']!, _serialIdMeta),
       );
     }
-    if (data.containsKey('part_id')) {
-      context.handle(
-        _partIdMeta,
-        partId.isAcceptableOrUnknown(data['part_id']!, _partIdMeta),
-      );
-    }
     if (data.containsKey('note')) {
       context.handle(
         _noteMeta,
@@ -11085,10 +9562,6 @@ class $ReturnChecksTable extends ReturnChecks
         DriftSqlType.string,
         data['${effectivePrefix}serial_id'],
       ),
-      partId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}part_id'],
-      ),
       condition: $ReturnChecksTable.$convertercondition.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
@@ -11128,7 +9601,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
   final String lineId;
   final String orderId;
   final String? serialId;
-  final String? partId;
   final Condition condition;
   final String? note;
   final DateTime returnedAt;
@@ -11142,7 +9614,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     required this.lineId,
     required this.orderId,
     this.serialId,
-    this.partId,
     required this.condition,
     this.note,
     required this.returnedAt,
@@ -11162,9 +9633,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     map['order_id'] = Variable<String>(orderId);
     if (!nullToAbsent || serialId != null) {
       map['serial_id'] = Variable<String>(serialId);
-    }
-    if (!nullToAbsent || partId != null) {
-      map['part_id'] = Variable<String>(partId);
     }
     {
       map['condition'] = Variable<String>(
@@ -11195,9 +9663,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       serialId: serialId == null && nullToAbsent
           ? const Value.absent()
           : Value(serialId),
-      partId: partId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(partId),
       condition: Value(condition),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       returnedAt: Value(returnedAt),
@@ -11221,7 +9686,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       lineId: serializer.fromJson<String>(json['lineId']),
       orderId: serializer.fromJson<String>(json['orderId']),
       serialId: serializer.fromJson<String?>(json['serialId']),
-      partId: serializer.fromJson<String?>(json['partId']),
       condition: serializer.fromJson<Condition>(json['condition']),
       note: serializer.fromJson<String?>(json['note']),
       returnedAt: serializer.fromJson<DateTime>(json['returnedAt']),
@@ -11240,7 +9704,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       'lineId': serializer.toJson<String>(lineId),
       'orderId': serializer.toJson<String>(orderId),
       'serialId': serializer.toJson<String?>(serialId),
-      'partId': serializer.toJson<String?>(partId),
       'condition': serializer.toJson<Condition>(condition),
       'note': serializer.toJson<String?>(note),
       'returnedAt': serializer.toJson<DateTime>(returnedAt),
@@ -11257,7 +9720,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     String? lineId,
     String? orderId,
     Value<String?> serialId = const Value.absent(),
-    Value<String?> partId = const Value.absent(),
     Condition? condition,
     Value<String?> note = const Value.absent(),
     DateTime? returnedAt,
@@ -11271,7 +9733,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     lineId: lineId ?? this.lineId,
     orderId: orderId ?? this.orderId,
     serialId: serialId.present ? serialId.value : this.serialId,
-    partId: partId.present ? partId.value : this.partId,
     condition: condition ?? this.condition,
     note: note.present ? note.value : this.note,
     returnedAt: returnedAt ?? this.returnedAt,
@@ -11287,7 +9748,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       lineId: data.lineId.present ? data.lineId.value : this.lineId,
       orderId: data.orderId.present ? data.orderId.value : this.orderId,
       serialId: data.serialId.present ? data.serialId.value : this.serialId,
-      partId: data.partId.present ? data.partId.value : this.partId,
       condition: data.condition.present ? data.condition.value : this.condition,
       note: data.note.present ? data.note.value : this.note,
       returnedAt: data.returnedAt.present
@@ -11310,7 +9770,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
           ..write('lineId: $lineId, ')
           ..write('orderId: $orderId, ')
           ..write('serialId: $serialId, ')
-          ..write('partId: $partId, ')
           ..write('condition: $condition, ')
           ..write('note: $note, ')
           ..write('returnedAt: $returnedAt, ')
@@ -11329,7 +9788,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     lineId,
     orderId,
     serialId,
-    partId,
     condition,
     note,
     returnedAt,
@@ -11347,7 +9805,6 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
           other.lineId == this.lineId &&
           other.orderId == this.orderId &&
           other.serialId == this.serialId &&
-          other.partId == this.partId &&
           other.condition == this.condition &&
           other.note == this.note &&
           other.returnedAt == this.returnedAt &&
@@ -11363,7 +9820,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
   final Value<String> lineId;
   final Value<String> orderId;
   final Value<String?> serialId;
-  final Value<String?> partId;
   final Value<Condition> condition;
   final Value<String?> note;
   final Value<DateTime> returnedAt;
@@ -11378,7 +9834,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     this.lineId = const Value.absent(),
     this.orderId = const Value.absent(),
     this.serialId = const Value.absent(),
-    this.partId = const Value.absent(),
     this.condition = const Value.absent(),
     this.note = const Value.absent(),
     this.returnedAt = const Value.absent(),
@@ -11394,7 +9849,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     required String lineId,
     required String orderId,
     this.serialId = const Value.absent(),
-    this.partId = const Value.absent(),
     this.condition = const Value.absent(),
     this.note = const Value.absent(),
     required DateTime returnedAt,
@@ -11412,7 +9866,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     Expression<String>? lineId,
     Expression<String>? orderId,
     Expression<String>? serialId,
-    Expression<String>? partId,
     Expression<String>? condition,
     Expression<String>? note,
     Expression<DateTime>? returnedAt,
@@ -11428,7 +9881,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
       if (lineId != null) 'line_id': lineId,
       if (orderId != null) 'order_id': orderId,
       if (serialId != null) 'serial_id': serialId,
-      if (partId != null) 'part_id': partId,
       if (condition != null) 'condition': condition,
       if (note != null) 'note': note,
       if (returnedAt != null) 'returned_at': returnedAt,
@@ -11446,7 +9898,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     Value<String>? lineId,
     Value<String>? orderId,
     Value<String?>? serialId,
-    Value<String?>? partId,
     Value<Condition>? condition,
     Value<String?>? note,
     Value<DateTime>? returnedAt,
@@ -11462,7 +9913,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
       lineId: lineId ?? this.lineId,
       orderId: orderId ?? this.orderId,
       serialId: serialId ?? this.serialId,
-      partId: partId ?? this.partId,
       condition: condition ?? this.condition,
       note: note ?? this.note,
       returnedAt: returnedAt ?? this.returnedAt,
@@ -11498,9 +9948,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     if (serialId.present) {
       map['serial_id'] = Variable<String>(serialId.value);
     }
-    if (partId.present) {
-      map['part_id'] = Variable<String>(partId.value);
-    }
     if (condition.present) {
       map['condition'] = Variable<String>(
         $ReturnChecksTable.$convertercondition.toSql(condition.value),
@@ -11532,7 +9979,6 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
           ..write('lineId: $lineId, ')
           ..write('orderId: $orderId, ')
           ..write('serialId: $serialId, ')
-          ..write('partId: $partId, ')
           ..write('condition: $condition, ')
           ..write('note: $note, ')
           ..write('returnedAt: $returnedAt, ')
@@ -12527,14 +10973,12 @@ abstract class _$RentoryDatabase extends GeneratedDatabase {
   late final $LocationsTable locations = $LocationsTable(this);
   late final $AssetsTable assets = $AssetsTable(this);
   late final $SerialsTable serials = $SerialsTable(this);
-  late final $PartsTable parts = $PartsTable(this);
   late final $OrdersTable orders = $OrdersTable(this);
   late final $OrderDocumentsTable orderDocuments = $OrderDocumentsTable(this);
   late final $OrderLinesTable orderLines = $OrderLinesTable(this);
   late final $OrderLineSerialsTable orderLineSerials = $OrderLineSerialsTable(
     this,
   );
-  late final $OrderLinePartsTable orderLineParts = $OrderLinePartsTable(this);
   late final $ReturnChecksTable returnChecks = $ReturnChecksTable(this);
   late final $PhotosTable photos = $PhotosTable(this);
   late final $SyncCursorsTable syncCursors = $SyncCursorsTable(this);
@@ -12551,12 +10995,10 @@ abstract class _$RentoryDatabase extends GeneratedDatabase {
     locations,
     assets,
     serials,
-    parts,
     orders,
     orderDocuments,
     orderLines,
     orderLineSerials,
-    orderLineParts,
     returnChecks,
     photos,
     syncCursors,
@@ -15136,25 +13578,6 @@ final class $$AssetsTableReferences
     );
   }
 
-  static MultiTypedResultKey<$PartsTable, List<Part>> _partsRefsTable(
-    _$RentoryDatabase db,
-  ) => MultiTypedResultKey.fromTable(
-    db.parts,
-    aliasName: 'assets__id__parts__asset_id',
-  );
-
-  $$PartsTableProcessedTableManager get partsRefs {
-    final manager = $$PartsTableTableManager(
-      $_db,
-      $_db.parts,
-    ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_partsRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
   static MultiTypedResultKey<$OrderLinesTable, List<OrderLine>>
   _orderLinesRefsTable(_$RentoryDatabase db) => MultiTypedResultKey.fromTable(
     db.orderLines,
@@ -15326,31 +13749,6 @@ class $$AssetsTableFilterComposer
           }) => $$SerialsTableFilterComposer(
             $db: $db,
             $table: $db.serials,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> partsRefs(
-    Expression<bool> Function($$PartsTableFilterComposer f) f,
-  ) {
-    final $$PartsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.assetId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableFilterComposer(
-            $db: $db,
-            $table: $db.parts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -15654,31 +14052,6 @@ class $$AssetsTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> partsRefs<T extends Object>(
-    Expression<T> Function($$PartsTableAnnotationComposer a) f,
-  ) {
-    final $$PartsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.assetId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
   Expression<T> orderLinesRefs<T extends Object>(
     Expression<T> Function($$OrderLinesTableAnnotationComposer a) f,
   ) {
@@ -15722,7 +14095,6 @@ class $$AssetsTableTableManager
             bool categoryId,
             bool locationId,
             bool serialsRefs,
-            bool partsRefs,
             bool orderLinesRefs,
           })
         > {
@@ -15834,14 +14206,12 @@ class $$AssetsTableTableManager
                 categoryId = false,
                 locationId = false,
                 serialsRefs = false,
-                partsRefs = false,
                 orderLinesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (serialsRefs) db.serials,
-                    if (partsRefs) db.parts,
                     if (orderLinesRefs) db.orderLines,
                   ],
                   addJoins:
@@ -15904,19 +14274,6 @@ class $$AssetsTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (partsRefs)
-                        await $_getPrefetchedData<Asset, $AssetsTable, Part>(
-                          currentTable: table,
-                          referencedTable: $$AssetsTableReferences
-                              ._partsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$AssetsTableReferences(db, table, p0).partsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.assetId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
                       if (orderLinesRefs)
                         await $_getPrefetchedData<
                           Asset,
@@ -15962,7 +14319,6 @@ typedef $$AssetsTableProcessedTableManager =
         bool categoryId,
         bool locationId,
         bool serialsRefs,
-        bool partsRefs,
         bool orderLinesRefs,
       })
     >;
@@ -16038,25 +14394,6 @@ final class $$SerialsTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static MultiTypedResultKey<$PartsTable, List<Part>> _partsRefsTable(
-    _$RentoryDatabase db,
-  ) => MultiTypedResultKey.fromTable(
-    db.parts,
-    aliasName: 'serials__id__parts__serial_id',
-  );
-
-  $$PartsTableProcessedTableManager get partsRefs {
-    final manager = $$PartsTableTableManager(
-      $_db,
-      $_db.parts,
-    ).filter((f) => f.serialId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_partsRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 
@@ -16219,31 +14556,6 @@ class $$SerialsTableFilterComposer
           ),
     );
     return composer;
-  }
-
-  Expression<bool> partsRefs(
-    Expression<bool> Function($$PartsTableFilterComposer f) f,
-  ) {
-    final $$PartsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.serialId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableFilterComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
   }
 
   Expression<bool> orderLineSerialsRefs(
@@ -16518,31 +14830,6 @@ class $$SerialsTableAnnotationComposer
     return composer;
   }
 
-  Expression<T> partsRefs<T extends Object>(
-    Expression<T> Function($$PartsTableAnnotationComposer a) f,
-  ) {
-    final $$PartsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.serialId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
   Expression<T> orderLineSerialsRefs<T extends Object>(
     Expression<T> Function($$OrderLineSerialsTableAnnotationComposer a) f,
   ) {
@@ -16610,7 +14897,6 @@ class $$SerialsTableTableManager
           PrefetchHooks Function({
             bool assetId,
             bool locationId,
-            bool partsRefs,
             bool orderLineSerialsRefs,
             bool returnChecksRefs,
           })
@@ -16710,14 +14996,12 @@ class $$SerialsTableTableManager
               ({
                 assetId = false,
                 locationId = false,
-                partsRefs = false,
                 orderLineSerialsRefs = false,
                 returnChecksRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
-                    if (partsRefs) db.parts,
                     if (orderLineSerialsRefs) db.orderLineSerials,
                     if (returnChecksRefs) db.returnChecks,
                   ],
@@ -16764,19 +15048,6 @@ class $$SerialsTableTableManager
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
-                      if (partsRefs)
-                        await $_getPrefetchedData<Serial, $SerialsTable, Part>(
-                          currentTable: table,
-                          referencedTable: $$SerialsTableReferences
-                              ._partsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$SerialsTableReferences(db, table, p0).partsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serialId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
                       if (orderLineSerialsRefs)
                         await $_getPrefetchedData<
                           Serial,
@@ -16842,948 +15113,7 @@ typedef $$SerialsTableProcessedTableManager =
       PrefetchHooks Function({
         bool assetId,
         bool locationId,
-        bool partsRefs,
         bool orderLineSerialsRefs,
-        bool returnChecksRefs,
-      })
-    >;
-typedef $$PartsTableCreateCompanionBuilder = PartsCompanion Function({
-  Value<String> id,
-  Value<DateTime> updatedAt,
-  Value<bool> deleted,
-  Value<bool> dirty,
-  Value<int?> odooId,
-  required String name,
-  Value<String?> code,
-  required String assetId,
-  Value<String?> serialId,
-  Value<int> sequence,
-  Value<PartKind> kind,
-  Value<String> condition,
-  Value<PartState> state,
-  Value<double> rentalPriceDay,
-  Value<String?> currentOrderId,
-  Value<String?> currentLineId,
-  Value<String?> note,
-  Value<bool> active,
-  Value<int> rowid,
-});
-typedef $$PartsTableUpdateCompanionBuilder = PartsCompanion Function({
-  Value<String> id,
-  Value<DateTime> updatedAt,
-  Value<bool> deleted,
-  Value<bool> dirty,
-  Value<int?> odooId,
-  Value<String> name,
-  Value<String?> code,
-  Value<String> assetId,
-  Value<String?> serialId,
-  Value<int> sequence,
-  Value<PartKind> kind,
-  Value<String> condition,
-  Value<PartState> state,
-  Value<double> rentalPriceDay,
-  Value<String?> currentOrderId,
-  Value<String?> currentLineId,
-  Value<String?> note,
-  Value<bool> active,
-  Value<int> rowid,
-});
-
-final class $$PartsTableReferences
-    extends BaseReferences<_$RentoryDatabase, $PartsTable, Part> {
-  $$PartsTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $AssetsTable _assetIdTable(_$RentoryDatabase db) =>
-      db.assets.createAlias('parts__asset_id__assets__id');
-
-  $$AssetsTableProcessedTableManager get assetId {
-    final $_column = $_itemColumn<String>('asset_id')!;
-
-    final manager = $$AssetsTableTableManager(
-      $_db,
-      $_db.assets,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_assetIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $SerialsTable _serialIdTable(_$RentoryDatabase db) =>
-      db.serials.createAlias('parts__serial_id__serials__id');
-
-  $$SerialsTableProcessedTableManager? get serialId {
-    final $_column = $_itemColumn<String>('serial_id');
-    if ($_column == null) return null;
-    final manager = $$SerialsTableTableManager(
-      $_db,
-      $_db.serials,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_serialIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static MultiTypedResultKey<$OrderLinesTable, List<OrderLine>>
-  _orderLinesRefsTable(_$RentoryDatabase db) => MultiTypedResultKey.fromTable(
-    db.orderLines,
-    aliasName: 'parts__id__order_lines__part_id',
-  );
-
-  $$OrderLinesTableProcessedTableManager get orderLinesRefs {
-    final manager = $$OrderLinesTableTableManager(
-      $_db,
-      $_db.orderLines,
-    ).filter((f) => f.partId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_orderLinesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$OrderLinePartsTable, List<OrderLinePart>>
-  _orderLinePartsRefsTable(_$RentoryDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.orderLineParts,
-        aliasName: 'parts__id__order_line_parts__part_id',
-      );
-
-  $$OrderLinePartsTableProcessedTableManager get orderLinePartsRefs {
-    final manager = $$OrderLinePartsTableTableManager(
-      $_db,
-      $_db.orderLineParts,
-    ).filter((f) => f.partId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_orderLinePartsRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$ReturnChecksTable, List<ReturnCheck>>
-  _returnChecksRefsTable(_$RentoryDatabase db) => MultiTypedResultKey.fromTable(
-    db.returnChecks,
-    aliasName: 'parts__id__return_checks__part_id',
-  );
-
-  $$ReturnChecksTableProcessedTableManager get returnChecksRefs {
-    final manager = $$ReturnChecksTableTableManager(
-      $_db,
-      $_db.returnChecks,
-    ).filter((f) => f.partId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_returnChecksRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-}
-
-class $$PartsTableFilterComposer
-    extends Composer<_$RentoryDatabase, $PartsTable> {
-  $$PartsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get deleted => $composableBuilder(
-    column: $table.deleted,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get odooId => $composableBuilder(
-    column: $table.odooId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get code => $composableBuilder(
-    column: $table.code,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get sequence => $composableBuilder(
-    column: $table.sequence,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<PartKind, PartKind, String> get kind =>
-      $composableBuilder(
-        column: $table.kind,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get condition => $composableBuilder(
-    column: $table.condition,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<PartState, PartState, String> get state =>
-      $composableBuilder(
-        column: $table.state,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<double> get rentalPriceDay => $composableBuilder(
-    column: $table.rentalPriceDay,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get currentOrderId => $composableBuilder(
-    column: $table.currentOrderId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get currentLineId => $composableBuilder(
-    column: $table.currentLineId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get active => $composableBuilder(
-    column: $table.active,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$AssetsTableFilterComposer get assetId {
-    final $$AssetsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.assetId,
-      referencedTable: $db.assets,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$AssetsTableFilterComposer(
-            $db: $db,
-            $table: $db.assets,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$SerialsTableFilterComposer get serialId {
-    final $$SerialsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serialId,
-      referencedTable: $db.serials,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SerialsTableFilterComposer(
-            $db: $db,
-            $table: $db.serials,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  Expression<bool> orderLinesRefs(
-    Expression<bool> Function($$OrderLinesTableFilterComposer f) f,
-  ) {
-    final $$OrderLinesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderLines,
-      getReferencedColumn: (t) => t.partId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinesTableFilterComposer(
-            $db: $db,
-            $table: $db.orderLines,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> orderLinePartsRefs(
-    Expression<bool> Function($$OrderLinePartsTableFilterComposer f) f,
-  ) {
-    final $$OrderLinePartsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderLineParts,
-      getReferencedColumn: (t) => t.partId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinePartsTableFilterComposer(
-            $db: $db,
-            $table: $db.orderLineParts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> returnChecksRefs(
-    Expression<bool> Function($$ReturnChecksTableFilterComposer f) f,
-  ) {
-    final $$ReturnChecksTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.returnChecks,
-      getReferencedColumn: (t) => t.partId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ReturnChecksTableFilterComposer(
-            $db: $db,
-            $table: $db.returnChecks,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$PartsTableOrderingComposer
-    extends Composer<_$RentoryDatabase, $PartsTable> {
-  $$PartsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get deleted => $composableBuilder(
-    column: $table.deleted,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get odooId => $composableBuilder(
-    column: $table.odooId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get code => $composableBuilder(
-    column: $table.code,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get sequence => $composableBuilder(
-    column: $table.sequence,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get kind => $composableBuilder(
-    column: $table.kind,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get condition => $composableBuilder(
-    column: $table.condition,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get state => $composableBuilder(
-    column: $table.state,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get rentalPriceDay => $composableBuilder(
-    column: $table.rentalPriceDay,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get currentOrderId => $composableBuilder(
-    column: $table.currentOrderId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get currentLineId => $composableBuilder(
-    column: $table.currentLineId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get active => $composableBuilder(
-    column: $table.active,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$AssetsTableOrderingComposer get assetId {
-    final $$AssetsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.assetId,
-      referencedTable: $db.assets,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$AssetsTableOrderingComposer(
-            $db: $db,
-            $table: $db.assets,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$SerialsTableOrderingComposer get serialId {
-    final $$SerialsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serialId,
-      referencedTable: $db.serials,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SerialsTableOrderingComposer(
-            $db: $db,
-            $table: $db.serials,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PartsTableAnnotationComposer
-    extends Composer<_$RentoryDatabase, $PartsTable> {
-  $$PartsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get deleted =>
-      $composableBuilder(column: $table.deleted, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirty =>
-      $composableBuilder(column: $table.dirty, builder: (column) => column);
-
-  GeneratedColumn<int> get odooId =>
-      $composableBuilder(column: $table.odooId, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get code =>
-      $composableBuilder(column: $table.code, builder: (column) => column);
-
-  GeneratedColumn<int> get sequence =>
-      $composableBuilder(column: $table.sequence, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<PartKind, String> get kind =>
-      $composableBuilder(column: $table.kind, builder: (column) => column);
-
-  GeneratedColumn<String> get condition =>
-      $composableBuilder(column: $table.condition, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<PartState, String> get state =>
-      $composableBuilder(column: $table.state, builder: (column) => column);
-
-  GeneratedColumn<double> get rentalPriceDay => $composableBuilder(
-    column: $table.rentalPriceDay,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get currentOrderId => $composableBuilder(
-    column: $table.currentOrderId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get currentLineId => $composableBuilder(
-    column: $table.currentLineId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
-
-  GeneratedColumn<bool> get active =>
-      $composableBuilder(column: $table.active, builder: (column) => column);
-
-  $$AssetsTableAnnotationComposer get assetId {
-    final $$AssetsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.assetId,
-      referencedTable: $db.assets,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$AssetsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.assets,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$SerialsTableAnnotationComposer get serialId {
-    final $$SerialsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serialId,
-      referencedTable: $db.serials,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$SerialsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.serials,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  Expression<T> orderLinesRefs<T extends Object>(
-    Expression<T> Function($$OrderLinesTableAnnotationComposer a) f,
-  ) {
-    final $$OrderLinesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderLines,
-      getReferencedColumn: (t) => t.partId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.orderLines,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> orderLinePartsRefs<T extends Object>(
-    Expression<T> Function($$OrderLinePartsTableAnnotationComposer a) f,
-  ) {
-    final $$OrderLinePartsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderLineParts,
-      getReferencedColumn: (t) => t.partId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinePartsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.orderLineParts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> returnChecksRefs<T extends Object>(
-    Expression<T> Function($$ReturnChecksTableAnnotationComposer a) f,
-  ) {
-    final $$ReturnChecksTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.returnChecks,
-      getReferencedColumn: (t) => t.partId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ReturnChecksTableAnnotationComposer(
-            $db: $db,
-            $table: $db.returnChecks,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$PartsTableTableManager
-    extends
-        RootTableManager<
-          _$RentoryDatabase,
-          $PartsTable,
-          Part,
-          $$PartsTableFilterComposer,
-          $$PartsTableOrderingComposer,
-          $$PartsTableAnnotationComposer,
-          $$PartsTableCreateCompanionBuilder,
-          $$PartsTableUpdateCompanionBuilder,
-          (Part, $$PartsTableReferences),
-          Part,
-          PrefetchHooks Function({
-            bool assetId,
-            bool serialId,
-            bool orderLinesRefs,
-            bool orderLinePartsRefs,
-            bool returnChecksRefs,
-          })
-        > {
-  $$PartsTableTableManager(_$RentoryDatabase db, $PartsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$PartsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$PartsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$PartsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> deleted = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
-                Value<int?> odooId = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<String?> code = const Value.absent(),
-                Value<String> assetId = const Value.absent(),
-                Value<String?> serialId = const Value.absent(),
-                Value<int> sequence = const Value.absent(),
-                Value<PartKind> kind = const Value.absent(),
-                Value<String> condition = const Value.absent(),
-                Value<PartState> state = const Value.absent(),
-                Value<double> rentalPriceDay = const Value.absent(),
-                Value<String?> currentOrderId = const Value.absent(),
-                Value<String?> currentLineId = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<bool> active = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => PartsCompanion(
-                id: id,
-                updatedAt: updatedAt,
-                deleted: deleted,
-                dirty: dirty,
-                odooId: odooId,
-                name: name,
-                code: code,
-                assetId: assetId,
-                serialId: serialId,
-                sequence: sequence,
-                kind: kind,
-                condition: condition,
-                state: state,
-                rentalPriceDay: rentalPriceDay,
-                currentOrderId: currentOrderId,
-                currentLineId: currentLineId,
-                note: note,
-                active: active,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> deleted = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
-                Value<int?> odooId = const Value.absent(),
-                required String name,
-                Value<String?> code = const Value.absent(),
-                required String assetId,
-                Value<String?> serialId = const Value.absent(),
-                Value<int> sequence = const Value.absent(),
-                Value<PartKind> kind = const Value.absent(),
-                Value<String> condition = const Value.absent(),
-                Value<PartState> state = const Value.absent(),
-                Value<double> rentalPriceDay = const Value.absent(),
-                Value<String?> currentOrderId = const Value.absent(),
-                Value<String?> currentLineId = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<bool> active = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => PartsCompanion.insert(
-                id: id,
-                updatedAt: updatedAt,
-                deleted: deleted,
-                dirty: dirty,
-                odooId: odooId,
-                name: name,
-                code: code,
-                assetId: assetId,
-                serialId: serialId,
-                sequence: sequence,
-                kind: kind,
-                condition: condition,
-                state: state,
-                rentalPriceDay: rentalPriceDay,
-                currentOrderId: currentOrderId,
-                currentLineId: currentLineId,
-                note: note,
-                active: active,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<$PartsTable, Part>(table),
-                  $$PartsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback:
-              ({
-                assetId = false,
-                serialId = false,
-                orderLinesRefs = false,
-                orderLinePartsRefs = false,
-                returnChecksRefs = false,
-              }) {
-                return PrefetchHooks(
-                  db: db,
-                  explicitlyWatchedTables: [
-                    if (orderLinesRefs) db.orderLines,
-                    if (orderLinePartsRefs) db.orderLineParts,
-                    if (returnChecksRefs) db.returnChecks,
-                  ],
-                  addJoins:
-                      <
-                        T extends TableManagerState<
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic
-                        >
-                      >(state) {
-                        if (assetId) {
-                          state = state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.assetId,
-                            referencedTable: $$PartsTableReferences
-                                ._assetIdTable(db),
-                            referencedColumn: $$PartsTableReferences
-                                ._assetIdTable(db)
-                                .id,
-                          ) as T;
-                        }
-                        if (serialId) {
-                          state = state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.serialId,
-                            referencedTable: $$PartsTableReferences
-                                ._serialIdTable(db),
-                            referencedColumn: $$PartsTableReferences
-                                ._serialIdTable(db)
-                                .id,
-                          ) as T;
-                        }
-
-                        return state;
-                      },
-                  getPrefetchedDataCallback: (items) async {
-                    return [
-                      if (orderLinesRefs)
-                        await $_getPrefetchedData<Part, $PartsTable, OrderLine>(
-                          currentTable: table,
-                          referencedTable: $$PartsTableReferences
-                              ._orderLinesRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$PartsTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).orderLinesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.partId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (orderLinePartsRefs)
-                        await $_getPrefetchedData<
-                          Part,
-                          $PartsTable,
-                          OrderLinePart
-                        >(
-                          currentTable: table,
-                          referencedTable: $$PartsTableReferences
-                              ._orderLinePartsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$PartsTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).orderLinePartsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.partId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (returnChecksRefs)
-                        await $_getPrefetchedData<
-                          Part,
-                          $PartsTable,
-                          ReturnCheck
-                        >(
-                          currentTable: table,
-                          referencedTable: $$PartsTableReferences
-                              ._returnChecksRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$PartsTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).returnChecksRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.partId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                    ];
-                  },
-                );
-              },
-        ),
-      );
-}
-
-typedef $$PartsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$RentoryDatabase,
-      $PartsTable,
-      Part,
-      $$PartsTableFilterComposer,
-      $$PartsTableOrderingComposer,
-      $$PartsTableAnnotationComposer,
-      $$PartsTableCreateCompanionBuilder,
-      $$PartsTableUpdateCompanionBuilder,
-      (Part, $$PartsTableReferences),
-      Part,
-      PrefetchHooks Function({
-        bool assetId,
-        bool serialId,
-        bool orderLinesRefs,
-        bool orderLinePartsRefs,
         bool returnChecksRefs,
       })
     >;
@@ -19531,7 +16861,6 @@ typedef $$OrderLinesTableCreateCompanionBuilder = OrderLinesCompanion Function({
   Value<int> sequence,
   Value<LineType> lineType,
   Value<String?> assetId,
-  Value<String?> partId,
   Value<String> name,
   Value<double> quantity,
   Value<double> priceDay,
@@ -19558,7 +16887,6 @@ typedef $$OrderLinesTableUpdateCompanionBuilder = OrderLinesCompanion Function({
   Value<int> sequence,
   Value<LineType> lineType,
   Value<String?> assetId,
-  Value<String?> partId,
   Value<String> name,
   Value<double> quantity,
   Value<double> priceDay,
@@ -19614,23 +16942,6 @@ final class $$OrderLinesTableReferences
     );
   }
 
-  static $PartsTable _partIdTable(_$RentoryDatabase db) =>
-      db.parts.createAlias('order_lines__part_id__parts__id');
-
-  $$PartsTableProcessedTableManager? get partId {
-    final $_column = $_itemColumn<String>('part_id');
-    if ($_column == null) return null;
-    final manager = $$PartsTableTableManager(
-      $_db,
-      $_db.parts,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_partIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
   static MultiTypedResultKey<$OrderLineSerialsTable, List<OrderLineSerial>>
   _orderLineSerialsRefsTable(_$RentoryDatabase db) =>
       MultiTypedResultKey.fromTable(
@@ -19647,25 +16958,6 @@ final class $$OrderLinesTableReferences
     final cache = $_typedResult.readTableOrNull(
       _orderLineSerialsRefsTable($_db),
     );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$OrderLinePartsTable, List<OrderLinePart>>
-  _orderLinePartsRefsTable(_$RentoryDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.orderLineParts,
-        aliasName: 'order_lines__id__order_line_parts__line_id',
-      );
-
-  $$OrderLinePartsTableProcessedTableManager get orderLinePartsRefs {
-    final manager = $$OrderLinePartsTableTableManager(
-      $_db,
-      $_db.orderLineParts,
-    ).filter((f) => f.lineId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_orderLinePartsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -19854,29 +17146,6 @@ class $$OrderLinesTableFilterComposer
     return composer;
   }
 
-  $$PartsTableFilterComposer get partId {
-    final $$PartsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableFilterComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
   Expression<bool> orderLineSerialsRefs(
     Expression<bool> Function($$OrderLineSerialsTableFilterComposer f) f,
   ) {
@@ -19893,31 +17162,6 @@ class $$OrderLinesTableFilterComposer
           }) => $$OrderLineSerialsTableFilterComposer(
             $db: $db,
             $table: $db.orderLineSerials,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> orderLinePartsRefs(
-    Expression<bool> Function($$OrderLinePartsTableFilterComposer f) f,
-  ) {
-    final $$OrderLinePartsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderLineParts,
-      getReferencedColumn: (t) => t.lineId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinePartsTableFilterComposer(
-            $db: $db,
-            $table: $db.orderLineParts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -20112,29 +17356,6 @@ class $$OrderLinesTableOrderingComposer
     );
     return composer;
   }
-
-  $$PartsTableOrderingComposer get partId {
-    final $$PartsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableOrderingComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
 }
 
 class $$OrderLinesTableAnnotationComposer
@@ -20274,29 +17495,6 @@ class $$OrderLinesTableAnnotationComposer
     return composer;
   }
 
-  $$PartsTableAnnotationComposer get partId {
-    final $$PartsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
   Expression<T> orderLineSerialsRefs<T extends Object>(
     Expression<T> Function($$OrderLineSerialsTableAnnotationComposer a) f,
   ) {
@@ -20313,31 +17511,6 @@ class $$OrderLinesTableAnnotationComposer
           }) => $$OrderLineSerialsTableAnnotationComposer(
             $db: $db,
             $table: $db.orderLineSerials,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<T> orderLinePartsRefs<T extends Object>(
-    Expression<T> Function($$OrderLinePartsTableAnnotationComposer a) f,
-  ) {
-    final $$OrderLinePartsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.orderLineParts,
-      getReferencedColumn: (t) => t.lineId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinePartsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.orderLineParts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -20389,9 +17562,7 @@ class $$OrderLinesTableTableManager
           PrefetchHooks Function({
             bool orderId,
             bool assetId,
-            bool partId,
             bool orderLineSerialsRefs,
-            bool orderLinePartsRefs,
             bool returnChecksRefs,
           })
         > {
@@ -20417,7 +17588,6 @@ class $$OrderLinesTableTableManager
                 Value<int> sequence = const Value.absent(),
                 Value<LineType> lineType = const Value.absent(),
                 Value<String?> assetId = const Value.absent(),
-                Value<String?> partId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<double> quantity = const Value.absent(),
                 Value<double> priceDay = const Value.absent(),
@@ -20443,7 +17613,6 @@ class $$OrderLinesTableTableManager
                 sequence: sequence,
                 lineType: lineType,
                 assetId: assetId,
-                partId: partId,
                 name: name,
                 quantity: quantity,
                 priceDay: priceDay,
@@ -20471,7 +17640,6 @@ class $$OrderLinesTableTableManager
                 Value<int> sequence = const Value.absent(),
                 Value<LineType> lineType = const Value.absent(),
                 Value<String?> assetId = const Value.absent(),
-                Value<String?> partId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<double> quantity = const Value.absent(),
                 Value<double> priceDay = const Value.absent(),
@@ -20497,7 +17665,6 @@ class $$OrderLinesTableTableManager
                 sequence: sequence,
                 lineType: lineType,
                 assetId: assetId,
-                partId: partId,
                 name: name,
                 quantity: quantity,
                 priceDay: priceDay,
@@ -20526,16 +17693,13 @@ class $$OrderLinesTableTableManager
               ({
                 orderId = false,
                 assetId = false,
-                partId = false,
                 orderLineSerialsRefs = false,
-                orderLinePartsRefs = false,
                 returnChecksRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (orderLineSerialsRefs) db.orderLineSerials,
-                    if (orderLinePartsRefs) db.orderLineParts,
                     if (returnChecksRefs) db.returnChecks,
                   ],
                   addJoins:
@@ -20576,17 +17740,6 @@ class $$OrderLinesTableTableManager
                                 .id,
                           ) as T;
                         }
-                        if (partId) {
-                          state = state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.partId,
-                            referencedTable: $$OrderLinesTableReferences
-                                ._partIdTable(db),
-                            referencedColumn: $$OrderLinesTableReferences
-                                ._partIdTable(db)
-                                .id,
-                          ) as T;
-                        }
 
                         return state;
                       },
@@ -20607,27 +17760,6 @@ class $$OrderLinesTableTableManager
                                 table,
                                 p0,
                               ).orderLineSerialsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.lineId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (orderLinePartsRefs)
-                        await $_getPrefetchedData<
-                          OrderLine,
-                          $OrderLinesTable,
-                          OrderLinePart
-                        >(
-                          currentTable: table,
-                          referencedTable: $$OrderLinesTableReferences
-                              ._orderLinePartsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$OrderLinesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).orderLinePartsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.lineId == item.id,
@@ -20678,9 +17810,7 @@ typedef $$OrderLinesTableProcessedTableManager =
       PrefetchHooks Function({
         bool orderId,
         bool assetId,
-        bool partId,
         bool orderLineSerialsRefs,
-        bool orderLinePartsRefs,
         bool returnChecksRefs,
       })
     >;
@@ -21132,450 +18262,6 @@ typedef $$OrderLineSerialsTableProcessedTableManager =
       OrderLineSerial,
       PrefetchHooks Function({bool lineId, bool serialId})
     >;
-typedef $$OrderLinePartsTableCreateCompanionBuilder =
-    OrderLinePartsCompanion Function({
-      Value<String> id,
-      Value<DateTime> updatedAt,
-      Value<bool> deleted,
-      Value<bool> dirty,
-      Value<int?> odooId,
-      required String lineId,
-      required String partId,
-      Value<int> rowid,
-    });
-typedef $$OrderLinePartsTableUpdateCompanionBuilder =
-    OrderLinePartsCompanion Function({
-      Value<String> id,
-      Value<DateTime> updatedAt,
-      Value<bool> deleted,
-      Value<bool> dirty,
-      Value<int?> odooId,
-      Value<String> lineId,
-      Value<String> partId,
-      Value<int> rowid,
-    });
-
-final class $$OrderLinePartsTableReferences
-    extends
-        BaseReferences<_$RentoryDatabase, $OrderLinePartsTable, OrderLinePart> {
-  $$OrderLinePartsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $OrderLinesTable _lineIdTable(_$RentoryDatabase db) =>
-      db.orderLines.createAlias('order_line_parts__line_id__order_lines__id');
-
-  $$OrderLinesTableProcessedTableManager get lineId {
-    final $_column = $_itemColumn<String>('line_id')!;
-
-    final manager = $$OrderLinesTableTableManager(
-      $_db,
-      $_db.orderLines,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_lineIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $PartsTable _partIdTable(_$RentoryDatabase db) =>
-      db.parts.createAlias('order_line_parts__part_id__parts__id');
-
-  $$PartsTableProcessedTableManager get partId {
-    final $_column = $_itemColumn<String>('part_id')!;
-
-    final manager = $$PartsTableTableManager(
-      $_db,
-      $_db.parts,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_partIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$OrderLinePartsTableFilterComposer
-    extends Composer<_$RentoryDatabase, $OrderLinePartsTable> {
-  $$OrderLinePartsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get deleted => $composableBuilder(
-    column: $table.deleted,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get odooId => $composableBuilder(
-    column: $table.odooId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$OrderLinesTableFilterComposer get lineId {
-    final $$OrderLinesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.lineId,
-      referencedTable: $db.orderLines,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinesTableFilterComposer(
-            $db: $db,
-            $table: $db.orderLines,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$PartsTableFilterComposer get partId {
-    final $$PartsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableFilterComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$OrderLinePartsTableOrderingComposer
-    extends Composer<_$RentoryDatabase, $OrderLinePartsTable> {
-  $$OrderLinePartsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get deleted => $composableBuilder(
-    column: $table.deleted,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get odooId => $composableBuilder(
-    column: $table.odooId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$OrderLinesTableOrderingComposer get lineId {
-    final $$OrderLinesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.lineId,
-      referencedTable: $db.orderLines,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinesTableOrderingComposer(
-            $db: $db,
-            $table: $db.orderLines,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$PartsTableOrderingComposer get partId {
-    final $$PartsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableOrderingComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$OrderLinePartsTableAnnotationComposer
-    extends Composer<_$RentoryDatabase, $OrderLinePartsTable> {
-  $$OrderLinePartsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get deleted =>
-      $composableBuilder(column: $table.deleted, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirty =>
-      $composableBuilder(column: $table.dirty, builder: (column) => column);
-
-  GeneratedColumn<int> get odooId =>
-      $composableBuilder(column: $table.odooId, builder: (column) => column);
-
-  $$OrderLinesTableAnnotationComposer get lineId {
-    final $$OrderLinesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.lineId,
-      referencedTable: $db.orderLines,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$OrderLinesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.orderLines,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$PartsTableAnnotationComposer get partId {
-    final $$PartsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$OrderLinePartsTableTableManager
-    extends
-        RootTableManager<
-          _$RentoryDatabase,
-          $OrderLinePartsTable,
-          OrderLinePart,
-          $$OrderLinePartsTableFilterComposer,
-          $$OrderLinePartsTableOrderingComposer,
-          $$OrderLinePartsTableAnnotationComposer,
-          $$OrderLinePartsTableCreateCompanionBuilder,
-          $$OrderLinePartsTableUpdateCompanionBuilder,
-          (OrderLinePart, $$OrderLinePartsTableReferences),
-          OrderLinePart,
-          PrefetchHooks Function({bool lineId, bool partId})
-        > {
-  $$OrderLinePartsTableTableManager(
-    _$RentoryDatabase db,
-    $OrderLinePartsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$OrderLinePartsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$OrderLinePartsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$OrderLinePartsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> deleted = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
-                Value<int?> odooId = const Value.absent(),
-                Value<String> lineId = const Value.absent(),
-                Value<String> partId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => OrderLinePartsCompanion(
-                id: id,
-                updatedAt: updatedAt,
-                deleted: deleted,
-                dirty: dirty,
-                odooId: odooId,
-                lineId: lineId,
-                partId: partId,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> deleted = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
-                Value<int?> odooId = const Value.absent(),
-                required String lineId,
-                required String partId,
-                Value<int> rowid = const Value.absent(),
-              }) => OrderLinePartsCompanion.insert(
-                id: id,
-                updatedAt: updatedAt,
-                deleted: deleted,
-                dirty: dirty,
-                odooId: odooId,
-                lineId: lineId,
-                partId: partId,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<$OrderLinePartsTable, OrderLinePart>(table),
-                  $$OrderLinePartsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({lineId = false, partId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (lineId) {
-                      state = state.withJoin(
-                        currentTable: table,
-                        currentColumn: table.lineId,
-                        referencedTable: $$OrderLinePartsTableReferences
-                            ._lineIdTable(db),
-                        referencedColumn: $$OrderLinePartsTableReferences
-                            ._lineIdTable(db)
-                            .id,
-                      ) as T;
-                    }
-                    if (partId) {
-                      state = state.withJoin(
-                        currentTable: table,
-                        currentColumn: table.partId,
-                        referencedTable: $$OrderLinePartsTableReferences
-                            ._partIdTable(db),
-                        referencedColumn: $$OrderLinePartsTableReferences
-                            ._partIdTable(db)
-                            .id,
-                      ) as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$OrderLinePartsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$RentoryDatabase,
-      $OrderLinePartsTable,
-      OrderLinePart,
-      $$OrderLinePartsTableFilterComposer,
-      $$OrderLinePartsTableOrderingComposer,
-      $$OrderLinePartsTableAnnotationComposer,
-      $$OrderLinePartsTableCreateCompanionBuilder,
-      $$OrderLinePartsTableUpdateCompanionBuilder,
-      (OrderLinePart, $$OrderLinePartsTableReferences),
-      OrderLinePart,
-      PrefetchHooks Function({bool lineId, bool partId})
-    >;
 typedef $$ReturnChecksTableCreateCompanionBuilder =
     ReturnChecksCompanion Function({
       Value<String> id,
@@ -21586,7 +18272,6 @@ typedef $$ReturnChecksTableCreateCompanionBuilder =
       required String lineId,
       required String orderId,
       Value<String?> serialId,
-      Value<String?> partId,
       Value<Condition> condition,
       Value<String?> note,
       required DateTime returnedAt,
@@ -21603,7 +18288,6 @@ typedef $$ReturnChecksTableUpdateCompanionBuilder =
       Value<String> lineId,
       Value<String> orderId,
       Value<String?> serialId,
-      Value<String?> partId,
       Value<Condition> condition,
       Value<String?> note,
       Value<DateTime> returnedAt,
@@ -21660,23 +18344,6 @@ final class $$ReturnChecksTableReferences
       $_db.serials,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_serialIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $PartsTable _partIdTable(_$RentoryDatabase db) =>
-      db.parts.createAlias('return_checks__part_id__parts__id');
-
-  $$PartsTableProcessedTableManager? get partId {
-    final $_column = $_itemColumn<String>('part_id');
-    if ($_column == null) return null;
-    final manager = $$PartsTableTableManager(
-      $_db,
-      $_db.parts,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_partIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -21799,29 +18466,6 @@ class $$ReturnChecksTableFilterComposer
           }) => $$SerialsTableFilterComposer(
             $db: $db,
             $table: $db.serials,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$PartsTableFilterComposer get partId {
-    final $$PartsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableFilterComposer(
-            $db: $db,
-            $table: $db.parts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -21954,29 +18598,6 @@ class $$ReturnChecksTableOrderingComposer
     );
     return composer;
   }
-
-  $$PartsTableOrderingComposer get partId {
-    final $$PartsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableOrderingComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
 }
 
 class $$ReturnChecksTableAnnotationComposer
@@ -22087,29 +18708,6 @@ class $$ReturnChecksTableAnnotationComposer
     );
     return composer;
   }
-
-  $$PartsTableAnnotationComposer get partId {
-    final $$PartsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.partId,
-      referencedTable: $db.parts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$PartsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.parts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
 }
 
 class $$ReturnChecksTableTableManager
@@ -22125,12 +18723,7 @@ class $$ReturnChecksTableTableManager
           $$ReturnChecksTableUpdateCompanionBuilder,
           (ReturnCheck, $$ReturnChecksTableReferences),
           ReturnCheck,
-          PrefetchHooks Function({
-            bool lineId,
-            bool orderId,
-            bool serialId,
-            bool partId,
-          })
+          PrefetchHooks Function({bool lineId, bool orderId, bool serialId})
         > {
   $$ReturnChecksTableTableManager(
     _$RentoryDatabase db,
@@ -22155,7 +18748,6 @@ class $$ReturnChecksTableTableManager
                 Value<String> lineId = const Value.absent(),
                 Value<String> orderId = const Value.absent(),
                 Value<String?> serialId = const Value.absent(),
-                Value<String?> partId = const Value.absent(),
                 Value<Condition> condition = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<DateTime> returnedAt = const Value.absent(),
@@ -22170,7 +18762,6 @@ class $$ReturnChecksTableTableManager
                 lineId: lineId,
                 orderId: orderId,
                 serialId: serialId,
-                partId: partId,
                 condition: condition,
                 note: note,
                 returnedAt: returnedAt,
@@ -22187,7 +18778,6 @@ class $$ReturnChecksTableTableManager
                 required String lineId,
                 required String orderId,
                 Value<String?> serialId = const Value.absent(),
-                Value<String?> partId = const Value.absent(),
                 Value<Condition> condition = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 required DateTime returnedAt,
@@ -22202,7 +18792,6 @@ class $$ReturnChecksTableTableManager
                 lineId: lineId,
                 orderId: orderId,
                 serialId: serialId,
-                partId: partId,
                 condition: condition,
                 note: note,
                 returnedAt: returnedAt,
@@ -22218,12 +18807,7 @@ class $$ReturnChecksTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({
-                lineId = false,
-                orderId = false,
-                serialId = false,
-                partId = false,
-              }) {
+              ({lineId = false, orderId = false, serialId = false}) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [],
@@ -22276,17 +18860,6 @@ class $$ReturnChecksTableTableManager
                                 .id,
                           ) as T;
                         }
-                        if (partId) {
-                          state = state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.partId,
-                            referencedTable: $$ReturnChecksTableReferences
-                                ._partIdTable(db),
-                            referencedColumn: $$ReturnChecksTableReferences
-                                ._partIdTable(db)
-                                .id,
-                          ) as T;
-                        }
 
                         return state;
                       },
@@ -22311,12 +18884,7 @@ typedef $$ReturnChecksTableProcessedTableManager =
       $$ReturnChecksTableUpdateCompanionBuilder,
       (ReturnCheck, $$ReturnChecksTableReferences),
       ReturnCheck,
-      PrefetchHooks Function({
-        bool lineId,
-        bool orderId,
-        bool serialId,
-        bool partId,
-      })
+      PrefetchHooks Function({bool lineId, bool orderId, bool serialId})
     >;
 typedef $$PhotosTableCreateCompanionBuilder = PhotosCompanion Function({
   Value<String> id,
@@ -22847,8 +19415,6 @@ class $RentoryDatabaseManager {
       $$AssetsTableTableManager(_db, _db.assets);
   $$SerialsTableTableManager get serials =>
       $$SerialsTableTableManager(_db, _db.serials);
-  $$PartsTableTableManager get parts =>
-      $$PartsTableTableManager(_db, _db.parts);
   $$OrdersTableTableManager get orders =>
       $$OrdersTableTableManager(_db, _db.orders);
   $$OrderDocumentsTableTableManager get orderDocuments =>
@@ -22857,8 +19423,6 @@ class $RentoryDatabaseManager {
       $$OrderLinesTableTableManager(_db, _db.orderLines);
   $$OrderLineSerialsTableTableManager get orderLineSerials =>
       $$OrderLineSerialsTableTableManager(_db, _db.orderLineSerials);
-  $$OrderLinePartsTableTableManager get orderLineParts =>
-      $$OrderLinePartsTableTableManager(_db, _db.orderLineParts);
   $$ReturnChecksTableTableManager get returnChecks =>
       $$ReturnChecksTableTableManager(_db, _db.returnChecks);
   $$PhotosTableTableManager get photos =>

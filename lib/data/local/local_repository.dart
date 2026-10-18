@@ -76,7 +76,7 @@ class LocalRepository implements RentoryRepository {
 
   @override
   Stream<List<AssetSummary>> watchAssets({String? search}) => _watch(
-    {db.assets, db.serials, db.parts, db.orderLines, db.categories},
+    {db.assets, db.serials, db.orderLines, db.categories},
     () async {
       final query = db.select(db.assets)
         ..where((a) => _alive(a) & a.active.equals(true))
@@ -142,26 +142,6 @@ class LocalRepository implements RentoryRepository {
           )
           ..orderBy([OrderingTerm.asc(db.serials.name)]);
     return [for (final row in await query.get()) row.readTable(db.serials)];
-  }
-
-  Future<List<Part>> _partsOfLine(OrderLine line) async {
-    if (line.lineType == LineType.part && line.partId != null) {
-      return (db.select(
-        db.parts,
-      )..where((p) => p.id.equals(line.partId!))).get();
-    }
-    if (line.lineType != LineType.asset) return const [];
-    final query =
-        db.select(db.parts).join([
-          innerJoin(
-            db.orderLineParts,
-            db.orderLineParts.partId.equalsExp(db.parts.id),
-          ),
-        ])..where(
-          db.orderLineParts.lineId.equals(line.id) &
-              db.orderLineParts.deleted.equals(false),
-        );
-    return [for (final row in await query.get()) row.readTable(db.parts)];
   }
 
   Future<List<ReturnCheck>> _checksOfLine(String lineId) => (db.select(
@@ -314,36 +294,12 @@ class LocalRepository implements RentoryRepository {
                   s.assetId.equals(assetId) & _alive(s) & s.active.equals(true),
             ))
             .get();
-    final parts =
-        await (db.select(db.parts)..where(
-              (p) =>
-                  p.assetId.equals(assetId) &
-                  _alive(p) &
-                  p.active.equals(true) &
-                  p.kind.equalsValue(PartKind.mandatory),
-            ))
-            .get();
-    final partLineIds = <String>{
-      for (final l in await (db.select(
-        db.orderLines,
-      )..where((l) => l.lineType.equalsValue(LineType.part))).get())
-        l.id,
-    };
-    bool blocked(Serial s) => parts.any(
-      (p) =>
-          p.serialId == s.id &&
-          (p.condition == 'lost' ||
-              p.condition == 'damaged' ||
-              (p.state != PartState.available &&
-                  partLineIds.contains(p.currentLineId))),
-    );
     return [
       for (final s in serials)
         SerialFacts(
           id: s.id,
           name: s.name,
           state: s.state,
-          blockedByPart: blocked(s),
         ),
     ];
   }
@@ -485,7 +441,6 @@ class LocalRepository implements RentoryRepository {
     String orderId, {
     required LineType type,
     String? assetId,
-    String? partId,
     String? name,
     double quantity = 1,
     double? priceDay,
@@ -503,13 +458,6 @@ class LocalRepository implements RentoryRepository {
       }
       price = priceDay ?? asset.rentalPriceDay;
       if (label.isEmpty) label = asset.name;
-    } else if (type == LineType.part && partId != null) {
-      final part = await (db.select(
-        db.parts,
-      )..where((p) => p.id.equals(partId))).getSingle();
-      price = priceDay ?? part.rentalPriceDay;
-      if (label.isEmpty) label = part.name;
-      assetId = part.assetId;
     }
     final last =
         await (db.select(db.orderLines)
@@ -526,7 +474,6 @@ class LocalRepository implements RentoryRepository {
             sequence: Value((last?.sequence ?? 0) + 10),
             lineType: Value(type),
             assetId: Value(section ? null : assetId),
-            partId: Value(section ? null : partId),
             name: Value(label),
             quantity: Value(section ? 0 : quantity),
             priceDay: Value(section ? 0 : price),
@@ -678,11 +625,6 @@ class LocalRepository implements RentoryRepository {
             await _setSerial(s.id, SerialState.reserved, v.line);
           }
         }
-        for (final p in await _partsOfLine(v.line)) {
-          if (p.state == PartState.available) {
-            await _setPart(p.id, PartState.reserved, v.line);
-          }
-        }
       }
     });
   }
@@ -780,9 +722,6 @@ class LocalRepository implements RentoryRepository {
         for (final s in v.serials) {
           await _setSerial(s.id, SerialState.out, v.line);
         }
-        for (final p in await _partsOfLine(v.line)) {
-          await _setPart(p.id, PartState.out, v.line);
-        }
       }
       await _syncState(orderId);
     });
@@ -809,12 +748,11 @@ class LocalRepository implements RentoryRepository {
 
       Future<void> check({
         String? serialId,
-        String? partId,
         required Condition condition,
         String? note,
       }) async {
         final existing = checks
-            .where((c) => c.serialId == serialId && c.partId == partId)
+            .where((c) => c.serialId == serialId)
             .firstOrNull;
         final values = ReturnChecksCompanion(
           condition: Value(condition),
@@ -836,7 +774,6 @@ class LocalRepository implements RentoryRepository {
                   lineId: Value(lineId),
                   orderId: Value(line.orderId),
                   serialId: Value(serialId),
-                  partId: Value(partId),
                 ),
               );
         }
@@ -845,23 +782,6 @@ class LocalRepository implements RentoryRepository {
       // Only what is still out. Re-checking a unit already back would
       // overwrite the condition it was recorded in (a damage note lost).
       final serialsBack = {for (final c in checks) c.serialId};
-      final partsBack = {for (final c in checks) c.partId};
-
-      for (final p in await _partsOfLine(line)) {
-        if (partsBack.contains(p.id)) continue;
-        await check(partId: p.id, condition: fallback);
-        await (db.update(db.parts)..where((x) => x.id.equals(p.id))).write(
-          PartsCompanion(
-            state: const Value(PartState.available),
-            condition: Value(partConditionAfterReturn(fallback)),
-            currentOrderId: const Value(null),
-            currentLineId: const Value(null),
-            updatedAt: _ts,
-            dirty: _dirty,
-          ),
-        );
-      }
-
       var allBack = true;
       if (serials.isNotEmpty) {
         final targets =
@@ -887,7 +807,7 @@ class LocalRepository implements RentoryRepository {
         }
         final back = {for (final c in await _checksOfLine(lineId)) c.serialId};
         allBack = serials.every((s) => back.contains(s.id));
-      } else if (line.lineType != LineType.part) {
+      } else {
         await check(condition: fallback);
       }
 
@@ -1052,24 +972,6 @@ class LocalRepository implements RentoryRepository {
   }
 
   @override
-  Future<List<Part>> rentableParts({String? search}) {
-    final query = db.select(db.parts)
-      ..where(
-        (p) =>
-            _alive(p) &
-            p.active.equals(true) &
-            p.kind.equalsValue(PartKind.mandatory).not(),
-      )
-      ..orderBy([(p) => OrderingTerm.asc(p.name)]);
-    final term = search?.trim();
-    if (term != null && term.isNotEmpty) {
-      final like = '%$term%';
-      query.where((p) => p.name.like(like) | p.code.like(like));
-    }
-    return query.get();
-  }
-
-  @override
   Future<void> updateLine(
     String lineId, {
     String? name,
@@ -1227,19 +1129,6 @@ class LocalRepository implements RentoryRepository {
         );
       }
     }
-    for (final p in await _partsOfLine(line)) {
-      if (p.state == PartState.reserved && p.currentLineId == line.id) {
-        await (db.update(db.parts)..where((x) => x.id.equals(p.id))).write(
-          PartsCompanion(
-            state: const Value(PartState.available),
-            currentOrderId: const Value(null),
-            currentLineId: const Value(null),
-            updatedAt: _ts,
-            dirty: _dirty,
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _setLine(String id, OrderLinesCompanion changes) =>
@@ -1250,17 +1139,6 @@ class LocalRepository implements RentoryRepository {
   Future<void> _setSerial(String id, SerialState state, OrderLine line) =>
       (db.update(db.serials)..where((s) => s.id.equals(id))).write(
         SerialsCompanion(
-          state: Value(state),
-          currentOrderId: Value(line.orderId),
-          currentLineId: Value(line.id),
-          updatedAt: _ts,
-          dirty: _dirty,
-        ),
-      );
-
-  Future<void> _setPart(String id, PartState state, OrderLine line) =>
-      (db.update(db.parts)..where((p) => p.id.equals(id))).write(
-        PartsCompanion(
           state: Value(state),
           currentOrderId: Value(line.orderId),
           currentLineId: Value(line.id),

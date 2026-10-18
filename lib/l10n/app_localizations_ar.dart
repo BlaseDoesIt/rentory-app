@@ -118,9 +118,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get lineAsset => 'معدّة';
 
   @override
-  String get linePart => 'قطعة';
-
-  @override
   String get lineService => 'خدمة';
 
   @override

@@ -75,7 +75,6 @@ extension Labels on AppLocalizations {
 
   String lineType(LineType t) => switch (t) {
     LineType.asset => lineAsset,
-    LineType.part => linePart,
     LineType.service => lineService,
     LineType.section => lineSection,
   };

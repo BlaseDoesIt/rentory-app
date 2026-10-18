@@ -29,12 +29,7 @@ const serials = [
   SerialFacts(id: 's1', name: 'CAM-001', state: SerialState.available),
   SerialFacts(id: 's2', name: 'CAM-002', state: SerialState.reserved),
   SerialFacts(id: 's3', name: 'CAM-003', state: SerialState.maintenance),
-  SerialFacts(
-    id: 's4',
-    name: 'CAM-004',
-    state: SerialState.available,
-    blockedByPart: true,
-  ),
+  SerialFacts(id: 's4', name: 'CAM-004', state: SerialState.retired),
 ];
 
 void main() {

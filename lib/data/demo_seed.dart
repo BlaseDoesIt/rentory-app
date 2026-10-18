@@ -111,7 +111,7 @@ class DemoSeed {
       150,
       serials: ['FX6-0231', 'FX6-0244'],
     );
-    final ronin = await asset(
+    await asset(
       'DJI Ronin 4D-6K',
       'CAM-003',
       'Cameras',
@@ -165,30 +165,6 @@ class DemoSeed {
       qty: 4,
       location: 'Shelf B',
     );
-
-    // The Ronin's balancing plate is mandatory: without it the unit cannot
-    // go out.
-    final roninUnit = await (db.select(
-      db.serials,
-    )..where((s) => s.assetId.equals(ronin))).getSingle();
-    for (final (name, code, kind, price) in [
-      ('Balancing plate', 'RON-PLATE', PartKind.mandatory, 0.0),
-      ('Master grip', 'RON-GRIP', PartKind.supply, 15.0),
-      ('TB50 spare battery', 'RON-TB50', PartKind.supply, 10.0),
-    ]) {
-      await db
-          .into(db.parts)
-          .insert(
-            PartsCompanion.insert(
-              name: name,
-              code: Value(code),
-              assetId: ronin,
-              serialId: Value(roninUnit.id),
-              kind: Value(kind),
-              rentalPriceDay: Value(price),
-            ),
-          );
-    }
 
     final customers = <String>[];
     for (final (name, phone) in [

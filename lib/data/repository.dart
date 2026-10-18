@@ -108,7 +108,6 @@ abstract interface class RentoryRepository {
     String orderId, {
     required LineType type,
     String? assetId,
-    String? partId,
     String? name,
     double quantity = 1,
     double? priceDay,
@@ -149,10 +148,6 @@ abstract interface class RentoryRepository {
 
   Future<List<Customer>> customers({String? search});
   Future<String> createCustomer({required String name, String? phone});
-
-  /// Parts that can go on their own line (not the mandatory ones that
-  /// travel with their unit).
-  Future<List<Part>> rentableParts({String? search});
 
   /// Change a line before it is booked. Null leaves a field as it is.
   Future<void> updateLine(

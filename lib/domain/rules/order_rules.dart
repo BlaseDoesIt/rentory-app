@@ -129,13 +129,6 @@ SerialState serialStateAfterReturn(Condition condition) => switch (condition) {
   Condition.minor || Condition.good => SerialState.available,
 };
 
-/// A part's own condition after check-in (`PART_CONDITION_MAP`).
-String partConditionAfterReturn(Condition condition) => switch (condition) {
-  Condition.missing => 'lost',
-  Condition.damaged => 'damaged',
-  Condition.minor || Condition.good => 'good',
-};
-
 /// Order dates must run forwards.
 String? datesProblem(DateTime? start, DateTime? end) =>
     start != null && end != null && !end.isAfter(start)
