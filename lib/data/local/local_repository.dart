@@ -53,7 +53,10 @@ class LocalRepository implements RentoryRepository {
   }
 
   @override
-  Stream<List<OrderSummary>> watchOrders({OrderState? state}) => _watch(
+  Stream<List<OrderSummary>> watchOrders({
+    OrderState? state,
+    bool archived = false,
+  }) => _watch(
     {
       db.orders,
       db.orderLines,
@@ -62,7 +65,8 @@ class LocalRepository implements RentoryRepository {
       db.customers,
     },
     () async {
-      final query = db.select(db.orders)..where((o) => _alive(o));
+      final query = db.select(db.orders)
+        ..where((o) => _alive(o) & o.active.equals(!archived));
       if (state != null) {
         query.where((o) => o.state.equalsValue(state));
       }
@@ -76,11 +80,14 @@ class LocalRepository implements RentoryRepository {
   );
 
   @override
-  Stream<List<AssetSummary>> watchAssets({String? search}) => _watch(
+  Stream<List<AssetSummary>> watchAssets({
+    String? search,
+    bool archived = false,
+  }) => _watch(
     {db.assets, db.serials, db.orderLines, db.categories, db.photos},
     () async {
       final query = db.select(db.assets)
-        ..where((a) => _alive(a) & a.active.equals(true))
+        ..where((a) => _alive(a) & a.active.equals(!archived))
         ..orderBy([(a) => OrderingTerm.asc(a.name)]);
       final term = search?.trim();
       if (term != null && term.isNotEmpty) {
@@ -246,6 +253,10 @@ class LocalRepository implements RentoryRepository {
         itemCount: views.where((v) => v.line.lineType == LineType.asset).length,
         overdue: overdue,
         daysLate: daysLate(overdue: overdue, dateEnd: order.dateEnd, now: now),
+        lineNames: [
+          for (final v in views)
+            if (v.line.name.isNotEmpty) v.line.name,
+        ],
       ),
       lines: views,
       lateDailyRate: late.dailyRate,
@@ -433,6 +444,7 @@ class LocalRepository implements RentoryRepository {
     double quantity = 1,
     double? priceDay,
     double discount = 0,
+    List<String> serialIds = const [],
   }) async {
     var price = priceDay ?? 0;
     var label = name ?? '';
@@ -441,7 +453,7 @@ class LocalRepository implements RentoryRepository {
       final asset = await (db.select(
         db.assets,
       )..where((a) => a.id.equals(askedAsset))).getSingle();
-      if (!asset.rentalOk) {
+      if (!asset.rentalOk || !asset.active || asset.deleted) {
         throw RuleException.one('${asset.name} is not for rent.');
       }
       if (asset.stateManual != null) {
@@ -479,6 +491,9 @@ class LocalRepository implements RentoryRepository {
             updatedAt: _ts,
           ),
         );
+    if (!section && serialIds.isNotEmpty) {
+      await setLineSerials(row.id, serialIds);
+    }
     return row.id;
   }
 
@@ -506,7 +521,93 @@ class LocalRepository implements RentoryRepository {
           dirty: _dirty,
         ),
       );
+      await _syncState(line.orderId);
     });
+  }
+
+  @override
+  Future<void> moveLines(String orderId, List<String> lineIds) async {
+    final current = {for (final l in await _lines(orderId)) l.id: l};
+    await db.transaction(() async {
+      for (final (i, id) in lineIds.indexed) {
+        final l = current[id];
+        final sequence = (i + 1) * 10;
+        if (l == null || l.sequence == sequence) continue;
+        await _setLine(id, OrderLinesCompanion(sequence: Value(sequence)));
+      }
+    });
+  }
+
+  @override
+  Future<ScanAdd> addScanned(String orderId, String code) async {
+    final hit = await findByCode(code);
+    final a = hit.asset;
+    if (a == null) {
+      return (outcome: ScanOutcome.notFound, lineId: null, name: code.trim());
+    }
+    final lines = await _lines(orderId);
+    final open = lines
+        .where(
+          (l) =>
+              l.assetId == a.id &&
+              l.lineType == LineType.asset &&
+              l.rentalState == RentalState.none,
+        )
+        .firstOrNull;
+    ScanAdd result(ScanOutcome o, String id) =>
+        (outcome: o, lineId: id, name: hit.serial?.name ?? a.name);
+
+    if (a.tracking == Tracking.none) {
+      if (open != null) {
+        await updateLine(open.id, quantity: open.quantity + 1);
+        return result(ScanOutcome.added, open.id);
+      }
+      final id = await addLine(orderId, type: LineType.asset, assetId: a.id);
+      return result(ScanOutcome.added, id);
+    }
+
+    var serialId = hit.serial?.id;
+    if (serialId != null) {
+      for (final l in lines) {
+        if ((await _serialsOfLine(l.id)).any((s) => s.id == serialId)) {
+          return result(ScanOutcome.alreadyOnOrder, l.id);
+        }
+      }
+      final free = await serialOptionsFor(orderId, a.id);
+      if (!free.any((o) => o.serial.id == serialId)) {
+        throw RuleException.one(
+          '${hit.serial!.name} is not free for these dates.',
+        );
+      }
+    } else {
+      // The asset's own barcode: take its unit only when there is one.
+      final free = [
+        for (final o in await serialOptionsFor(orderId, a.id))
+          if (!o.overdue) o,
+      ];
+      if (free.length == 1) serialId = free.single.serial.id;
+    }
+
+    if (serialId != null) {
+      if (open != null) {
+        final have = [for (final s in await _serialsOfLine(open.id)) s.id];
+        await setLineSerials(open.id, [...have, serialId]);
+        return result(ScanOutcome.added, open.id);
+      }
+      final id = await addLine(
+        orderId,
+        type: LineType.asset,
+        assetId: a.id,
+        serialIds: [serialId],
+      );
+      return result(ScanOutcome.added, id);
+    }
+    if (open != null) {
+      await updateLine(open.id, quantity: open.quantity + 1);
+      return result(ScanOutcome.pickUnits, open.id);
+    }
+    final id = await addLine(orderId, type: LineType.asset, assetId: a.id);
+    return result(ScanOutcome.pickUnits, id);
   }
 
   // ============================================================ serials
@@ -534,11 +635,33 @@ class LocalRepository implements RentoryRepository {
   }
 
   @override
+  Future<List<SerialOption>> serialOptionsFor(
+    String orderId,
+    String assetId,
+  ) async {
+    final order = await _order(orderId);
+    if (order.dateStart == null || order.dateEnd == null) return const [];
+    return freeSerials(
+      serials: await _serialFacts(assetId),
+      assetId: assetId,
+      claims: await _claims(assetId),
+      ask: Ask(start: order.dateStart!, end: order.dateEnd!, orderId: orderId),
+      now: _clock(),
+    );
+  }
+
+  @override
   Future<void> setLineSerials(String lineId, List<String> serialIds) async {
     final line = await _line(lineId);
-    if (line.rentalState != RentalState.none) {
-      throw RuleException.one('Units can only be changed before booking.');
+    if (line.rentalState.goneOut) {
+      throw RuleException.one(
+        '${line.name} is already out. Add a new line for more units.',
+      );
     }
+    await _rebookAfter(line, () => _writeLineSerials(lineId, serialIds));
+  }
+
+  Future<void> _writeLineSerials(String lineId, List<String> serialIds) async {
     await db.transaction(() async {
       await (db.update(
         db.orderLineSerials,
@@ -587,32 +710,41 @@ class LocalRepository implements RentoryRepository {
   // ============================================================ lifecycle
 
   @override
-  Future<void> book(String orderId) async {
+  Future<void> book(String orderId, {List<String>? lineIds}) async {
     final detail = await loadOrder(orderId);
     final order = detail.order;
-    final problems = bookProblems(order.state, [
-      for (final v in detail.lines) _facts(v),
-    ]);
+    final picked = [
+      for (final v in detail.lines)
+        if (lineIds == null
+            ? v.line.rentalState == RentalState.none &&
+                  v.line.lineType != LineType.section
+            : lineIds.contains(v.line.id))
+          v,
+    ];
+    final problems = bookProblems([for (final v in picked) _facts(v)]);
     if (problems.isNotEmpty) throw RuleException(problems);
-    problems.addAll(await _availabilityProblems(detail));
+    problems.addAll(await _availabilityProblems(detail, picked));
     if (problems.isNotEmpty) throw RuleException(problems);
 
     // Always confirmed, even when re-booking a numbered order: the units
     // still have to be refereed. The number itself is kept.
-    final number = await gateway.confirmBooking(orderId, _clock());
+    final number = await gateway.confirmBooking(
+      orderId,
+      _clock(),
+      lineIds: lineIds == null ? null : [for (final v in picked) v.line.id],
+    );
     await db.transaction(() async {
+      final reopen =
+          order.state == OrderState.draft ||
+          order.state == OrderState.cancelled;
       await updateOrder(
         orderId,
         OrdersCompanion(
-          state: const Value(OrderState.booked),
+          state: reopen ? const Value(OrderState.booked) : const Value.absent(),
           number: Value(number),
         ),
       );
-      for (final v in detail.lines) {
-        if (v.line.lineType == LineType.section ||
-            v.line.rentalState != RentalState.none) {
-          continue;
-        }
+      for (final v in picked) {
         await _setLine(
           v.line.id,
           const OrderLinesCompanion(rentalState: Value(RentalState.booked)),
@@ -624,14 +756,52 @@ class LocalRepository implements RentoryRepository {
           }
         }
       }
+      if (!reopen) await _syncState(orderId);
     });
   }
 
-  Future<List<String>> _availabilityProblems(OrderDetail detail) async {
+  @override
+  Future<void> unbookLine(String lineId) async {
+    final line = await _line(lineId);
+    if (line.rentalState != RentalState.booked) return;
+    await db.transaction(() async {
+      await _releaseLine(line);
+      await _setLine(
+        lineId,
+        const OrderLinesCompanion(rentalState: Value(RentalState.none)),
+      );
+      await _syncState(line.orderId);
+    });
+  }
+
+  /// Runs [change] on [line]. A booked line comes off the booking first and
+  /// is booked again after, so the server referees the new units or dates.
+  /// If that fails the change stays and the line waits, unbooked.
+  Future<void> _rebookAfter(
+    OrderLine line,
+    Future<void> Function() change,
+  ) async {
+    if (line.rentalState != RentalState.booked) return change();
+    await unbookLine(line.id);
+    await change();
+    try {
+      await book(line.orderId, lineIds: [line.id]);
+    } on RuleException catch (e) {
+      throw RuleException([
+        ...e.problems,
+        '${line.name} is saved but not booked now. Fix it and book it again.',
+      ]);
+    }
+  }
+
+  Future<List<String>> _availabilityProblems(
+    OrderDetail detail,
+    List<LineView> lines,
+  ) async {
     final order = detail.order;
     final now = _clock();
     final problems = <String>[];
-    for (final v in detail.lines) {
+    for (final v in lines) {
       final l = v.line;
       if (l.lineType != LineType.asset || l.assetId == null) continue;
       final w = _window(l, order);
@@ -702,18 +872,29 @@ class LocalRepository implements RentoryRepository {
   }
 
   @override
-  Future<void> pickupAll(String orderId, {bool force = false}) async {
+  Future<void> pickupAll(
+    String orderId, {
+    bool force = false,
+    List<String>? lineIds,
+  }) async {
     final detail = await loadOrder(orderId);
     final order = detail.order;
-    if (!OrderState.committed.contains(order.state)) {
-      throw RuleException.one('Book the order before picking it up.');
+    // Only booked lines go out; the rest wait for their own booking.
+    final going = [
+      for (final v in detail.lines)
+        if (v.line.rentalState == RentalState.booked &&
+            canPickUpLine(_facts(v)) &&
+            (lineIds == null || lineIds.contains(v.line.id)))
+          v,
+    ];
+    if (going.isEmpty) {
+      throw RuleException.one('Book the items before picking them up.');
     }
     final problems = pickupProblems(
       rentalContractSigned: order.sigRentalContract,
       forcedByAdmin: force,
     );
-    for (final v in detail.lines) {
-      if (!canPickUpLine(_facts(v))) continue;
+    for (final v in going) {
       if (_facts(v).missingSerials) {
         problems.add('${v.line.name}: pick the units before handing it over.');
       }
@@ -727,8 +908,7 @@ class LocalRepository implements RentoryRepository {
 
     final now = _clock();
     await db.transaction(() async {
-      for (final v in detail.lines) {
-        if (!canPickUpLine(_facts(v))) continue;
+      for (final v in going) {
         await _setLine(
           v.line.id,
           OrderLinesCompanion(
@@ -910,6 +1090,59 @@ class LocalRepository implements RentoryRepository {
   }
 
   @override
+  Future<Removal> removeOrder(String orderId) async {
+    final detail = await loadOrder(orderId);
+    if (detail.lines.any((v) => v.line.rentalState == RentalState.pickedUp)) {
+      throw RuleException.one(
+        'Items are still with the customer. Return them first.',
+      );
+    }
+    final history = detail.lines.any((v) => v.line.rentalState.goneOut);
+    await db.transaction(() async {
+      // Nothing stays reserved for an order that is gone or archived.
+      for (final v in detail.lines) {
+        if (v.line.rentalState != RentalState.booked) continue;
+        await _releaseLine(v.line);
+        await _setLine(
+          v.line.id,
+          const OrderLinesCompanion(rentalState: Value(RentalState.none)),
+        );
+      }
+      if (history) {
+        await updateOrder(orderId, const OrdersCompanion(active: Value(false)));
+        return;
+      }
+      const gone = Value(true);
+      for (final v in detail.lines) {
+        await _setLine(v.line.id, const OrderLinesCompanion(deleted: gone));
+        await (db.update(
+          db.orderLineSerials,
+        )..where((x) => x.lineId.equals(v.line.id))).write(
+          OrderLineSerialsCompanion(
+            deleted: gone,
+            updatedAt: _ts,
+            dirty: _dirty,
+          ),
+        );
+      }
+      await (db.update(
+        db.orderDocuments,
+      )..where((x) => x.orderId.equals(orderId))).write(
+        OrderDocumentsCompanion(deleted: gone, updatedAt: _ts, dirty: _dirty),
+      );
+      await (db.delete(
+        db.orderPhotos,
+      )..where((x) => x.orderId.equals(orderId))).go();
+      await updateOrder(orderId, const OrdersCompanion(deleted: gone));
+    });
+    return history ? Removal.archived : Removal.deleted;
+  }
+
+  @override
+  Future<void> restoreOrder(String orderId) =>
+      updateOrder(orderId, const OrdersCompanion(active: Value(true)));
+
+  @override
   Future<({Asset? asset, Serial? serial})> findByCode(String code) async {
     final c = code.trim();
     final serial =
@@ -1078,6 +1311,37 @@ class LocalRepository implements RentoryRepository {
             ..orderBy([(l) => OrderingTerm.asc(l.name)]))
           .get();
 
+  @override
+  Future<String> createLocation(String name) async {
+    final clean = name.trim();
+    if (clean.isEmpty) throw RuleException.one('The location needs a name.');
+    final same =
+        await (db.select(db.locations)..where(
+              (l) => _alive(l) & l.name.lower().equals(clean.toLowerCase()),
+            ))
+            .getSingleOrNull();
+    if (same != null) {
+      if (!same.active) {
+        await (db.update(
+          db.locations,
+        )..where((l) => l.id.equals(same.id))).write(
+          LocationsCompanion(
+            active: const Value(true),
+            updatedAt: _ts,
+            dirty: _dirty,
+          ),
+        );
+      }
+      return same.id;
+    }
+    final row = await db
+        .into(db.locations)
+        .insertReturning(
+          LocationsCompanion.insert(name: clean, updatedAt: _ts),
+        );
+    return row.id;
+  }
+
   /// Codes already taken by something a scanner could find.
   Future<List<String>> _codeClashes(Iterable<String> codes) async {
     final clashes = <String>[];
@@ -1209,6 +1473,146 @@ class LocalRepository implements RentoryRepository {
       changes.copyWith(updatedAt: _ts, dirty: _dirty),
     );
   }
+
+  @override
+  Future<void> changeTracking(
+    String assetId,
+    Tracking tracking, {
+    List<String> units = const [],
+    double? quantity,
+  }) async {
+    final a = await (db.select(
+      db.assets,
+    )..where((x) => x.id.equals(assetId))).getSingle();
+    if (a.tracking == tracking) return;
+    final busy = [
+      for (final l in await _liveLines(assetId))
+        if (l.rentalState != RentalState.none) l,
+    ];
+    if (busy.isNotEmpty) {
+      throw RuleException.one(
+        '${a.name} is booked or out on ${busy.length} line(s). '
+        'Return or unbook those first.',
+      );
+    }
+    final all = await (db.select(
+      db.serials,
+    )..where((s) => s.assetId.equals(assetId) & _alive(s))).get();
+    if (tracking == Tracking.serial) {
+      final known = {for (final s in all) s.name.toLowerCase()};
+      final fresh = [
+        for (final n in _cleanNames(units))
+          if (!known.contains(n.toLowerCase())) n,
+      ];
+      if (all.isEmpty && fresh.isEmpty) {
+        throw RuleException.one('Add at least one unit.');
+      }
+      final clashes = await _codeClashes(fresh);
+      if (clashes.isNotEmpty) {
+        throw RuleException([
+          for (final x in clashes)
+            '$x is already used by another asset or unit.',
+        ]);
+      }
+      await db.transaction(() async {
+        // Units it had before it was counted by quantity come back.
+        for (final s in all) {
+          if (s.active) continue;
+          await (db.update(db.serials)..where((x) => x.id.equals(s.id))).write(
+            SerialsCompanion(
+              active: const Value(true),
+              updatedAt: _ts,
+              dirty: _dirty,
+            ),
+          );
+        }
+        await _insertUnits(a, fresh);
+        await updateAsset(
+          assetId,
+          const AssetsCompanion(
+            tracking: Value(Tracking.serial),
+            qtyManual: Value(0),
+          ),
+        );
+      });
+      return;
+    }
+    final fit = all.where((s) => s.active && !s.state.unfit).length;
+    final stock = quantity ?? fit.toDouble();
+    if (stock <= 0) throw RuleException.one('Quantity must be more than zero.');
+    await db.transaction(() async {
+      // Units are kept for the record, only switched off.
+      for (final s in all) {
+        if (!s.active) continue;
+        await (db.update(db.serials)..where((x) => x.id.equals(s.id))).write(
+          SerialsCompanion(
+            active: const Value(false),
+            updatedAt: _ts,
+            dirty: _dirty,
+          ),
+        );
+      }
+      // Draft lines stop naming units; they now count a quantity.
+      for (final l in await _liveLines(assetId)) {
+        await (db.update(
+          db.orderLineSerials,
+        )..where((x) => x.lineId.equals(l.id) & _alive(x))).write(
+          OrderLineSerialsCompanion(
+            deleted: const Value(true),
+            updatedAt: _ts,
+            dirty: _dirty,
+          ),
+        );
+      }
+      await updateAsset(
+        assetId,
+        AssetsCompanion(
+          tracking: const Value(Tracking.none),
+          qtyManual: Value(stock),
+        ),
+      );
+    });
+  }
+
+  @override
+  Future<Removal> removeAsset(String assetId) async {
+    final a = await (db.select(
+      db.assets,
+    )..where((x) => x.id.equals(assetId))).getSingle();
+    final busy = [
+      for (final l in await _liveLines(assetId))
+        if (l.rentalState != RentalState.none) l,
+    ];
+    if (busy.isNotEmpty) {
+      throw RuleException.one(
+        '${a.name} is booked or out on ${busy.length} line(s). '
+        'Return or unbook those first.',
+      );
+    }
+    final used = await (db.select(
+      db.orderLines,
+    )..where((l) => l.assetId.equals(assetId) & _alive(l))).get();
+    if (used.isNotEmpty) {
+      await updateAsset(assetId, const AssetsCompanion(active: Value(false)));
+      return Removal.archived;
+    }
+    const gone = Value(true);
+    await db.transaction(() async {
+      await (db.update(
+        db.serials,
+      )..where((s) => s.assetId.equals(assetId))).write(
+        SerialsCompanion(deleted: gone, updatedAt: _ts, dirty: _dirty),
+      );
+      await (db.update(db.photos)..where((p) => p.assetId.equals(assetId)))
+          .write(PhotosCompanion(deleted: gone, updatedAt: _ts, dirty: _dirty));
+      await updateAsset(assetId, const AssetsCompanion(deleted: gone));
+    });
+    return Removal.deleted;
+  }
+
+  @override
+  Future<void> restoreAsset(String assetId) =>
+      updateAsset(assetId, const AssetsCompanion(active: Value(true)));
 
   @override
   Future<void> setAssetStatus(String assetId, AssetManualState? state) async {
@@ -1417,11 +1821,6 @@ class LocalRepository implements RentoryRepository {
     double? discount,
   }) async {
     final line = await _line(lineId);
-    if (line.rentalState != RentalState.none) {
-      throw RuleException.one(
-        'Booked lines are fixed. Put the order back to draft to change them.',
-      );
-    }
     if (quantity != null && quantity <= 0) {
       throw RuleException.one('Quantity must be more than zero.');
     }
@@ -1431,7 +1830,14 @@ class LocalRepository implements RentoryRepository {
     if (discount != null && (discount < 0 || discount > 100)) {
       throw RuleException.one('The discount is a percent from 0 to 100.');
     }
-    await _setLine(
+    final newQty = quantity != null && quantity != line.quantity;
+    if (newQty && line.rentalState.goneOut) {
+      throw RuleException.one(
+        '${line.name} is already out, so its quantity stays. '
+        'Add a new line for more.',
+      );
+    }
+    Future<void> write() => _setLine(
       lineId,
       OrderLinesCompanion(
         name: name == null ? const Value.absent() : Value(name),
@@ -1440,6 +1846,9 @@ class LocalRepository implements RentoryRepository {
         discount: discount == null ? const Value.absent() : Value(discount),
       ),
     );
+    // Name and money never touch the booking; quantity is refereed again.
+    if (!newQty) return write();
+    await _rebookAfter(line, write);
   }
 
   @override
@@ -1449,9 +1858,13 @@ class LocalRepository implements RentoryRepository {
     DateTime? end,
   ) async {
     final line = await _line(lineId);
-    if (line.rentalState != RentalState.none) {
+    final same =
+        line.dateStart?.toUtc() == start?.toUtc() &&
+        line.dateEnd?.toUtc() == end?.toUtc();
+    if (same) return;
+    if (line.rentalState.goneOut) {
       throw RuleException.one(
-        'Booked lines are fixed. Put the order back to draft to change them.',
+        '${line.name} is already out, so its dates stay as they are.',
       );
     }
     if (start != null || end != null) {
@@ -1469,11 +1882,14 @@ class LocalRepository implements RentoryRepository {
         );
       }
     }
-    await _setLine(
-      lineId,
-      OrderLinesCompanion(
-        dateStart: Value(start?.toUtc()),
-        dateEnd: Value(end?.toUtc()),
+    await _rebookAfter(
+      line,
+      () => _setLine(
+        lineId,
+        OrderLinesCompanion(
+          dateStart: Value(start?.toUtc()),
+          dateEnd: Value(end?.toUtc()),
+        ),
       ),
     );
   }
@@ -1655,6 +2071,30 @@ class LocalRepository implements RentoryRepository {
             ..orderBy([(p) => OrderingTerm.asc(p.takenAt)]))
           .get();
 
+  // ============================================================ order photos
+
+  @override
+  Future<List<OrderPhoto>> orderPhotos(String orderId) =>
+      (db.select(db.orderPhotos)
+            ..where((p) => p.orderId.equals(orderId))
+            ..orderBy([(p) => OrderingTerm.asc(p.takenAt)]))
+          .get();
+
+  @override
+  Future<void> addOrderPhoto(String orderId, String path) => db
+      .into(db.orderPhotos)
+      .insert(
+        OrderPhotosCompanion.insert(
+          orderId: orderId,
+          path: path,
+          takenAt: Value(_clock()),
+        ),
+      );
+
+  @override
+  Future<void> removeOrderPhoto(String photoId) =>
+      (db.delete(db.orderPhotos)..where((p) => p.id.equals(photoId))).go();
+
   // ============================================================ helpers
 
   /// Hand back what a line holds but has not sent out. Only units this line
@@ -1712,7 +2152,11 @@ class LocalBookingGateway implements BookingGateway {
   final RentoryDatabase db;
 
   @override
-  Future<String> confirmBooking(String orderId, DateTime bookedAt) async {
+  Future<String> confirmBooking(
+    String orderId,
+    DateTime bookedAt, {
+    List<String>? lineIds,
+  }) async {
     final existing = await (db.select(
       db.orders,
     )..where((o) => o.id.equals(orderId))).getSingle();

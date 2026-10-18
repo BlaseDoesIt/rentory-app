@@ -58,19 +58,23 @@ class FakeServer implements RemoteStore {
   }
 
   @override
-  Future<String> bookOrder(String orderId) async {
+  Future<String> bookOrder(String orderId, {List<String>? lineIds}) async {
     final o = t('orders')[orderId]!;
-    if (o['number'] != null && o['state'] != 'draft') {
-      return o['number'] as String;
-    }
     final now = DateTime.now().toUtc().toIso8601String();
     final pending = <({String serial, String line, DateTime s, DateTime e})>[];
-    for (final l in t('order_lines').values.where(
-      (l) =>
-          l['order_id'] == orderId &&
-          l['deleted'] != true &&
-          l['line_type'] == 'asset',
-    )) {
+    final lines = [
+      for (final l in t('order_lines').values)
+        if (l['order_id'] == orderId &&
+            l['deleted'] != true &&
+            l['line_type'] == 'asset' &&
+            (lineIds?.contains(l['id']) ??
+                (l['rental_state'] ?? 'none') == 'none'))
+          l,
+    ];
+    if (lines.isEmpty && o['number'] != null) return o['number'] as String;
+    for (final l in lines) {
+      // Like the server's trigger: an unbooked line let go of its claims.
+      claims.removeWhere((c) => c.line == l['id']);
       final s = DateTime.parse((l['date_start'] ?? o['date_start']) as String);
       final e = DateTime.parse((l['date_end'] ?? o['date_end']) as String);
       for (final link in t(
@@ -93,7 +97,9 @@ class FakeServer implements RemoteStore {
         'RO/2026/${(++_numbers).toString().padLeft(4, '0')}';
     _stamp('orders', {
       ...o,
-      'state': 'booked',
+      'state': o['state'] == 'draft' || o['state'] == 'cancelled'
+          ? 'booked'
+          : o['state'],
       'number': number,
       'updated_at': now,
     });

@@ -17,9 +17,10 @@ abstract interface class RemoteStore {
     int limit = 500,
   });
 
-  /// Confirm a booking. Returns the order number, or throws
-  /// [RuleException] with the server's reason.
-  Future<String> bookOrder(String orderId);
+  /// Confirm a booking of [lineIds], or of every line not booked yet.
+  /// Returns the order number, or throws [RuleException] with the server's
+  /// reason.
+  Future<String> bookOrder(String orderId, {List<String>? lineIds});
 
   Future<void> uploadPhoto(String path, Uint8List bytes);
 
@@ -53,11 +54,11 @@ class SupabaseRemoteStore implements RemoteStore {
   }
 
   @override
-  Future<String> bookOrder(String orderId) async {
+  Future<String> bookOrder(String orderId, {List<String>? lineIds}) async {
     try {
       final number = await client.rpc<String>(
-        'book_order',
-        params: {'p_order_id': orderId},
+        'book_lines',
+        params: {'p_order_id': orderId, 'p_line_ids': lineIds},
       );
       return number;
     } on PostgrestException catch (e) {

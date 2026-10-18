@@ -25,6 +25,7 @@ class OrderSummary {
     required this.itemCount,
     required this.overdue,
     required this.daysLate,
+    this.lineNames = const [],
   });
 
   final Order order;
@@ -33,6 +34,9 @@ class OrderSummary {
   final int itemCount;
   final bool overdue;
   final int daysLate;
+
+  /// What is on it, for search.
+  final List<String> lineNames;
 }
 
 class LineView {
@@ -122,9 +126,38 @@ class AssetDetail {
 /// Per-unit outcome of a return: condition and an optional note.
 typedef UnitReturn = ({Condition condition, String? note});
 
+/// What a delete did: some records keep history, so they are archived.
+enum Removal { deleted, archived }
+
+/// What scanning a code onto an order did.
+enum ScanOutcome {
+  /// Added (or one more on its line).
+  added,
+
+  /// Added, but its unit could not be chosen alone: pick it on [lineId].
+  pickUnits,
+
+  /// That unit is already on this order.
+  alreadyOnOrder,
+
+  /// No asset or unit has this code.
+  notFound,
+}
+
+typedef ScanAdd = ({ScanOutcome outcome, String? lineId, String? name});
+
 abstract interface class RentoryRepository {
-  Stream<List<OrderSummary>> watchOrders({OrderState? state});
-  Stream<List<AssetSummary>> watchAssets({String? search});
+  /// Orders, or with [archived] only the archived ones.
+  Stream<List<OrderSummary>> watchOrders({
+    OrderState? state,
+    bool archived = false,
+  });
+
+  /// Assets, or with [archived] only the archived ones.
+  Stream<List<AssetSummary>> watchAssets({
+    String? search,
+    bool archived = false,
+  });
   Future<OrderDetail> loadOrder(String orderId);
 
   Future<String> createOrder({
@@ -144,18 +177,41 @@ abstract interface class RentoryRepository {
     double quantity = 1,
     double? priceDay,
     double discount = 0,
+
+    /// Units for a serial asset; the quantity follows them.
+    List<String> serialIds = const [],
   });
   Future<void> removeLine(String lineId);
 
+  /// Puts the order's lines in this order (sections included).
+  Future<void> moveLines(String orderId, List<String> lineIds);
+
+  /// Adds whatever [code] scans to: a unit, or an asset by its barcode.
+  Future<ScanAdd> addScanned(String orderId, String code);
+
   Future<List<SerialOption>> serialOptions(String lineId);
+
+  /// Units of [assetId] free over the order's dates, for a line not made yet.
+  Future<List<SerialOption>> serialOptionsFor(String orderId, String assetId);
   Future<void> setLineSerials(String lineId, List<String> serialIds);
 
   /// Picks free units by name, never overdue ones. Returns how many it
   /// could not find.
   Future<int> autofillSerials(String lineId);
 
-  Future<void> book(String orderId);
-  Future<void> pickupAll(String orderId, {bool force = false});
+  /// Books [lineIds], or every line not booked yet. Works on an order of
+  /// any state: lines added later are booked on their own.
+  Future<void> book(String orderId, {List<String>? lineIds});
+
+  /// Takes a booked line off the booking; its units are free again.
+  Future<void> unbookLine(String lineId);
+
+  /// Hands over [lineIds], or every booked line.
+  Future<void> pickupAll(
+    String orderId, {
+    bool force = false,
+    List<String>? lineIds,
+  });
 
   /// Check in a line. [units] gives serials their own condition; null brings
   /// every unit back at [fallback].
@@ -167,6 +223,10 @@ abstract interface class RentoryRepository {
   Future<void> returnAll(String orderId);
   Future<void> cancel(String orderId);
   Future<void> resetToDraft(String orderId);
+
+  /// Deletes an order nothing ever left on; one with history is archived.
+  Future<Removal> removeOrder(String orderId);
+  Future<void> restoreOrder(String orderId);
 
   /// Find a serial or asset by scanned barcode or code.
   Future<({Asset? asset, Serial? serial})> findByCode(String code);
@@ -181,7 +241,8 @@ abstract interface class RentoryRepository {
   Future<List<Customer>> customers({String? search});
   Future<String> createCustomer({required String name, String? phone});
 
-  /// Change a line before it is booked. Null leaves a field as it is.
+  /// Change a line. Null leaves a field as it is. A booked line is booked
+  /// again after the change; a line already out keeps its quantity.
   Future<void> updateLine(
     String lineId, {
     String? name,
@@ -190,7 +251,7 @@ abstract interface class RentoryRepository {
     double? discount,
   });
 
-  /// Gives a draft line its own dates. Null [start] and [end] put it back on
+  /// Gives a line not yet out its own dates. Null [start] and [end] put it back on
   /// the order's dates. Must sit inside the order's window unless the order
   /// allows otherwise.
   Future<void> setLineDates(String lineId, DateTime? start, DateTime? end);
@@ -204,6 +265,7 @@ abstract interface class RentoryRepository {
   Future<List<Category>> categories();
   Future<String> createCategory(String name);
   Future<List<Location>> locations();
+  Future<String> createLocation(String name);
 
   /// A new asset. [tracking] serial gives it one unit per name in [units]
   /// (each name is also its barcode); otherwise [quantity] is the stock.
@@ -228,6 +290,20 @@ abstract interface class RentoryRepository {
 
   /// Edit an asset. Codes and barcodes are checked like [createAsset].
   Future<void> updateAsset(String assetId, AssetsCompanion changes);
+
+  /// Counts an asset by unit or by quantity from now on. Going by unit,
+  /// [units] are added to any it had; going by quantity, [quantity] is the
+  /// stock. Refused while it is booked or out.
+  Future<void> changeTracking(
+    String assetId,
+    Tracking tracking, {
+    List<String> units = const [],
+    double? quantity,
+  });
+
+  /// Deletes an asset no order ever used; one with history is archived.
+  Future<Removal> removeAsset(String assetId);
+  Future<void> restoreAsset(String assetId);
 
   /// Maintenance, retired, or null to hand status back to the quantities.
   /// Free units follow; refused while anything is out or reserved.
@@ -283,10 +359,22 @@ abstract interface class RentoryRepository {
   /// Makes [photoId] the first of its asset's photos.
   Future<void> setCoverPhoto(String photoId);
   Future<void> removePhoto(String photoId);
+
+  // ------------------------------------------------- order photos (phone)
+
+  /// Photos of an order taken on this phone. Local only, never uploaded.
+  Future<List<OrderPhoto>> orderPhotos(String orderId);
+  Future<void> addOrderPhoto(String orderId, String path);
+  Future<void> removeOrderPhoto(String photoId);
 }
 
 /// Confirms a booking and hands out its number. Locally a counter; with
 /// Supabase, the server, which also refuses a unit another device just took.
 abstract interface class BookingGateway {
-  Future<String> confirmBooking(String orderId, DateTime bookedAt);
+  /// Confirms [lineIds], or every line of the order not booked yet.
+  Future<String> confirmBooking(
+    String orderId,
+    DateTime bookedAt, {
+    List<String>? lineIds,
+  });
 }

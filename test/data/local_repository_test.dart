@@ -228,11 +228,20 @@ void main() {
       throwsA(isA<RuleException>()),
     );
 
+    // A booked line can still change: it is booked again after.
     await repo.book(o);
+    await repo.updateLine(line, quantity: 1);
+    d = await repo.loadOrder(o);
+    expect(d.lines.single.line.quantity, 1);
+    expect(d.lines.single.line.rentalState, RentalState.booked);
+
+    // Once out, its quantity stays; the price can still be fixed.
+    await repo.pickupAll(o, force: true);
     await expectLater(
-      repo.updateLine(line, quantity: 1),
+      repo.updateLine(line, quantity: 2),
       throwsA(isA<RuleException>()),
     );
+    await repo.updateLine(line, priceDay: 10);
   });
 
   test('paperwork: documents, photos, role, documents returned', () async {
@@ -501,5 +510,179 @@ void main() {
 
     await repo.removePhoto(b);
     expect((await repo.loadAsset(camera)).photos.map((p) => p.id), [a]);
+  });
+
+  test('lines are booked, picked up and edited one by one', () async {
+    final o = await order();
+    final tri = await repo.addLine(o, type: LineType.asset, assetId: tripod);
+    await repo.book(o);
+    expect((await repo.loadOrder(o)).order.state, OrderState.booked);
+
+    // A line added to a booked order waits until it is booked itself.
+    final cam = await repo.addLine(
+      o,
+      type: LineType.asset,
+      assetId: camera,
+      serialIds: [
+        for (final x in await repo.serialOptionsFor(o, camera))
+          if (x.serial.name == 'FX6-001') x.serial.id,
+      ],
+    );
+    var d = await repo.loadOrder(o);
+    expect(d.lines.last.line.quantity, 1);
+    expect(d.lines.last.line.rentalState, RentalState.none);
+    expect(d.order.state, OrderState.booked);
+
+    await repo.book(o, lineIds: [cam]);
+    expect(await stateOf('FX6-001'), SerialState.reserved);
+
+    await repo.pickupAll(o, force: true, lineIds: [tri]);
+    d = await repo.loadOrder(o);
+    expect(d.order.state, OrderState.pickedUp);
+    expect(d.lines.last.line.rentalState, RentalState.booked);
+
+    // Changing the booked camera's unit books it again with the new one.
+    final other = (await repo.serialOptionsFor(
+      o,
+      camera,
+    )).singleWhere((x) => x.serial.name == 'FX6-002').serial.id;
+    await repo.setLineSerials(cam, [other]);
+    expect(await stateOf('FX6-001'), SerialState.available);
+    expect(await stateOf('FX6-002'), SerialState.reserved);
+
+    await repo.unbookLine(cam);
+    expect(await stateOf('FX6-002'), SerialState.available);
+    expect((await repo.loadOrder(o)).order.state, OrderState.pickedUp);
+  });
+
+  test('lines can be put in any order, sections included', () async {
+    final o = await order();
+    final a = await repo.addLine(o, type: LineType.section, name: 'Camera');
+    final b = await repo.addLine(o, type: LineType.asset, assetId: tripod);
+    final c = await repo.addLine(o, type: LineType.service, name: 'Driver');
+    await repo.moveLines(o, [c, a, b]);
+    final d = await repo.loadOrder(o);
+    expect([for (final v in d.lines) v.line.id], [c, a, b]);
+  });
+
+  test('scanning onto an order: unit, asset barcode, stock', () async {
+    final o = await order();
+    var r = await repo.addScanned(o, 'FX6-002');
+    expect(r.outcome, ScanOutcome.added);
+    var d = await repo.loadOrder(o);
+    expect(d.lines.single.serials.single.name, 'FX6-002');
+
+    r = await repo.addScanned(o, 'FX6-002');
+    expect(r.outcome, ScanOutcome.alreadyOnOrder);
+
+    // One unit left: the asset's own code takes it.
+    await repo.updateAsset(
+      camera,
+      const AssetsCompanion(barcode: Value('CAM')),
+    );
+    r = await repo.addScanned(o, 'CAM');
+    expect(r.outcome, ScanOutcome.added);
+    d = await repo.loadOrder(o);
+    expect(d.lines.single.serials, hasLength(2));
+
+    // Stock counted by quantity goes up by one per scan.
+    await repo.updateAsset(
+      tripod,
+      const AssetsCompanion(barcode: Value('TRI')),
+    );
+    await repo.addScanned(o, 'TRI');
+    await repo.addScanned(o, 'TRI');
+    d = await repo.loadOrder(o);
+    expect(d.lines.last.line.quantity, 2);
+
+    expect((await repo.addScanned(o, 'nope')).outcome, ScanOutcome.notFound);
+  });
+
+  test('scanning an asset with several free units asks for them', () async {
+    final o = await order();
+    await repo.updateAsset(
+      camera,
+      const AssetsCompanion(barcode: Value('CAM')),
+    );
+    final r = await repo.addScanned(o, 'CAM');
+    expect(r.outcome, ScanOutcome.pickUnits);
+    expect(r.lineId, isNotNull);
+  });
+
+  test('delete: unused things go, used ones are archived', () async {
+    final draft = await order();
+    await repo.addLine(draft, type: LineType.asset, assetId: tripod);
+    expect(await repo.removeOrder(draft), Removal.deleted);
+    expect(await repo.watchOrders().first, isEmpty);
+
+    final done = await order();
+    final l = await repo.addLine(done, type: LineType.asset, assetId: tripod);
+    await repo.book(done);
+    await repo.pickupAll(done, force: true);
+    await expectLater(repo.removeOrder(done), throwsA(isA<RuleException>()));
+    await repo.returnLine(l);
+    expect(await repo.removeOrder(done), Removal.archived);
+    expect(await repo.watchOrders().first, isEmpty);
+    expect(
+      (await repo.watchOrders(archived: true).first).single.order.id,
+      done,
+    );
+    await repo.restoreOrder(done);
+    expect(await repo.watchOrders().first, hasLength(1));
+
+    // The tripod was rented, so it is archived; a fresh asset is deleted.
+    expect(await repo.removeAsset(tripod), Removal.archived);
+    final spare = await repo.createAsset(
+      name: 'Spare',
+      tracking: Tracking.none,
+      quantity: 1,
+    );
+    expect(await repo.removeAsset(spare), Removal.deleted);
+    final left = [for (final a in await repo.watchAssets().first) a.asset.name];
+    expect(left, ['Sony FX6']);
+    await repo.restoreAsset(tripod);
+    expect(await repo.watchAssets().first, hasLength(2));
+  });
+
+  test('an asset can switch between by unit and by quantity', () async {
+    await repo.changeTracking(camera, Tracking.none);
+    var a = (await repo.loadAsset(camera)).summary;
+    expect(a.asset.tracking, Tracking.none);
+    expect(a.total, 2);
+
+    await repo.changeTracking(tripod, Tracking.serial, units: ['T-1', 'T-2']);
+    final t = await repo.loadAsset(tripod);
+    expect(t.asset.tracking, Tracking.serial);
+    expect(t.serials.map((s) => s.name), ['T-1', 'T-2']);
+
+    // Back by unit: the old units return.
+    await repo.changeTracking(camera, Tracking.serial);
+    a = (await repo.loadAsset(camera)).summary;
+    expect(a.total, 2);
+
+    final o = await order();
+    await repo.addLine(o, type: LineType.asset, assetId: tripod, quantity: 1);
+    await repo.autofillSerials((await repo.loadOrder(o)).lines.single.line.id);
+    await repo.book(o);
+    await expectLater(
+      repo.changeTracking(tripod, Tracking.none),
+      throwsA(isA<RuleException>()),
+    );
+  });
+
+  test('locations are made like categories, once per name', () async {
+    final id = await repo.createLocation(' Shelf A ');
+    expect(await repo.createLocation('shelf a'), id);
+    expect((await repo.locations()).single.name, 'Shelf A');
+  });
+
+  test('order photos stay on the device', () async {
+    final o = await order();
+    await repo.addOrderPhoto(o, '/x/1.jpg');
+    await repo.addOrderPhoto(o, '/x/2.jpg');
+    final photos = await repo.orderPhotos(o);
+    expect(photos.map((p) => p.path), ['/x/1.jpg', '/x/2.jpg']);
+    await repo.removeOrderPhoto(photos.first.id);
+    expect(await repo.orderPhotos(o), hasLength(1));
   });
 }

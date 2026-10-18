@@ -364,8 +364,12 @@ class SupabaseBookingGateway implements BookingGateway {
   final SyncEngine engine;
 
   @override
-  Future<String> confirmBooking(String orderId, DateTime bookedAt) async {
+  Future<String> confirmBooking(
+    String orderId,
+    DateTime bookedAt, {
+    List<String>? lineIds,
+  }) async {
     await engine.push();
-    return engine.remote.bookOrder(orderId);
+    return engine.remote.bookOrder(orderId, lineIds: lineIds);
   }
 }

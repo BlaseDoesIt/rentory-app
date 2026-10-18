@@ -36,7 +36,8 @@ class _Server implements RemoteStore {
   }
 
   @override
-  Future<String> bookOrder(String orderId) async => throw UnimplementedError();
+  Future<String> bookOrder(String orderId, {List<String>? lineIds}) async =>
+      throw UnimplementedError();
 
   @override
   Future<void> uploadPhoto(String path, Uint8List bytes) async => _check();

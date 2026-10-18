@@ -41,6 +41,7 @@ const syncedTables = [
     OrderLineSerials,
     ReturnChecks,
     Photos,
+    OrderPhotos,
     SyncCursors,
   ],
 )
@@ -52,13 +53,13 @@ class RentoryDatabase extends _$RentoryDatabase {
   RentoryDatabase.memory(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (m, from, to) async {
-      // Version 3 only added columns: add them in place, so edits not yet
-      // pushed survive the upgrade.
+      // Versions 3 and 4 only added columns and tables: add them in place,
+      // so edits not yet pushed survive the upgrade.
       if (from >= 2) {
         for (final table in allTables) {
           final have = {

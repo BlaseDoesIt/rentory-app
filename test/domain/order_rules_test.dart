@@ -55,14 +55,34 @@ void main() {
         OrderState.partialReturn,
       );
     });
+    test('a line added but not booked yet does not move the order', () {
+      expect(
+        deriveOrderState(OrderState.pickedUp, [
+          line(RentalState.pickedUp),
+          line(RentalState.none),
+        ]),
+        OrderState.pickedUp,
+      );
+      expect(
+        deriveOrderState(OrderState.returned, [
+          line(RentalState.returned),
+          line(RentalState.none),
+        ]),
+        OrderState.returned,
+      );
+    });
+    test('an order whose lines are all unbooked again is a draft', () {
+      expect(
+        deriveOrderState(OrderState.booked, [line(RentalState.none)]),
+        OrderState.draft,
+      );
+    });
   });
 
   group('bookProblems', () {
     test('an order of only headings has nothing on it', () {
       expect(
-        bookProblems(OrderState.draft, [
-          line(RentalState.none, type: LineType.section),
-        ]),
+        bookProblems([line(RentalState.none, type: LineType.section)]),
         isNotEmpty,
       );
     });
@@ -75,14 +95,14 @@ void main() {
         tracking: Tracking.serial,
         serialCount: 1,
       );
-      final problems = bookProblems(OrderState.draft, [camera]);
+      final problems = bookProblems([camera]);
       expect(problems.single, contains('FX6'));
     });
-    test('a booked order cannot be booked again', () {
-      expect(
-        bookProblems(OrderState.booked, [line(RentalState.booked)]),
-        isNotEmpty,
-      );
+    test('a booked line cannot be booked again', () {
+      expect(bookProblems([line(RentalState.booked)]), isNotEmpty);
+    });
+    test('an unbooked line can be booked on an order under way', () {
+      expect(bookProblems([line(RentalState.none)]), isEmpty);
     });
   });
 

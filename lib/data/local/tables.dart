@@ -235,6 +235,9 @@ class Orders extends Table with SyncColumns {
   TextColumn get captureMethod =>
       text().map(const KeyConverter(CaptureMethod.values)).nullable()();
   TextColumn get photosUrl => text().nullable()();
+
+  /// False once archived: kept for the record, hidden from the list.
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
 }
 
 /// Documents the customer left with us for this order.
@@ -314,6 +317,20 @@ class Photos extends Table with SyncColumns {
   DateTimeColumn get takenAt =>
       dateTime().clientDefault(() => DateTime.now().toUtc())();
   TextColumn get note => text().nullable()();
+}
+
+/// Photos of an order taken on this phone. Never synced or uploaded: the
+/// picture itself lives in the phone's gallery, and [path] is the app's own
+/// copy, used to show and share it.
+class OrderPhotos extends Table {
+  TextColumn get id => text().clientDefault(() => rowUuid.v4())();
+  TextColumn get orderId => text()();
+  TextColumn get path => text()();
+  DateTimeColumn get takenAt =>
+      dateTime().clientDefault(() => DateTime.now().toUtc())();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 /// Sync bookkeeping, one row per table: how far this device has pulled.

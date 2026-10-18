@@ -6995,6 +6995,19 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+    'active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -7035,6 +7048,7 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
     signatureTarget,
     captureMethod,
     photosUrl,
+    active,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7312,6 +7326,12 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
         photosUrl.isAcceptableOrUnknown(data['photos_url']!, _photosUrlMeta),
       );
     }
+    if (data.containsKey('active')) {
+      context.handle(
+        _activeMeta,
+        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
+      );
+    }
     return context;
   }
 
@@ -7481,6 +7501,10 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
         DriftSqlType.string,
         data['${effectivePrefix}photos_url'],
       ),
+      active: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active'],
+      )!,
     );
   }
 
@@ -7549,6 +7573,9 @@ class Order extends DataClass implements Insertable<Order> {
   final SignatureTarget? signatureTarget;
   final CaptureMethod? captureMethod;
   final String? photosUrl;
+
+  /// False once archived: kept for the record, hidden from the list.
+  final bool active;
   const Order({
     required this.id,
     required this.updatedAt,
@@ -7588,6 +7615,7 @@ class Order extends DataClass implements Insertable<Order> {
     this.signatureTarget,
     this.captureMethod,
     this.photosUrl,
+    required this.active,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7682,6 +7710,7 @@ class Order extends DataClass implements Insertable<Order> {
     if (!nullToAbsent || photosUrl != null) {
       map['photos_url'] = Variable<String>(photosUrl);
     }
+    map['active'] = Variable<bool>(active);
     return map;
   }
 
@@ -7763,6 +7792,7 @@ class Order extends DataClass implements Insertable<Order> {
       photosUrl: photosUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(photosUrl),
+      active: Value(active),
     );
   }
 
@@ -7822,6 +7852,7 @@ class Order extends DataClass implements Insertable<Order> {
       ),
       captureMethod: serializer.fromJson<CaptureMethod?>(json['captureMethod']),
       photosUrl: serializer.fromJson<String?>(json['photosUrl']),
+      active: serializer.fromJson<bool>(json['active']),
     );
   }
   @override
@@ -7866,6 +7897,7 @@ class Order extends DataClass implements Insertable<Order> {
       'signatureTarget': serializer.toJson<SignatureTarget?>(signatureTarget),
       'captureMethod': serializer.toJson<CaptureMethod?>(captureMethod),
       'photosUrl': serializer.toJson<String?>(photosUrl),
+      'active': serializer.toJson<bool>(active),
     };
   }
 
@@ -7908,6 +7940,7 @@ class Order extends DataClass implements Insertable<Order> {
     Value<SignatureTarget?> signatureTarget = const Value.absent(),
     Value<CaptureMethod?> captureMethod = const Value.absent(),
     Value<String?> photosUrl = const Value.absent(),
+    bool? active,
   }) => Order(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -7970,6 +8003,7 @@ class Order extends DataClass implements Insertable<Order> {
         ? captureMethod.value
         : this.captureMethod,
     photosUrl: photosUrl.present ? photosUrl.value : this.photosUrl,
+    active: active ?? this.active,
   );
   Order copyWithCompanion(OrdersCompanion data) {
     return Order(
@@ -8063,6 +8097,7 @@ class Order extends DataClass implements Insertable<Order> {
           ? data.captureMethod.value
           : this.captureMethod,
       photosUrl: data.photosUrl.present ? data.photosUrl.value : this.photosUrl,
+      active: data.active.present ? data.active.value : this.active,
     );
   }
 
@@ -8106,7 +8141,8 @@ class Order extends DataClass implements Insertable<Order> {
           ..write('allowLineDatesOutside: $allowLineDatesOutside, ')
           ..write('signatureTarget: $signatureTarget, ')
           ..write('captureMethod: $captureMethod, ')
-          ..write('photosUrl: $photosUrl')
+          ..write('photosUrl: $photosUrl, ')
+          ..write('active: $active')
           ..write(')'))
         .toString();
   }
@@ -8151,6 +8187,7 @@ class Order extends DataClass implements Insertable<Order> {
     signatureTarget,
     captureMethod,
     photosUrl,
+    active,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -8193,7 +8230,8 @@ class Order extends DataClass implements Insertable<Order> {
           other.allowLineDatesOutside == this.allowLineDatesOutside &&
           other.signatureTarget == this.signatureTarget &&
           other.captureMethod == this.captureMethod &&
-          other.photosUrl == this.photosUrl);
+          other.photosUrl == this.photosUrl &&
+          other.active == this.active);
 }
 
 class OrdersCompanion extends UpdateCompanion<Order> {
@@ -8235,6 +8273,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
   final Value<SignatureTarget?> signatureTarget;
   final Value<CaptureMethod?> captureMethod;
   final Value<String?> photosUrl;
+  final Value<bool> active;
   final Value<int> rowid;
   const OrdersCompanion({
     this.id = const Value.absent(),
@@ -8275,6 +8314,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     this.signatureTarget = const Value.absent(),
     this.captureMethod = const Value.absent(),
     this.photosUrl = const Value.absent(),
+    this.active = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   OrdersCompanion.insert({
@@ -8316,6 +8356,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     this.signatureTarget = const Value.absent(),
     this.captureMethod = const Value.absent(),
     this.photosUrl = const Value.absent(),
+    this.active = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   static Insertable<Order> custom({
@@ -8357,6 +8398,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     Expression<String>? signatureTarget,
     Expression<String>? captureMethod,
     Expression<String>? photosUrl,
+    Expression<bool>? active,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -8403,6 +8445,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
       if (signatureTarget != null) 'signature_target': signatureTarget,
       if (captureMethod != null) 'capture_method': captureMethod,
       if (photosUrl != null) 'photos_url': photosUrl,
+      if (active != null) 'active': active,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -8446,6 +8489,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     Value<SignatureTarget?>? signatureTarget,
     Value<CaptureMethod?>? captureMethod,
     Value<String?>? photosUrl,
+    Value<bool>? active,
     Value<int>? rowid,
   }) {
     return OrdersCompanion(
@@ -8489,6 +8533,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
       signatureTarget: signatureTarget ?? this.signatureTarget,
       captureMethod: captureMethod ?? this.captureMethod,
       photosUrl: photosUrl ?? this.photosUrl,
+      active: active ?? this.active,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8626,6 +8671,9 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     if (photosUrl.present) {
       map['photos_url'] = Variable<String>(photosUrl.value);
     }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -8673,6 +8721,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
           ..write('signatureTarget: $signatureTarget, ')
           ..write('captureMethod: $captureMethod, ')
           ..write('photosUrl: $photosUrl, ')
+          ..write('active: $active, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -12436,6 +12485,310 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
   }
 }
 
+class $OrderPhotosTable extends OrderPhotos
+    with TableInfo<$OrderPhotosTable, OrderPhoto> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OrderPhotosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: () => rowUuid.v4(),
+  );
+  static const VerificationMeta _orderIdMeta = const VerificationMeta(
+    'orderId',
+  );
+  @override
+  late final GeneratedColumn<String> orderId = GeneratedColumn<String>(
+    'order_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _takenAtMeta = const VerificationMeta(
+    'takenAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> takenAt = GeneratedColumn<DateTime>(
+    'taken_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now().toUtc(),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, orderId, path, takenAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'order_photos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OrderPhoto> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('order_id')) {
+      context.handle(
+        _orderIdMeta,
+        orderId.isAcceptableOrUnknown(data['order_id']!, _orderIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_orderIdMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('taken_at')) {
+      context.handle(
+        _takenAtMeta,
+        takenAt.isAcceptableOrUnknown(data['taken_at']!, _takenAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OrderPhoto map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OrderPhoto(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      orderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      takenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}taken_at'],
+      )!,
+    );
+  }
+
+  @override
+  $OrderPhotosTable createAlias(String alias) {
+    return $OrderPhotosTable(attachedDatabase, alias);
+  }
+}
+
+class OrderPhoto extends DataClass implements Insertable<OrderPhoto> {
+  final String id;
+  final String orderId;
+  final String path;
+  final DateTime takenAt;
+  const OrderPhoto({
+    required this.id,
+    required this.orderId,
+    required this.path,
+    required this.takenAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['order_id'] = Variable<String>(orderId);
+    map['path'] = Variable<String>(path);
+    map['taken_at'] = Variable<DateTime>(takenAt);
+    return map;
+  }
+
+  OrderPhotosCompanion toCompanion(bool nullToAbsent) {
+    return OrderPhotosCompanion(
+      id: Value(id),
+      orderId: Value(orderId),
+      path: Value(path),
+      takenAt: Value(takenAt),
+    );
+  }
+
+  factory OrderPhoto.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OrderPhoto(
+      id: serializer.fromJson<String>(json['id']),
+      orderId: serializer.fromJson<String>(json['orderId']),
+      path: serializer.fromJson<String>(json['path']),
+      takenAt: serializer.fromJson<DateTime>(json['takenAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'orderId': serializer.toJson<String>(orderId),
+      'path': serializer.toJson<String>(path),
+      'takenAt': serializer.toJson<DateTime>(takenAt),
+    };
+  }
+
+  OrderPhoto copyWith({
+    String? id,
+    String? orderId,
+    String? path,
+    DateTime? takenAt,
+  }) => OrderPhoto(
+    id: id ?? this.id,
+    orderId: orderId ?? this.orderId,
+    path: path ?? this.path,
+    takenAt: takenAt ?? this.takenAt,
+  );
+  OrderPhoto copyWithCompanion(OrderPhotosCompanion data) {
+    return OrderPhoto(
+      id: data.id.present ? data.id.value : this.id,
+      orderId: data.orderId.present ? data.orderId.value : this.orderId,
+      path: data.path.present ? data.path.value : this.path,
+      takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OrderPhoto(')
+          ..write('id: $id, ')
+          ..write('orderId: $orderId, ')
+          ..write('path: $path, ')
+          ..write('takenAt: $takenAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, orderId, path, takenAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OrderPhoto &&
+          other.id == this.id &&
+          other.orderId == this.orderId &&
+          other.path == this.path &&
+          other.takenAt == this.takenAt);
+}
+
+class OrderPhotosCompanion extends UpdateCompanion<OrderPhoto> {
+  final Value<String> id;
+  final Value<String> orderId;
+  final Value<String> path;
+  final Value<DateTime> takenAt;
+  final Value<int> rowid;
+  const OrderPhotosCompanion({
+    this.id = const Value.absent(),
+    this.orderId = const Value.absent(),
+    this.path = const Value.absent(),
+    this.takenAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OrderPhotosCompanion.insert({
+    this.id = const Value.absent(),
+    required String orderId,
+    required String path,
+    this.takenAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : orderId = Value(orderId),
+       path = Value(path);
+  static Insertable<OrderPhoto> custom({
+    Expression<String>? id,
+    Expression<String>? orderId,
+    Expression<String>? path,
+    Expression<DateTime>? takenAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (orderId != null) 'order_id': orderId,
+      if (path != null) 'path': path,
+      if (takenAt != null) 'taken_at': takenAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OrderPhotosCompanion copyWith({
+    Value<String>? id,
+    Value<String>? orderId,
+    Value<String>? path,
+    Value<DateTime>? takenAt,
+    Value<int>? rowid,
+  }) {
+    return OrderPhotosCompanion(
+      id: id ?? this.id,
+      orderId: orderId ?? this.orderId,
+      path: path ?? this.path,
+      takenAt: takenAt ?? this.takenAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (orderId.present) {
+      map['order_id'] = Variable<String>(orderId.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (takenAt.present) {
+      map['taken_at'] = Variable<DateTime>(takenAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OrderPhotosCompanion(')
+          ..write('id: $id, ')
+          ..write('orderId: $orderId, ')
+          ..write('path: $path, ')
+          ..write('takenAt: $takenAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SyncCursorsTable extends SyncCursors
     with TableInfo<$SyncCursorsTable, SyncCursor> {
   @override
@@ -12673,6 +13026,7 @@ abstract class _$RentoryDatabase extends GeneratedDatabase {
   );
   late final $ReturnChecksTable returnChecks = $ReturnChecksTable(this);
   late final $PhotosTable photos = $PhotosTable(this);
+  late final $OrderPhotosTable orderPhotos = $OrderPhotosTable(this);
   late final $SyncCursorsTable syncCursors = $SyncCursorsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -12693,6 +13047,7 @@ abstract class _$RentoryDatabase extends GeneratedDatabase {
     orderLineSerials,
     returnChecks,
     photos,
+    orderPhotos,
     syncCursors,
   ];
   @override
@@ -17739,6 +18094,7 @@ typedef $$OrdersTableCreateCompanionBuilder = OrdersCompanion Function({
   Value<SignatureTarget?> signatureTarget,
   Value<CaptureMethod?> captureMethod,
   Value<String?> photosUrl,
+  Value<bool> active,
   Value<int> rowid,
 });
 typedef $$OrdersTableUpdateCompanionBuilder = OrdersCompanion Function({
@@ -17780,6 +18136,7 @@ typedef $$OrdersTableUpdateCompanionBuilder = OrdersCompanion Function({
   Value<SignatureTarget?> signatureTarget,
   Value<CaptureMethod?> captureMethod,
   Value<String?> photosUrl,
+  Value<bool> active,
   Value<int> rowid,
 });
 
@@ -18070,6 +18427,11 @@ class $$OrdersTableFilterComposer
 
   ColumnFilters<String> get photosUrl => $composableBuilder(
     column: $table.photosUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get active => $composableBuilder(
+    column: $table.active,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18384,6 +18746,11 @@ class $$OrdersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CustomersTableOrderingComposer get customerId {
     final $$CustomersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -18599,6 +18966,9 @@ class $$OrdersTableAnnotationComposer
   GeneratedColumn<String> get photosUrl =>
       $composableBuilder(column: $table.photosUrl, builder: (column) => column);
 
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
   $$CustomersTableAnnotationComposer get customerId {
     final $$CustomersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -18794,6 +19164,7 @@ class $$OrdersTableTableManager
                 Value<SignatureTarget?> signatureTarget = const Value.absent(),
                 Value<CaptureMethod?> captureMethod = const Value.absent(),
                 Value<String?> photosUrl = const Value.absent(),
+                Value<bool> active = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OrdersCompanion(
                 id: id,
@@ -18834,6 +19205,7 @@ class $$OrdersTableTableManager
                 signatureTarget: signatureTarget,
                 captureMethod: captureMethod,
                 photosUrl: photosUrl,
+                active: active,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -18876,6 +19248,7 @@ class $$OrdersTableTableManager
                 Value<SignatureTarget?> signatureTarget = const Value.absent(),
                 Value<CaptureMethod?> captureMethod = const Value.absent(),
                 Value<String?> photosUrl = const Value.absent(),
+                Value<bool> active = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OrdersCompanion.insert(
                 id: id,
@@ -18916,6 +19289,7 @@ class $$OrdersTableTableManager
                 signatureTarget: signatureTarget,
                 captureMethod: captureMethod,
                 photosUrl: photosUrl,
+                active: active,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -21950,6 +22324,196 @@ typedef $$PhotosTableProcessedTableManager =
       Photo,
       PrefetchHooks Function()
     >;
+typedef $$OrderPhotosTableCreateCompanionBuilder =
+    OrderPhotosCompanion Function({
+      Value<String> id,
+      required String orderId,
+      required String path,
+      Value<DateTime> takenAt,
+      Value<int> rowid,
+    });
+typedef $$OrderPhotosTableUpdateCompanionBuilder =
+    OrderPhotosCompanion Function({
+      Value<String> id,
+      Value<String> orderId,
+      Value<String> path,
+      Value<DateTime> takenAt,
+      Value<int> rowid,
+    });
+
+class $$OrderPhotosTableFilterComposer
+    extends Composer<_$RentoryDatabase, $OrderPhotosTable> {
+  $$OrderPhotosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get orderId => $composableBuilder(
+    column: $table.orderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OrderPhotosTableOrderingComposer
+    extends Composer<_$RentoryDatabase, $OrderPhotosTable> {
+  $$OrderPhotosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get orderId => $composableBuilder(
+    column: $table.orderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OrderPhotosTableAnnotationComposer
+    extends Composer<_$RentoryDatabase, $OrderPhotosTable> {
+  $$OrderPhotosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get orderId =>
+      $composableBuilder(column: $table.orderId, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get takenAt =>
+      $composableBuilder(column: $table.takenAt, builder: (column) => column);
+}
+
+class $$OrderPhotosTableTableManager
+    extends
+        RootTableManager<
+          _$RentoryDatabase,
+          $OrderPhotosTable,
+          OrderPhoto,
+          $$OrderPhotosTableFilterComposer,
+          $$OrderPhotosTableOrderingComposer,
+          $$OrderPhotosTableAnnotationComposer,
+          $$OrderPhotosTableCreateCompanionBuilder,
+          $$OrderPhotosTableUpdateCompanionBuilder,
+          (
+            OrderPhoto,
+            BaseReferences<_$RentoryDatabase, $OrderPhotosTable, OrderPhoto>,
+          ),
+          OrderPhoto,
+          PrefetchHooks Function()
+        > {
+  $$OrderPhotosTableTableManager(_$RentoryDatabase db, $OrderPhotosTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OrderPhotosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OrderPhotosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OrderPhotosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> orderId = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<DateTime> takenAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OrderPhotosCompanion(
+                id: id,
+                orderId: orderId,
+                path: path,
+                takenAt: takenAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                required String orderId,
+                required String path,
+                Value<DateTime> takenAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OrderPhotosCompanion.insert(
+                id: id,
+                orderId: orderId,
+                path: path,
+                takenAt: takenAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$OrderPhotosTable, OrderPhoto>(table),
+                  BaseReferences<
+                    _$RentoryDatabase,
+                    $OrderPhotosTable,
+                    OrderPhoto
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OrderPhotosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$RentoryDatabase,
+      $OrderPhotosTable,
+      OrderPhoto,
+      $$OrderPhotosTableFilterComposer,
+      $$OrderPhotosTableOrderingComposer,
+      $$OrderPhotosTableAnnotationComposer,
+      $$OrderPhotosTableCreateCompanionBuilder,
+      $$OrderPhotosTableUpdateCompanionBuilder,
+      (
+        OrderPhoto,
+        BaseReferences<_$RentoryDatabase, $OrderPhotosTable, OrderPhoto>,
+      ),
+      OrderPhoto,
+      PrefetchHooks Function()
+    >;
 typedef $$SyncCursorsTableCreateCompanionBuilder =
     SyncCursorsCompanion Function({
       required String tableName_,
@@ -22136,6 +22700,8 @@ class $RentoryDatabaseManager {
       $$ReturnChecksTableTableManager(_db, _db.returnChecks);
   $$PhotosTableTableManager get photos =>
       $$PhotosTableTableManager(_db, _db.photos);
+  $$OrderPhotosTableTableManager get orderPhotos =>
+      $$OrderPhotosTableTableManager(_db, _db.orderPhotos);
   $$SyncCursorsTableTableManager get syncCursors =>
       $$SyncCursorsTableTableManager(_db, _db.syncCursors);
 }

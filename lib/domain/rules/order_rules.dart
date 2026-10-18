@@ -38,15 +38,21 @@ class LineFacts {
 }
 
 /// Draft and Cancelled are set by hand; the middle states follow the lines.
+/// Lines not booked yet (added to an order already under way) do not move
+/// it; an order whose lines are all unbooked again is a draft.
 OrderState deriveOrderState(OrderState current, Iterable<LineFacts> lines) {
   if (current == OrderState.draft || current == OrderState.cancelled) {
     return current;
   }
-  final states = {
+  final all = {
     for (final l in lines)
       if (!l.isSection) l.rentalState,
   };
-  if (states.isEmpty) return current;
+  if (all.isEmpty) return current;
+  if (all.length == 1 && all.first == RentalState.none) {
+    return OrderState.draft;
+  }
+  final states = all.difference({RentalState.none});
   if (states.length == 1 && states.first == RentalState.returned) {
     return OrderState.returned;
   }
@@ -59,18 +65,18 @@ OrderState deriveOrderState(OrderState current, Iterable<LineFacts> lines) {
   return OrderState.booked;
 }
 
-/// Problems standing between this order and Book. Availability is checked
+/// Problems standing between [lines] and Book: the lines about to be booked,
+/// one or all of the order's unbooked ones. Availability is checked
 /// separately (it needs other orders) and, in the end, by the server.
-List<String> bookProblems(OrderState state, List<LineFacts> lines) {
-  if (state != OrderState.draft && state != OrderState.cancelled) {
-    return ['Only a draft or cancelled order can be booked.'];
-  }
+List<String> bookProblems(List<LineFacts> lines) {
   if (!lines.any((l) => !l.isSection)) {
     return ['Add at least one item or service before booking.'];
   }
   return [
     for (final l in lines)
-      if (l.missingSerials)
+      if (l.rentalState != RentalState.none && !l.isSection)
+        '${l.name} is already booked.'
+      else if (l.missingSerials)
         '${l.name}: quantity ${l.quantity.round()}, '
             '${l.serialCount} unit(s) picked. Pick the units first.',
   ];
