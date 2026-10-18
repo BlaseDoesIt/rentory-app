@@ -206,4 +206,98 @@ void main() {
     expect(row.dirty, isTrue);
     expect(row.id, hasLength(36));
   });
+
+  test('customers: create, search, and order editing', () async {
+    final id = await repo.createCustomer(name: '  Studio One ', phone: '');
+    await repo.createCustomer(name: 'Other', phone: '+963 11');
+    expect((await repo.customers(search: 'studio')).single.id, id);
+    expect((await repo.customers(search: '963')).single.name, 'Other');
+    await expectLater(
+      repo.createCustomer(name: ' '),
+      throwsA(isA<RuleException>()),
+    );
+
+    final o = await order();
+    final line = await repo.addLine(o, type: LineType.asset, assetId: tripod);
+    await repo.updateLine(line, quantity: 2, priceDay: 12, discount: 50);
+    var d = await repo.loadOrder(o);
+    // 2 x 12 x 2 days, half off.
+    expect(d.lines.single.subtotal, 24);
+    await expectLater(
+      repo.updateLine(line, discount: 120),
+      throwsA(isA<RuleException>()),
+    );
+
+    await repo.book(o);
+    await expectLater(
+      repo.updateLine(line, quantity: 1),
+      throwsA(isA<RuleException>()),
+    );
+  });
+
+  test('paperwork: documents, photos, role, documents returned', () async {
+    final o = await order();
+    final types = <String>[];
+    for (final n in ['ID card', 'Passport']) {
+      types.add(
+        (await db
+                .into(db.documentTypes)
+                .insertReturning(DocumentTypesCompanion.insert(name: n)))
+            .id,
+      );
+    }
+    expect((await repo.documentTypes()).length, 2);
+    await repo.setOrderDocuments(o, {types[0]});
+    expect(await repo.orderDocuments(o), {types[0]});
+    await repo.setOrderDocuments(o, {types[1]});
+    await repo.setOrderDocuments(o, {types[0], types[1]});
+    expect(await repo.orderDocuments(o), {types[0], types[1]});
+    // Turned back on, not added twice.
+    expect((await db.select(db.orderDocuments).get()).length, 2);
+
+    await repo.markDocumentsReturned(o);
+    final row = (await repo.loadOrder(o)).order;
+    expect(row.documentsReturnedAt, now);
+    expect(row.documentsReturnedBy, 'u1');
+
+    final photo = await repo.addPhoto(
+      localPath: 'C:/x/1.jpg',
+      orderId: o,
+      note: 'pickup',
+    );
+    final photos = await repo.photos(o);
+    expect(photos.single.id, photo);
+    expect(photos.single.dirty, isTrue);
+    expect(photos.single.storagePath, isNull);
+
+    // Signed in without a profile row: office, not admin.
+    expect(await repo.currentRole(), Role.office);
+    await db
+        .into(db.profiles)
+        .insert(
+          ProfilesCompanion.insert(
+            id: const Value('u1'),
+            name: 'Boss',
+            role: const Value(Role.admin),
+          ),
+        );
+    expect(await repo.currentRole(), Role.admin);
+  });
+
+  test('scan finds the order a unit is on', () async {
+    final o = await order();
+    final line = await repo.addLine(o, type: LineType.asset, assetId: camera);
+    await repo.autofillSerials(line);
+    final unit = (await repo.loadOrder(o)).lines.single.serials.single;
+    // A draft holds nothing.
+    expect(await repo.currentOrderFor(serialId: unit.id), isNull);
+    await repo.book(o);
+    expect(await repo.currentOrderFor(serialId: unit.id), o);
+
+    final t = await order();
+    await repo.addLine(t, type: LineType.asset, assetId: tripod);
+    expect(await repo.currentOrderFor(assetId: tripod), isNull);
+    await repo.book(t);
+    expect(await repo.currentOrderFor(assetId: tripod), t);
+  });
 }

@@ -139,6 +139,54 @@ abstract interface class RentoryRepository {
 
   /// Find a serial or asset by scanned barcode or code.
   Future<({Asset? asset, Serial? serial})> findByCode(String code);
+
+  /// The open order a scanned unit belongs to right now: the one holding the
+  /// serial, or for stock without units the latest open order using the
+  /// asset. Null when nothing holds it.
+  Future<String?> currentOrderFor({String? serialId, String? assetId});
+
+  // ------------------------------------------------- order editor support
+
+  Future<List<Customer>> customers({String? search});
+  Future<String> createCustomer({required String name, String? phone});
+
+  /// Parts that can go on their own line (not the mandatory ones that
+  /// travel with their unit).
+  Future<List<Part>> rentableParts({String? search});
+
+  /// Change a line before it is booked. Null leaves a field as it is.
+  Future<void> updateLine(
+    String lineId, {
+    String? name,
+    double? quantity,
+    double? priceDay,
+    double? discount,
+  });
+
+  // ------------------------------------------------- pickup and return
+
+  /// What the signed-in user may do. Standalone (no sign-in) is admin.
+  Future<Role> currentRole();
+
+  Future<List<DocumentType>> documentTypes();
+
+  /// Document types the customer left with us for [orderId].
+  Future<Set<String>> orderDocuments(String orderId);
+  Future<void> setOrderDocuments(String orderId, Set<String> documentTypeIds);
+
+  /// The customer got their documents back.
+  Future<void> markDocumentsReturned(String orderId);
+
+  /// Records a picture already saved on this device. The sync engine
+  /// uploads it later.
+  Future<String> addPhoto({
+    required String localPath,
+    String? orderId,
+    String? lineId,
+    String? serialId,
+    String? note,
+  });
+  Future<List<Photo>> photos(String orderId);
 }
 
 /// Confirms a booking and hands out its number. Locally a counter; with

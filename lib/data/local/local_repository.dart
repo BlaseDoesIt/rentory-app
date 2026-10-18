@@ -990,6 +990,225 @@ class LocalRepository implements RentoryRepository {
     return (asset: asset, serial: null);
   }
 
+  @override
+  Future<String?> currentOrderFor({String? serialId, String? assetId}) async {
+    if (serialId != null) {
+      // A unit nobody holds has no order, even if its twins are out.
+      final s = await (db.select(
+        db.serials,
+      )..where((x) => x.id.equals(serialId))).getSingleOrNull();
+      return s?.currentOrderId;
+    }
+    if (assetId == null) return null;
+    final query =
+        db.select(db.orders).join([
+            innerJoin(
+              db.orderLines,
+              db.orderLines.orderId.equalsExp(db.orders.id),
+            ),
+          ])
+          ..where(
+            db.orderLines.assetId.equals(assetId) &
+                db.orderLines.deleted.equals(false) &
+                db.orders.deleted.equals(false) &
+                db.orders.state.isInValues(OrderState.committed.toList()),
+          )
+          ..orderBy([OrderingTerm.desc(db.orders.dateStart)])
+          ..limit(1);
+    final row = await query.getSingleOrNull();
+    return row?.readTable(db.orders).id;
+  }
+
+  // ============================================================ editor
+
+  @override
+  Future<List<Customer>> customers({String? search}) {
+    final query = db.select(db.customers)
+      ..where((c) => _alive(c))
+      ..orderBy([(c) => OrderingTerm.asc(c.name)]);
+    final term = search?.trim();
+    if (term != null && term.isNotEmpty) {
+      final like = '%$term%';
+      query.where((c) => c.name.like(like) | c.phone.like(like));
+    }
+    return query.get();
+  }
+
+  @override
+  Future<String> createCustomer({required String name, String? phone}) async {
+    final clean = name.trim();
+    if (clean.isEmpty) throw RuleException.one('The customer needs a name.');
+    final p = phone?.trim();
+    final row = await db
+        .into(db.customers)
+        .insertReturning(
+          CustomersCompanion.insert(
+            name: clean,
+            phone: Value(p == null || p.isEmpty ? null : p),
+            updatedAt: _ts,
+          ),
+        );
+    return row.id;
+  }
+
+  @override
+  Future<List<Part>> rentableParts({String? search}) {
+    final query = db.select(db.parts)
+      ..where(
+        (p) =>
+            _alive(p) &
+            p.active.equals(true) &
+            p.kind.equalsValue(PartKind.mandatory).not(),
+      )
+      ..orderBy([(p) => OrderingTerm.asc(p.name)]);
+    final term = search?.trim();
+    if (term != null && term.isNotEmpty) {
+      final like = '%$term%';
+      query.where((p) => p.name.like(like) | p.code.like(like));
+    }
+    return query.get();
+  }
+
+  @override
+  Future<void> updateLine(
+    String lineId, {
+    String? name,
+    double? quantity,
+    double? priceDay,
+    double? discount,
+  }) async {
+    final line = await _line(lineId);
+    if (line.rentalState != RentalState.none) {
+      throw RuleException.one(
+        'Booked lines are fixed. Put the order back to draft to change them.',
+      );
+    }
+    if (quantity != null && quantity <= 0) {
+      throw RuleException.one('Quantity must be more than zero.');
+    }
+    if (priceDay != null && priceDay < 0) {
+      throw RuleException.one('The price cannot be negative.');
+    }
+    if (discount != null && (discount < 0 || discount > 100)) {
+      throw RuleException.one('The discount is a percent from 0 to 100.');
+    }
+    await _setLine(
+      lineId,
+      OrderLinesCompanion(
+        name: name == null ? const Value.absent() : Value(name),
+        quantity: quantity == null ? const Value.absent() : Value(quantity),
+        priceDay: priceDay == null ? const Value.absent() : Value(priceDay),
+        discount: discount == null ? const Value.absent() : Value(discount),
+      ),
+    );
+  }
+
+  // ============================================================ paperwork
+
+  @override
+  Future<Role> currentRole() async {
+    final id = _userId();
+    if (id == null) return Role.admin;
+    final p = await (db.select(
+      db.profiles,
+    )..where((x) => x.id.equals(id))).getSingleOrNull();
+    return p?.role ?? Role.office;
+  }
+
+  @override
+  Future<List<DocumentType>> documentTypes() =>
+      (db.select(db.documentTypes)
+            ..where((d) => _alive(d) & d.active.equals(true))
+            ..orderBy([(d) => OrderingTerm.asc(d.sequence)]))
+          .get();
+
+  @override
+  Future<Set<String>> orderDocuments(String orderId) async => {
+    for (final d in await (db.select(
+      db.orderDocuments,
+    )..where((d) => d.orderId.equals(orderId) & _alive(d))).get())
+      d.documentTypeId,
+  };
+
+  @override
+  Future<void> setOrderDocuments(
+    String orderId,
+    Set<String> documentTypeIds,
+  ) async {
+    final rows = await (db.select(
+      db.orderDocuments,
+    )..where((d) => d.orderId.equals(orderId))).get();
+    await db.transaction(() async {
+      final have = <String>{};
+      for (final r in rows) {
+        final keep =
+            documentTypeIds.contains(r.documentTypeId) &&
+            have.add(r.documentTypeId);
+        if (keep != r.deleted) continue;
+        await (db.update(
+          db.orderDocuments,
+        )..where((d) => d.id.equals(r.id))).write(
+          OrderDocumentsCompanion(
+            deleted: Value(!keep),
+            updatedAt: _ts,
+            dirty: _dirty,
+          ),
+        );
+      }
+      for (final id in documentTypeIds.difference(have)) {
+        await db
+            .into(db.orderDocuments)
+            .insert(
+              OrderDocumentsCompanion.insert(
+                orderId: orderId,
+                documentTypeId: id,
+                updatedAt: _ts,
+              ),
+            );
+      }
+    });
+  }
+
+  @override
+  Future<void> markDocumentsReturned(String orderId) => updateOrder(
+    orderId,
+    OrdersCompanion(
+      documentsReturnedAt: Value(_clock()),
+      documentsReturnedBy: Value(_userId()),
+    ),
+  );
+
+  @override
+  Future<String> addPhoto({
+    required String localPath,
+    String? orderId,
+    String? lineId,
+    String? serialId,
+    String? note,
+  }) async {
+    final row = await db
+        .into(db.photos)
+        .insertReturning(
+          PhotosCompanion.insert(
+            localPath: Value(localPath),
+            orderId: Value(orderId),
+            lineId: Value(lineId),
+            serialId: Value(serialId),
+            note: Value(note),
+            takenAt: Value(_clock()),
+            updatedAt: _ts,
+          ),
+        );
+    return row.id;
+  }
+
+  @override
+  Future<List<Photo>> photos(String orderId) =>
+      (db.select(db.photos)
+            ..where((p) => p.orderId.equals(orderId) & _alive(p))
+            ..orderBy([(p) => OrderingTerm.asc(p.takenAt)]))
+          .get();
+
   // ============================================================ helpers
 
   /// Hand back what a line holds but has not sent out. Only units this line

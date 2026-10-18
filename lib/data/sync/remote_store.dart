@@ -73,8 +73,8 @@ class SupabaseRemoteStore implements RemoteStore {
         .uploadBinary(
           path,
           bytes,
-          fileOptions: const FileOptions(
-            contentType: 'image/jpeg',
+          fileOptions: FileOptions(
+            contentType: path.endsWith('.png') ? 'image/png' : 'image/jpeg',
             upsert: true,
           ),
         );

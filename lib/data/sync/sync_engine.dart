@@ -288,7 +288,9 @@ class SyncEngine {
     for (final p in pending) {
       final file = File(p.localPath!);
       if (!await file.exists()) continue;
-      final path = 'photos/${p.id}.jpg';
+      // Signatures are PNG, camera photos JPEG.
+      final ext = p.localPath!.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+      final path = 'photos/${p.id}.$ext';
       await remote.uploadPhoto(path, await file.readAsBytes());
       await (db.update(db.photos)..where((x) => x.id.equals(p.id))).write(
         PhotosCompanion(
