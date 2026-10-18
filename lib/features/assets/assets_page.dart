@@ -34,16 +34,16 @@ class _AssetsPageState extends State<AssetsPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            'Assets',
+            context.l10n.assets,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: TextField(
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Name, code or barcode',
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: context.l10n.searchAssets,
             ),
             onChanged: (v) => setState(() => _search = v),
           ),
@@ -57,7 +57,7 @@ class _AssetsPageState extends State<AssetsPage> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (assets.isEmpty) {
-                return const Center(child: Text('No assets.'));
+                return Center(child: Text(context.l10n.noAssets));
               }
               return ListView.separated(
                 padding: const EdgeInsets.all(16),
@@ -80,6 +80,7 @@ class _AssetTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = s.asset;
+    final l = context.l10n;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       title: Text(a.name),
@@ -87,12 +88,12 @@ class _AssetTile extends StatelessWidget {
         [
           if (a.code != null) a.code!,
           if (s.categoryName != null) s.categoryName!,
-          '${money(a.rentalPriceDay)} / day',
-          if (a.tracking == Tracking.serial) 'by unit',
+          '${money(a.rentalPriceDay)} ${l.perDay}',
+          if (a.tracking == Tracking.serial) l.byUnit,
         ].join('  ·  '),
       ),
       trailing: Text(
-        '${qty(s.available)} / ${qty(s.total)}\navailable',
+        '${qty(s.available)} / ${qty(s.total)}\n${l.available}',
         textAlign: TextAlign.end,
       ),
     );

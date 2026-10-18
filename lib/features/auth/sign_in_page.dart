@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../app/format.dart';
+
 /// Email and password against Supabase Auth. Each team member has their own
 /// account; the first one ever created becomes the admin.
 class SignInPage extends StatefulWidget {
@@ -27,7 +29,9 @@ class _SignInPageState extends State<SignInPage> {
     } on AuthException catch (e) {
       setState(() => _message = e.message);
     } catch (e) {
-      setState(() => _message = 'Could not reach the server. $e');
+      if (mounted) {
+        setState(() => _message = context.l10n.serverUnreachable('$e'));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -46,10 +50,7 @@ class _SignInPageState extends State<SignInPage> {
       password: _password.text,
     );
     if (res.session == null && mounted) {
-      setState(
-        () => _message =
-            'Account created. Check your email to confirm it, then sign in.',
-      );
+      setState(() => _message = context.l10n.accountCreated);
     }
   });
 
@@ -63,6 +64,7 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l = context.l10n;
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -75,30 +77,30 @@ class _SignInPageState extends State<SignInPage> {
                 children: [
                   Text('Rentory', style: text.headlineMedium),
                   const SizedBox(height: 4),
-                  Text('Sign in to your team', style: text.bodyMedium),
+                  Text(l.signInToTeam, style: text.bodyMedium),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(labelText: l.email),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _password,
                     obscureText: true,
                     autofillHints: const [AutofillHints.password],
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    decoration: InputDecoration(labelText: l.password),
                     onSubmitted: (_) => _busy ? null : _signIn(),
                   ),
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: _busy ? null : _signIn,
-                    child: const Text('Sign in'),
+                    child: Text(l.signIn),
                   ),
                   TextButton(
                     onPressed: _busy ? null : _signUp,
-                    child: const Text('Create account'),
+                    child: Text(l.createAccount),
                   ),
                   if (_message != null) ...[
                     const SizedBox(height: 12),

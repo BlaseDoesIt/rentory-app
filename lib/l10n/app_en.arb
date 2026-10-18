@@ -1,0 +1,278 @@
+{
+  "@@locale": "en",
+  "appName": "Rentory",
+  "orders": "Orders",
+  "scan": "Scan",
+  "assets": "Assets",
+  "settings": "Settings",
+  "ok": "OK",
+  "yes": "Yes",
+  "cancel": "Cancel",
+  "save": "Save",
+  "add": "Add",
+  "back": "Back",
+  "change": "Change",
+  "clear": "Clear",
+  "notYet": "Not yet",
+  "all": "All",
+  "stateDraft": "Draft",
+  "stateBooked": "Booked",
+  "statePickedUp": "Picked up",
+  "statePartialReturn": "Partial return",
+  "stateReturned": "Returned",
+  "stateCancelled": "Cancelled",
+  "rentalNone": "Not booked",
+  "rentalBooked": "Booked",
+  "rentalOut": "Out",
+  "rentalBack": "Back",
+  "conditionGood": "Good",
+  "conditionMinor": "Minor",
+  "conditionDamaged": "Damaged",
+  "conditionMissing": "Missing",
+  "serialAvailable": "Available",
+  "serialReserved": "Reserved",
+  "serialOut": "Out with a customer",
+  "serialMaintenance": "In maintenance",
+  "serialLost": "Lost",
+  "serialRetired": "Retired",
+  "lineAsset": "Asset",
+  "linePart": "Part",
+  "lineService": "Service",
+  "lineSection": "Section",
+  "noOrders": "No orders yet.",
+  "noCustomer": "No customer",
+  "newOrder": "New order",
+  "order": "Order",
+  "dateRange": "{start} → {end}",
+  "@dateRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "itemCount": "{count, plural, =1{1 item} other{{count} items}}",
+  "@itemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysLate": "{count, plural, =1{1 day late} other{{count} days late}}",
+  "@daysLate": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "customer": "Customer",
+  "chooseCustomer": "Choose a customer",
+  "newCustomer": "New customer",
+  "searchCustomers": "Name or phone",
+  "noCustomers": "No customers found.",
+  "name": "Name",
+  "phone": "Phone",
+  "start": "Start",
+  "end": "End",
+  "endAfterStart": "The end must be after the start.",
+  "createOrder": "Create order",
+  "addLine": "Add line",
+  "editLine": "Edit line",
+  "removeLine": "Remove",
+  "removeLineQuestion": "Remove {name} from the order?",
+  "@removeLineQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "searchNameOrCode": "Name or code",
+  "nothingFound": "Nothing found.",
+  "perDay": "/ day",
+  "byUnitHint": "Rented by unit. Pick the units after adding.",
+  "description": "Description",
+  "sectionTitle": "Section title",
+  "quantity": "Quantity",
+  "pricePerDay": "Price / day",
+  "discountPercent": "Discount %",
+  "checkNumbers": "Check the numbers.",
+  "quantityPositive": "Quantity must be more than zero.",
+  "pickItemFirst": "Pick an item first.",
+  "nameNeeded": "Give it a name.",
+  "bookedLinesFixed": "Booked lines are fixed. Put the order back to draft to change them.",
+  "linesTotal": "Lines",
+  "discount": "Discount",
+  "lateFee": "Late fee",
+  "total": "Total",
+  "paid": "Paid",
+  "due": "Due",
+  "depositHeld": "Deposit held",
+  "deposit": "Deposit",
+  "discountAndPayment": "Discount and payment",
+  "orderDiscount": "Order discount",
+  "percent": "Percent",
+  "fixed": "Fixed amount",
+  "percentMax": "A percent discount is at most 100.",
+  "book": "Book",
+  "pickup": "Pickup",
+  "returnItems": "Return",
+  "backToDraft": "Back to draft",
+  "cancelOrder": "Cancel order",
+  "cancelOrderQuestion": "Cancel this order?",
+  "unitsMissing": "Units missing",
+  "pickUnits": "Pick units",
+  "autofill": "Autofill",
+  "autofillDone": "Units picked.",
+  "autofillShort": "{count, plural, =1{1 unit could not be found.} other{{count} units could not be found.}}",
+  "@autofillShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unitsChosen": "{chosen} of {wanted} chosen",
+  "@unitsChosen": {
+    "placeholders": {
+      "chosen": {
+        "type": "int"
+      },
+      "wanted": {
+        "type": "int"
+      }
+    }
+  },
+  "noFreeUnits": "No free units for these dates.",
+  "overdue": "Overdue",
+  "overdueHint": "Still out past its return date. Autofill skips it.",
+  "notFree": "Not free",
+  "checklist": "Checklist",
+  "rentalContractSigned": "Rental contract signed",
+  "requiredForPickup": "Required for pickup",
+  "pickupReturnReceipt": "Pickup / return receipt signed",
+  "loanContract": "Loan contract signed",
+  "itemsCaptured": "Items captured",
+  "documentsLeft": "Documents left with us",
+  "signature": "Signature",
+  "signerName": "Signed by",
+  "signFirst": "Sign in the box first.",
+  "saveSignature": "Save signature",
+  "signedBy": "Signed by {name}, {date}",
+  "@signedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "conditionPhotos": "Condition photos",
+  "addPhoto": "Add photo",
+  "forcePickup": "Hand over without the contract",
+  "forcePickupHint": "Admin only. Use when the contract will be signed later.",
+  "handOver": "Hand over",
+  "checkIn": "Check in",
+  "stillOut": "{qty} still out",
+  "@stillOut": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "note": "Note",
+  "nothingSelected": "Nothing selected.",
+  "documentsReturned": "Documents handed back to the customer",
+  "documentsReturnedOn": "Documents returned {date}",
+  "@documentsReturnedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "scanHint": "Scan or type a code, then Enter",
+  "scanWithCamera": "Scan with camera",
+  "notFound": "Nothing matches {code}.",
+  "@notFound": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "openOrder": "Open order",
+  "notOnAnyOrder": "Not on any open order.",
+  "searchAssets": "Name, code or barcode",
+  "noAssets": "No assets.",
+  "byUnit": "by unit",
+  "available": "available",
+  "deviceOnly": "This device only",
+  "sharedWithTeam": "Shared with team",
+  "noServer": "No server configured. Data stays on this device.",
+  "signedInAs": "Signed in as {email}",
+  "@signedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "Language",
+  "languageDevice": "Device",
+  "loadDemo": "Load demo data",
+  "loadDemoHint": "Cameras, lights and a few sample orders. Only when empty.",
+  "dataAlready": "There is data already.",
+  "demoLoaded": "Demo data loaded.",
+  "signOut": "Sign out",
+  "syncing": "Syncing…",
+  "offline": "Offline. Changes will sync later.",
+  "syncProblem": "Sync problem: {message}",
+  "@syncProblem": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "notSynced": "Not synced yet",
+  "synced": "Synced {date}",
+  "@synced": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNow": "Sync now",
+  "signInToTeam": "Sign in to your team",
+  "email": "Email",
+  "password": "Password",
+  "signIn": "Sign in",
+  "createAccount": "Create account",
+  "accountCreated": "Account created. Check your email to confirm it, then sign in.",
+  "serverUnreachable": "Could not reach the server. {error}",
+  "@serverUnreachable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app.dart';
+import 'app/language.dart';
 import 'app/services.dart';
 import 'data/local/database.dart';
 
@@ -14,5 +15,6 @@ Future<void> main() async {
       publishableKey: config.supabaseKey!,
     );
   }
-  runApp(RentoryApp(config: config, db: RentoryDatabase()));
+  final language = await LanguageController.load();
+  runApp(RentoryApp(config: config, db: RentoryDatabase(), language: language));
 }

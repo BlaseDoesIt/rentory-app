@@ -1,6 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../data/local/database.dart';
 import '../data/local/local_repository.dart';
@@ -51,6 +55,7 @@ class Services extends InheritedWidget {
     required this.backend,
     required this.userEmail,
     required this.onSignOut,
+    this.files = const AppFiles(),
     required super.child,
   });
 
@@ -63,8 +68,28 @@ class Services extends InheritedWidget {
   final String? userEmail;
   final Future<void> Function()? onSignOut;
 
+  /// Where photos and signatures are saved before they upload.
+  final AppFiles files;
+
   static Services of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<Services>()!;
+
+  /// The same services around another subtree.
+  Widget wrap(Widget child) => Services(
+    db: db,
+    backend: backend,
+    userEmail: userEmail,
+    onSignOut: onSignOut,
+    files: files,
+    child: child,
+  );
+
+  /// Pushed routes sit outside the tree [Services] was put in, so carry it.
+  static Future<T?> push<T>(BuildContext context, Widget page) {
+    final services = of(context);
+    return Navigator.of(context)
+        .push<T>(MaterialPageRoute<T>(builder: (_) => services.wrap(page)));
+  }
 
   @override
   bool updateShouldNotify(Services old) =>
@@ -91,4 +116,47 @@ class Backend {
   const Backend(this.repo, this.sync);
   final RentoryRepository repo;
   final SyncEngine? sync;
+}
+
+/// Pictures kept on this device: condition photos and signatures. The sync
+/// engine uploads them from here.
+class AppFiles {
+  const AppFiles({this.root});
+
+  /// Fixed folder (tests). Null uses the app's documents folder.
+  final String? root;
+
+  Future<Directory> _dir() async {
+    final base = root ?? (await getApplicationDocumentsDirectory()).path;
+    final dir = Directory(p.join(base, 'rentory_photos'));
+    await dir.create(recursive: true);
+    return dir;
+  }
+
+  /// Copies a picked or captured picture in and returns its new path.
+  Future<String> keep(String sourcePath, String name) async {
+    final ext = p.extension(sourcePath).isEmpty
+        ? '.jpg'
+        : p.extension(sourcePath);
+    final target = p.join((await _dir()).path, '$name$ext');
+    await File(sourcePath).copy(target);
+    return target;
+  }
+
+  /// The camera on a phone, a file picker on PC. Null when cancelled.
+  Future<String?> pickPhoto() async {
+    final phone = Platform.isAndroid || Platform.isIOS;
+    final shot = await ImagePicker().pickImage(
+      source: phone ? ImageSource.camera : ImageSource.gallery,
+      maxWidth: 2000,
+      imageQuality: 85,
+    );
+    return shot?.path;
+  }
+
+  Future<String> write(Uint8List bytes, String fileName) async {
+    final target = p.join((await _dir()).path, fileName);
+    await File(target).writeAsBytes(bytes, flush: true);
+    return target;
+  }
 }

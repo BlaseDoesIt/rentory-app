@@ -24,6 +24,25 @@ lib/
   features/   one folder per screen area: orders, scan, assets, settings
 ```
 
+## Screens
+
+Orders (new order, draft editing with asset/part/service/section lines, unit
+picker with Autofill), pickup (checklist, documents left, signature, condition
+photos; admins may hand over without the contract), return (condition and note
+per unit, documents handed back) and Scan (camera on phones, USB scanner or
+keyboard on PC). Screens only call `RentoryRepository`.
+
+Photos and signatures are saved under the app documents folder
+(`rentory_photos/`) and recorded in `photos` with a `localPath`; the sync
+engine uploads them.
+
+## Languages
+
+English and Arabic (right to left), picked in Settings or following the
+device. Numbers and dates use English digits in both. Strings live in
+`lib/l10n/app_en.arb` and `app_ar.arb`; after editing them run
+`flutter gen-l10n`. Messages from the business rules are still English.
+
 ## Secrets
 
 No keys in git. Supabase URL/anon key and Odoo credentials are entered in Settings

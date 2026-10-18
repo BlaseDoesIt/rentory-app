@@ -23,7 +23,7 @@ void main() {
 
     expect(find.text('Draft  ·  Sample Productions'), findsOneWidget);
     expect(find.textContaining('Test Films'), findsOneWidget);
-    expect(find.textContaining('day(s) late'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'days? late')), findsOneWidget);
 
     await tester.tap(find.text('Assets').last);
     await tester.pump();
