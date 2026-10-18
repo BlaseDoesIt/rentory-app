@@ -78,7 +78,7 @@ class _SignInPageState extends State<SignInPage> {
                 children: [
                   const Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: BrandMark(size: 56),
+                    child: BrandMark(size: 72),
                   ),
                   const SizedBox(height: 20),
                   Text(l.appName, style: text.headlineMedium),

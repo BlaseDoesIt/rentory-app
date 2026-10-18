@@ -420,7 +420,8 @@ class LabeledValue extends StatelessWidget {
   }
 }
 
-/// The Rentory mark: an inverted rounded square with an R.
+/// The Rentory logo (a box with a key) on a white rounded tile, so the
+/// black line art reads the same in light and dark mode.
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key, this.size = 36});
   final double size;
@@ -431,19 +432,17 @@ class BrandMark extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      alignment: Alignment.center,
+      padding: EdgeInsets.all(size * 0.12),
       decoration: BoxDecoration(
-        color: scheme.primary,
-        borderRadius: BorderRadius.circular(size * 0.28),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(size * 0.26),
+        border: Border.all(color: scheme.outline),
       ),
-      child: Text(
-        'R',
-        style: TextStyle(
-          color: scheme.onPrimary,
-          fontWeight: FontWeight.w800,
-          fontSize: size * 0.5,
-          height: 1,
-        ),
+      child: Image.asset(
+        'assets/logo.png',
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        semanticLabel: 'Rentory',
       ),
     );
   }

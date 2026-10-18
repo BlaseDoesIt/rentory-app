@@ -366,10 +366,17 @@ class _SideNav extends StatelessWidget {
                       ? MainAxisAlignment.start
                       : MainAxisAlignment.center,
                   children: [
-                    const BrandMark(),
+                    const BrandMark(size: 40),
                     if (extended) ...[
                       const SizedBox(width: 12),
-                      Text(l.appName, style: text.titleLarge),
+                      Flexible(
+                        child: Text(
+                          l.appName,
+                          style: text.titleLarge,
+                          overflow: TextOverflow.fade,
+                          softWrap: false,
+                        ),
+                      ),
                     ],
                   ],
                 ),
