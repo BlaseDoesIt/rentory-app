@@ -4,6 +4,7 @@ import '../../app/format.dart';
 import '../../app/services.dart';
 import '../../data/repository.dart';
 import '../../domain/enums.dart';
+import 'new_order_page.dart';
 import 'order_detail_page.dart';
 
 class OrdersPage extends StatefulWidget {
@@ -29,13 +30,26 @@ class _OrdersPageState extends State<OrdersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('new-order'),
+        icon: const Icon(Icons.add),
+        label: Text(l.newOrder),
+        onPressed: () => Services.push<void>(context, const NewOrderPage()),
+      ),
+      body: _list(context, l),
+    );
+  }
+
+  Widget _list(BuildContext context, AppLocalizations l) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            'Orders',
+            l.orders,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
@@ -46,9 +60,9 @@ class _OrdersPageState extends State<OrdersPage> {
             children: [
               for (final s in <OrderState?>[null, ...OrderState.values])
                 Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsetsDirectional.only(end: 8),
                   child: ChoiceChip(
-                    label: Text(s == null ? 'All' : orderStateLabel(s)),
+                    label: Text(s == null ? l.all : l.orderState(s)),
                     selected: _filter == s,
                     onSelected: (_) => setState(() => _filter = s),
                   ),
@@ -68,10 +82,10 @@ class _OrdersPageState extends State<OrdersPage> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (orders.isEmpty) {
-                return const Center(child: Text('No orders yet.'));
+                return Center(child: Text(l.noOrders));
               }
               return ListView.separated(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                 itemCount: orders.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, i) => _OrderTile(orders[i]),
@@ -91,14 +105,15 @@ class _OrderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final o = s.order;
-    final customer = s.customerLabel.isEmpty ? 'No customer' : s.customerLabel;
-    final late = s.overdue ? '  ·  ${s.daysLate} day(s) late' : '';
+    final l = context.l10n;
+    final customer = s.customerLabel.isEmpty ? l.noCustomer : s.customerLabel;
+    final late = s.overdue ? '  ·  ${l.daysLate(s.daysLate)}' : '';
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      title: Text('${o.number ?? 'Draft'}  ·  $customer'),
+      title: Text('${o.number ?? l.stateDraft}  ·  $customer'),
       subtitle: Text(
-        '${when(o.dateStart)} → ${when(o.dateEnd)}  ·  '
-        '${s.itemCount} item(s)$late',
+        '${l.dateRange(when(o.dateStart), when(o.dateEnd))}  ·  '
+        '${l.itemCount(s.itemCount)}$late',
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -108,23 +123,10 @@ class _OrderTile extends StatelessWidget {
             money(s.amounts.charged),
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          Text(orderStateLabel(o.state)),
+          Text(l.orderState(o.state)),
         ],
       ),
-      onTap: () {
-        final services = Services.of(context);
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => Services(
-              db: services.db,
-              backend: services.backend,
-              userEmail: services.userEmail,
-              onSignOut: services.onSignOut,
-              child: OrderDetailPage(orderId: o.id),
-            ),
-          ),
-        );
-      },
+      onTap: () => Services.push<void>(context, OrderDetailPage(orderId: o.id)),
     );
   }
 }
