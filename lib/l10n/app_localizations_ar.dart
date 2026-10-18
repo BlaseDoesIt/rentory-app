@@ -560,6 +560,12 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذّر تشغيل Rentory. أغلقه وافتحه مجددًا. إذا تكرر ذلك، أرسل هذه الرسالة:';
 
   @override
+  String get copyError => 'نسخ الخطأ';
+
+  @override
+  String get errorCopied => 'تم نسخ الخطأ';
+
+  @override
   String get noConnection => 'لا يوجد اتصال';
 
   @override

@@ -1058,6 +1058,18 @@ abstract class AppLocalizations {
   /// **'Rentory couldn\'t start. Close it and open it again. If this keeps happening, send this message:'**
   String get startupFailed;
 
+  /// No description provided for @copyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy error'**
+  String get copyError;
+
+  /// No description provided for @errorCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Error copied'**
+  String get errorCopied;
+
   /// No description provided for @noConnection.
   ///
   /// In en, this message translates to:

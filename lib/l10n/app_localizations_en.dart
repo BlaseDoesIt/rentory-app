@@ -551,6 +551,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Rentory couldn\'t start. Close it and open it again. If this keeps happening, send this message:';
 
   @override
+  String get copyError => 'Copy error';
+
+  @override
+  String get errorCopied => 'Error copied';
+
+  @override
   String get noConnection => 'No connection';
 
   @override

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -174,17 +175,27 @@ class _StartupFailed extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     return Scaffold(
-      body: Center(
-        child: Padding(
+      body: SafeArea(
+        // Long Java traces don't fit the screen: scroll, and copy in one tap.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
               Text(l.startupFailed, textAlign: TextAlign.center),
               const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: error));
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(l.errorCopied)));
+                },
+                icon: const Icon(Icons.copy),
+                label: Text(l.copyError),
+              ),
+              const SizedBox(height: 16),
               SelectableText(
                 error,
-                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

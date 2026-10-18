@@ -160,6 +160,8 @@
   "serverUnreachable": "تعذر الوصول إلى الخادم. {error}",
   "notConfigured": "تم بناء هذه النسخة من Rentory بدون عنوان الخادم، لذا لا يمكن تشغيلها. اطلب نسخة جديدة.",
   "startupFailed": "تعذّر تشغيل Rentory. أغلقه وافتحه مجددًا. إذا تكرر ذلك، أرسل هذه الرسالة:",
+  "copyError": "نسخ الخطأ",
+  "errorCopied": "تم نسخ الخطأ",
   "noConnection": "لا يوجد اتصال",
   "noConnectionHint": "يحتاج Rentory إلى الإنترنت ليعمل. سيتابع فور عودة الاتصال.",
   "serverProblem": "تعذر تحميل بيانات فريقك",
