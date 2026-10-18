@@ -1081,6 +1081,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get tryAgain;
+
+  /// No description provided for @statOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Out now'**
+  String get statOut;
+
+  /// No description provided for @statDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafts'**
+  String get statDrafts;
+
+  /// No description provided for @ordersSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{out} out now · {overdue} overdue'**
+  String ordersSummary(int out, int overdue);
+
+  /// No description provided for @searchOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer, phone or order number'**
+  String get searchOrders;
+
+  /// No description provided for @noOrdersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap New order to start a rental.'**
+  String get noOrdersHint;
+
+  /// No description provided for @items.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get items;
+
+  /// No description provided for @payment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get payment;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @noLinesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on this order yet.'**
+  String get noLinesYet;
+
+  /// No description provided for @newAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'New asset'**
+  String get newAsset;
+
+  /// No description provided for @assetsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 asset} other{{count} assets}} · {out} out'**
+  String assetsSummary(int count, int out);
+
+  /// No description provided for @noAssetsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first asset with New asset.'**
+  String get noAssetsHint;
+
+  /// No description provided for @availableOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{available} of {total} available'**
+  String availableOf(String available, String total);
+
+  /// No description provided for @asset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get asset;
+
+  /// No description provided for @availableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get availableNow;
+
+  /// No description provided for @totalStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalStock;
+
+  /// No description provided for @pricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get pricing;
+
+  /// No description provided for @declaredValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get declaredValue;
+
+  /// No description provided for @barcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode'**
+  String get barcode;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @unitsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unit} other{{count} units}}'**
+  String unitsCount(int count);
+
+  /// No description provided for @addUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Add units'**
+  String get addUnits;
+
+  /// No description provided for @unitsOnePerLine.
+  ///
+  /// In en, this message translates to:
+  /// **'One unit name per line, e.g. FX6-0003'**
+  String get unitsOnePerLine;
+
+  /// No description provided for @viewAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'View asset'**
+  String get viewAsset;
+
+  /// No description provided for @scanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a unit and the order it\'s on'**
+  String get scanSubtitle;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @data.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get data;
+
+  /// No description provided for @dates.
+  ///
+  /// In en, this message translates to:
+  /// **'Dates'**
+  String get dates;
+
+  /// No description provided for @goingOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Going out'**
+  String get goingOut;
+
+  /// No description provided for @newCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'New category'**
+  String get newCategory;
+
+  /// No description provided for @details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name *'**
+  String get nameRequired;
+
+  /// No description provided for @codeOrBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code or barcode'**
+  String get codeOrBarcode;
+
+  /// No description provided for @codeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What a scanner reads. Leave empty if it has none.'**
+  String get codeHint;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get stock;
+
+  /// No description provided for @trackByUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'By unit'**
+  String get trackByUnit;
+
+  /// No description provided for @trackByQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'By quantity'**
+  String get trackByQuantity;
+
+  /// No description provided for @trackByUnitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Each piece has its own serial and barcode, like cameras.'**
+  String get trackByUnitHint;
+
+  /// No description provided for @trackByQuantityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Identical pieces counted together, like stands or cables.'**
+  String get trackByQuantityHint;
+
+  /// No description provided for @createAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Create asset'**
+  String get createAsset;
+
+  /// No description provided for @unitName.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit serial'**
+  String get unitName;
+
+  /// No description provided for @unitNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type or scan, then Enter'**
+  String get unitNameHint;
+
+  /// No description provided for @numberUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Number them for me'**
+  String get numberUnits;
+
+  /// No description provided for @prefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefix'**
+  String get prefix;
+
+  /// No description provided for @howMany.
+  ///
+  /// In en, this message translates to:
+  /// **'How many'**
+  String get howMany;
 }
 
 class _AppLocalizationsDelegate

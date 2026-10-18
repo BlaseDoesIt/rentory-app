@@ -11,6 +11,8 @@ import 'package:rentory/app/services.dart';
 import 'package:rentory/data/local/database.dart';
 import 'package:rentory/data/local/local_repository.dart';
 import 'package:rentory/domain/enums.dart';
+import 'package:rentory/features/assets/asset_detail_page.dart';
+import 'package:rentory/features/assets/new_asset_page.dart';
 import 'package:rentory/features/orders/order_detail_page.dart';
 import 'package:rentory/features/orders/pickup_page.dart';
 import 'package:rentory/features/orders/return_page.dart';
@@ -197,7 +199,8 @@ void main() {
     await typeInto(tester, const Key('line-name'), 'Extras');
     await tapOn(tester, find.byKey(const Key('add-line-confirm')));
     expect(find.text('Delivery'), findsOneWidget);
-    expect(find.text('Extras'), findsOneWidget);
+    // Sections show as small uppercase labels.
+    expect(find.text('EXTRAS'), findsOneWidget);
 
     // Line discount, then remove the service.
     await tapOn(tester, find.text('Tripod'));
@@ -473,6 +476,81 @@ void main() {
         .join(' ');
     expect(all, isNot(matches(RegExp('[٠-٩]'))));
     expect(all, contains('محجوز'));
+    await done(tester);
+  });
+
+  testWidgets('new asset: units typed and numbered, then more added', (
+    tester,
+  ) async {
+    tall(tester);
+    await tester.pumpWidget(host(const NewAssetPage()));
+    await settle(tester);
+
+    await typeInto(tester, const Key('asset-name'), 'Sigma 18-35');
+    await typeInto(tester, const Key('asset-code'), 'LNS');
+    // One typed by hand, three numbered: LNS-002 to LNS-004.
+    await typeInto(tester, const Key('asset-unit'), 'LNS-001');
+    await tapOn(tester, find.byKey(const Key('add-unit')));
+    await tapOn(tester, find.byKey(const Key('number-units')));
+    await tapOn(tester, find.byKey(const Key('number-confirm')));
+    expect(find.text('4 units'), findsOneWidget);
+    await typeInto(tester, const Key('asset-price'), '25');
+    await tapOn(tester, find.byKey(const Key('save-asset')));
+
+    expect(find.byType(AssetDetailPage), findsOneWidget);
+    expect(find.text('LNS-004'), findsOneWidget);
+
+    await tapOn(tester, find.byKey(const Key('add-units')));
+    await tester.enterText(find.byKey(const Key('units-input')), 'LNS-010');
+    await tapOn(tester, find.byKey(const Key('save-units-dialog')));
+    expect(find.text('LNS-010'), findsOneWidget);
+
+    final lens = (await tester.runAsync(
+      () => (db.select(
+        db.assets,
+      )..where((a) => a.name.equals('Sigma 18-35'))).getSingle(),
+    ))!;
+    final d = (await tester.runAsync(() => repo.loadAsset(lens.id)))!;
+    expect(d.serials.map((u) => u.name), [
+      'LNS-001',
+      'LNS-002',
+      'LNS-003',
+      'LNS-004',
+      'LNS-010',
+    ]);
+    expect(lens.rentalPriceDay, 25);
+    expect(lens.tracking, Tracking.serial);
+    await done(tester);
+  });
+
+  testWidgets('new asset counted by quantity; a clash is refused', (
+    tester,
+  ) async {
+    tall(tester);
+    await tester.pumpWidget(host(const NewAssetPage()));
+    await settle(tester);
+
+    await typeInto(tester, const Key('asset-name'), 'C-stand');
+    // Already the tripod's code.
+    await typeInto(tester, const Key('asset-code'), 'GRP-1');
+    await tapOn(tester, find.text('By quantity'));
+    await typeInto(tester, const Key('asset-qty'), '6');
+    await tapOn(tester, find.byKey(const Key('save-asset')));
+    expect(find.textContaining('already used'), findsOneWidget);
+    await tapOn(tester, find.text('OK'));
+
+    await typeInto(tester, const Key('asset-code'), 'GRP-2');
+    await tapOn(tester, find.byKey(const Key('save-asset')));
+    expect(find.byType(AssetDetailPage), findsOneWidget);
+    final stand = (await tester.runAsync(
+      () => (db.select(
+        db.assets,
+      )..where((a) => a.name.equals('C-stand'))).getSingle(),
+    ))!;
+    expect(
+      (stand.qtyManual, stand.tracking, stand.code),
+      (6.0, Tracking.none, 'GRP-2'),
+    );
     await done(tester);
   });
 }

@@ -277,5 +277,90 @@
   "noConnectionHint": "Rentory needs the internet to work. It will continue as soon as the connection is back.",
   "serverProblem": "Can't load your team's data",
   "connecting": "Connecting…",
-  "tryAgain": "Try again"
+  "tryAgain": "Try again",
+  "statOut": "Out now",
+  "statDrafts": "Drafts",
+  "ordersSummary": "{out} out now · {overdue} overdue",
+  "@ordersSummary": {
+    "placeholders": {
+      "out": {
+        "type": "int"
+      },
+      "overdue": {
+        "type": "int"
+      }
+    }
+  },
+  "searchOrders": "Customer, phone or order number",
+  "noOrdersHint": "Tap New order to start a rental.",
+  "items": "Items",
+  "payment": "Payment",
+  "edit": "Edit",
+  "noLinesYet": "Nothing on this order yet.",
+  "newAsset": "New asset",
+  "assetsSummary": "{count, plural, =1{1 asset} other{{count} assets}} · {out} out",
+  "@assetsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "out": {
+        "type": "int"
+      }
+    }
+  },
+  "noAssetsHint": "Add your first asset with New asset.",
+  "availableOf": "{available} of {total} available",
+  "@availableOf": {
+    "placeholders": {
+      "available": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "asset": "Asset",
+  "availableNow": "Available",
+  "totalStock": "Total",
+  "pricing": "Pricing",
+  "declaredValue": "Value",
+  "barcode": "Barcode",
+  "notes": "Notes",
+  "unitsCount": "{count, plural, =1{1 unit} other{{count} units}}",
+  "@unitsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addUnits": "Add units",
+  "unitsOnePerLine": "One unit name per line, e.g. FX6-0003",
+  "viewAsset": "View asset",
+  "scanSubtitle": "Find a unit and the order it's on",
+  "account": "Account",
+  "data": "Data",
+  "dates": "Dates",
+  "goingOut": "Going out",
+  "newCategory": "New category",
+  "details": "Details",
+  "nameRequired": "Name *",
+  "codeOrBarcode": "Code or barcode",
+  "codeHint": "What a scanner reads. Leave empty if it has none.",
+  "category": "Category",
+  "none": "None",
+  "location": "Location",
+  "stock": "Stock",
+  "trackByUnit": "By unit",
+  "trackByQuantity": "By quantity",
+  "trackByUnitHint": "Each piece has its own serial and barcode, like cameras.",
+  "trackByQuantityHint": "Identical pieces counted together, like stands or cables.",
+  "createAsset": "Create asset",
+  "unitName": "Unit serial",
+  "unitNameHint": "Type or scan, then Enter",
+  "numberUnits": "Number them for me",
+  "prefix": "Prefix",
+  "howMany": "How many"
 }

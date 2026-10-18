@@ -561,4 +561,170 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tryAgain => 'Try again';
+
+  @override
+  String get statOut => 'Out now';
+
+  @override
+  String get statDrafts => 'Drafts';
+
+  @override
+  String ordersSummary(int out, int overdue) {
+    return '$out out now · $overdue overdue';
+  }
+
+  @override
+  String get searchOrders => 'Customer, phone or order number';
+
+  @override
+  String get noOrdersHint => 'Tap New order to start a rental.';
+
+  @override
+  String get items => 'Items';
+
+  @override
+  String get payment => 'Payment';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get noLinesYet => 'Nothing on this order yet.';
+
+  @override
+  String get newAsset => 'New asset';
+
+  @override
+  String assetsSummary(int count, int out) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count assets',
+      one: '1 asset',
+    );
+    return '$_temp0 · $out out';
+  }
+
+  @override
+  String get noAssetsHint => 'Add your first asset with New asset.';
+
+  @override
+  String availableOf(String available, String total) {
+    return '$available of $total available';
+  }
+
+  @override
+  String get asset => 'Asset';
+
+  @override
+  String get availableNow => 'Available';
+
+  @override
+  String get totalStock => 'Total';
+
+  @override
+  String get pricing => 'Pricing';
+
+  @override
+  String get declaredValue => 'Value';
+
+  @override
+  String get barcode => 'Barcode';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String unitsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count units',
+      one: '1 unit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addUnits => 'Add units';
+
+  @override
+  String get unitsOnePerLine => 'One unit name per line, e.g. FX6-0003';
+
+  @override
+  String get viewAsset => 'View asset';
+
+  @override
+  String get scanSubtitle => 'Find a unit and the order it\'s on';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get data => 'Data';
+
+  @override
+  String get dates => 'Dates';
+
+  @override
+  String get goingOut => 'Going out';
+
+  @override
+  String get newCategory => 'New category';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get nameRequired => 'Name *';
+
+  @override
+  String get codeOrBarcode => 'Code or barcode';
+
+  @override
+  String get codeHint => 'What a scanner reads. Leave empty if it has none.';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get none => 'None';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get stock => 'Stock';
+
+  @override
+  String get trackByUnit => 'By unit';
+
+  @override
+  String get trackByQuantity => 'By quantity';
+
+  @override
+  String get trackByUnitHint =>
+      'Each piece has its own serial and barcode, like cameras.';
+
+  @override
+  String get trackByQuantityHint =>
+      'Identical pieces counted together, like stands or cables.';
+
+  @override
+  String get createAsset => 'Create asset';
+
+  @override
+  String get unitName => 'Unit serial';
+
+  @override
+  String get unitNameHint => 'Type or scan, then Enter';
+
+  @override
+  String get numberUnits => 'Number them for me';
+
+  @override
+  String get prefix => 'Prefix';
+
+  @override
+  String get howMany => 'How many';
 }

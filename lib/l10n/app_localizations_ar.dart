@@ -570,4 +570,166 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tryAgain => 'حاول مجدداً';
+
+  @override
+  String get statOut => 'خارج الآن';
+
+  @override
+  String get statDrafts => 'مسودات';
+
+  @override
+  String ordersSummary(int out, int overdue) {
+    return '$out خارج الآن · $overdue متأخر';
+  }
+
+  @override
+  String get searchOrders => 'الزبون أو الهاتف أو رقم الطلب';
+
+  @override
+  String get noOrdersHint => 'اضغط طلب جديد لبدء تأجير.';
+
+  @override
+  String get items => 'المعدات';
+
+  @override
+  String get payment => 'الدفع';
+
+  @override
+  String get edit => 'تعديل';
+
+  @override
+  String get noLinesYet => 'لا شيء في هذا الطلب بعد.';
+
+  @override
+  String get newAsset => 'معدّة جديدة';
+
+  @override
+  String assetsSummary(int count, int out) {
+    return '$count معدّة · $out خارج';
+  }
+
+  @override
+  String get noAssetsHint => 'أضف أول معدّة من معدّة جديدة.';
+
+  @override
+  String availableOf(String available, String total) {
+    return '$available من $total متاح';
+  }
+
+  @override
+  String get asset => 'معدّة';
+
+  @override
+  String get availableNow => 'متاح';
+
+  @override
+  String get totalStock => 'الإجمالي';
+
+  @override
+  String get pricing => 'التسعير';
+
+  @override
+  String get declaredValue => 'القيمة';
+
+  @override
+  String get barcode => 'الباركود';
+
+  @override
+  String get notes => 'ملاحظات';
+
+  @override
+  String unitsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count وحدة',
+      few: '$count وحدات',
+      two: 'وحدتان',
+      one: 'وحدة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addUnits => 'إضافة وحدات';
+
+  @override
+  String get unitsOnePerLine => 'اسم وحدة في كل سطر، مثل FX6-0003';
+
+  @override
+  String get viewAsset => 'عرض المعدّة';
+
+  @override
+  String get scanSubtitle => 'اعثر على وحدة والطلب الذي تتبعه';
+
+  @override
+  String get account => 'الحساب';
+
+  @override
+  String get data => 'البيانات';
+
+  @override
+  String get dates => 'التواريخ';
+
+  @override
+  String get goingOut => 'ما سيخرج';
+
+  @override
+  String get newCategory => 'فئة جديدة';
+
+  @override
+  String get details => 'التفاصيل';
+
+  @override
+  String get nameRequired => 'الاسم *';
+
+  @override
+  String get codeOrBarcode => 'الرمز أو الباركود';
+
+  @override
+  String get codeHint => 'ما يقرؤه الماسح. اتركه فارغاً إن لم يوجد.';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get none => 'بدون';
+
+  @override
+  String get location => 'الموقع';
+
+  @override
+  String get stock => 'المخزون';
+
+  @override
+  String get trackByUnit => 'بالوحدة';
+
+  @override
+  String get trackByQuantity => 'بالكمية';
+
+  @override
+  String get trackByUnitHint =>
+      'لكل قطعة رقم تسلسلي وباركود خاص، مثل الكاميرات.';
+
+  @override
+  String get trackByQuantityHint =>
+      'قطع متطابقة تُعدّ معاً، مثل الحوامل أو الكابلات.';
+
+  @override
+  String get createAsset => 'إنشاء المعدّة';
+
+  @override
+  String get unitName => 'رقم الوحدة';
+
+  @override
+  String get unitNameHint => 'اكتب أو امسح ثم Enter';
+
+  @override
+  String get numberUnits => 'رقّمها تلقائياً';
+
+  @override
+  String get prefix => 'البادئة';
+
+  @override
+  String get howMany => 'كم وحدة';
 }
