@@ -10,6 +10,7 @@ import '../../domain/rules/availability.dart'
 import '../../domain/rules/late_fee.dart';
 import '../../domain/rules/money.dart';
 import '../../domain/rules/order_rules.dart';
+import '../../domain/rules/rented_in.dart';
 import '../repository.dart';
 import 'database.dart';
 import 'tables.dart';
@@ -437,6 +438,16 @@ class LocalRepository implements RentoryRepository {
       if (!asset.rentalOk) {
         throw RuleException.one('${asset.name} is not for rent.');
       }
+      if (asset.stateManual != null) {
+        throw RuleException.one(
+          '${asset.name} is in ${asset.stateManual!.key} and cannot be rented.',
+        );
+      }
+      if (asset.rentedInReturnedAt != null) {
+        throw RuleException.one(
+          '${asset.name} has already gone back to its owner.',
+        );
+      }
       price = priceDay ?? asset.rentalPriceDay;
       if (label.isEmpty) label = asset.name;
     }
@@ -622,6 +633,26 @@ class LocalRepository implements RentoryRepository {
         problems.add('${l.name}: no dates.');
         continue;
       }
+      final a = v.asset;
+      if (a != null && a.stateManual != null) {
+        problems.add('${l.name}: in ${a.stateManual!.key}, cannot go out.');
+        continue;
+      }
+      if (a != null && a.ownership == Ownership.rentedIn) {
+        final p = rentedInLineProblem(
+          assetName: l.name,
+          supplier: a.supplierName,
+          heldFrom: a.rentedInDateStart,
+          dueBack: a.rentedInDateEnd,
+          givenBackAt: a.rentedInReturnedAt,
+          lineStart: w.start,
+          lineEnd: w.end,
+        );
+        if (p != null) {
+          problems.add(p);
+          continue;
+        }
+      }
       final ask = Ask(
         start: w.start!,
         end: w.end!,
@@ -729,6 +760,7 @@ class LocalRepository implements RentoryRepository {
 
       Future<void> check({
         String? serialId,
+        String? serialName,
         required Condition condition,
         String? note,
       }) async {
@@ -755,6 +787,7 @@ class LocalRepository implements RentoryRepository {
                   lineId: Value(lineId),
                   orderId: Value(line.orderId),
                   serialId: Value(serialId),
+                  serialName: Value(serialName),
                 ),
               );
         }
@@ -775,7 +808,12 @@ class LocalRepository implements RentoryRepository {
         for (final s in serials) {
           final t = targets[s.id];
           if (t == null) continue;
-          await check(serialId: s.id, condition: t.condition, note: t.note);
+          await check(
+            serialId: s.id,
+            serialName: s.name,
+            condition: t.condition,
+            note: t.note,
+          );
           await (db.update(db.serials)..where((x) => x.id.equals(s.id))).write(
             SerialsCompanion(
               state: Value(serialStateAfterReturn(t.condition)),
@@ -927,7 +965,10 @@ class LocalRepository implements RentoryRepository {
   ) async => AssetSummary(
     asset: a,
     categoryName: categories[a.categoryId],
-    total: a.tracking == Tracking.serial
+    // Parked by hand, or a loan already given back: nothing to promise.
+    total: a.stateManual != null || a.rentedInReturnedAt != null
+        ? 0
+        : a.tracking == Tracking.serial
         ? (await _serialFacts(a.id))
               .where((s) => s.fitToPromise)
               .length
@@ -956,11 +997,38 @@ class LocalRepository implements RentoryRepository {
         : await (db.select(
             db.locations,
           )..where((l) => l.id.equals(a.locationId!))).getSingleOrNull();
+    final source = a.sourceId == null
+        ? null
+        : await (db.select(
+            db.customers,
+          )..where((c) => c.id.equals(a.sourceId!))).getSingleOrNull();
     return AssetDetail(
       summary: await _summary(a, categories, await _qtyOutByAsset()),
       serials: serials,
       locationName: location?.name,
+      sourceName: source?.name,
+      liveLines: (await _liveLines(assetId)).length,
     );
+  }
+
+  /// Lines of [assetId] an open order still counts on.
+  Future<List<OrderLine>> _liveLines(String assetId) async {
+    final query =
+        db.select(db.orderLines).join([
+          innerJoin(db.orders, db.orders.id.equalsExp(db.orderLines.orderId)),
+        ])..where(
+          db.orderLines.assetId.equals(assetId) &
+              db.orderLines.deleted.equals(false) &
+              db.orders.deleted.equals(false) &
+              db.orderLines.rentalState
+                  .equalsValue(RentalState.returned)
+                  .not() &
+              db.orders.state.isInValues(const [
+                OrderState.cancelled,
+                OrderState.returned,
+              ]).not(),
+        );
+    return [for (final r in await query.get()) r.readTable(db.orderLines)];
   }
 
   @override
@@ -1026,6 +1094,7 @@ class LocalRepository implements RentoryRepository {
     double priceDay = 0,
     double declaredValue = 0,
     String? notes,
+    AssetsCompanion more = const AssetsCompanion(),
   }) async {
     String? opt(String? s) => s == null || s.trim().isEmpty ? null : s.trim();
     final clean = name.trim();
@@ -1040,6 +1109,7 @@ class LocalRepository implements RentoryRepository {
         'Quantity must be more than zero.',
       if (tracking == Tracking.serial && unitNames.isEmpty)
         'Add at least one unit.',
+      ..._assetProblems(more),
     ];
     if (problems.isNotEmpty) throw RuleException(problems);
     final clashes = await _codeClashes({?c, ?b, ...unitNames});
@@ -1066,11 +1136,193 @@ class LocalRepository implements RentoryRepository {
               updatedAt: _ts,
             ),
           );
+      await (db.update(db.assets)..where((x) => x.id.equals(row.id))).write(
+        more.copyWith(updatedAt: _ts),
+      );
       if (tracking == Tracking.serial) {
         await _insertUnits(row, unitNames);
       }
       return row.id;
     });
+  }
+
+  /// What is wrong with these asset values, if anything.
+  static List<String> _assetProblems(AssetsCompanion c) {
+    double? v(Value<double> x) => x.present ? x.value : null;
+    final start = c.rentedInDateStart.present
+        ? c.rentedInDateStart.value
+        : null;
+    final end = c.rentedInDateEnd.present ? c.rentedInDateEnd.value : null;
+    final url = c.evaluationUrl.present ? c.evaluationUrl.value : null;
+    return [
+      if (c.name.present && c.name.value.trim().isEmpty)
+        'The asset needs a name.',
+      for (final (label, x) in [
+        ('price', v(c.rentalPriceDay)),
+        ('value', v(c.declaredValue)),
+        ('cost', v(c.unitCost)),
+        ('loan cost', v(c.rentedInCostDay)),
+        ('deposit', v(c.rentedInDeposit)),
+      ])
+        if (x != null && x < 0) 'The $label cannot be negative.',
+      if (start != null && end != null && !end.isAfter(start))
+        'The loan must end after it starts.',
+      if (url != null && url.isNotEmpty && !RegExp(r'^https?://').hasMatch(url))
+        'The evaluation link must start with http:// or https://.',
+    ];
+  }
+
+  @override
+  Future<void> updateAsset(String assetId, AssetsCompanion changes) async {
+    final problems = _assetProblems(changes);
+    if (problems.isNotEmpty) throw RuleException(problems);
+    final codes = <String>{
+      if (changes.code.present && (changes.code.value ?? '').trim().isNotEmpty)
+        changes.code.value!.trim(),
+      if (changes.barcode.present &&
+          (changes.barcode.value ?? '').trim().isNotEmpty)
+        changes.barcode.value!.trim(),
+    };
+    for (final c in codes) {
+      final hit = await findByCode(c);
+      if (hit.serial != null ||
+          (hit.asset != null && hit.asset!.id != assetId)) {
+        throw RuleException.one('$c is already used by another asset or unit.');
+      }
+    }
+    await (db.update(db.assets)..where((a) => a.id.equals(assetId))).write(
+      changes.copyWith(updatedAt: _ts, dirty: _dirty),
+    );
+  }
+
+  @override
+  Future<void> setAssetStatus(String assetId, AssetManualState? state) async {
+    final a = await (db.select(
+      db.assets,
+    )..where((x) => x.id.equals(assetId))).getSingle();
+    final units = await (db.select(
+      db.serials,
+    )..where((s) => s.assetId.equals(assetId) & _alive(s))).get();
+    if (state != null) {
+      final busy = units.where(
+        (s) => s.state == SerialState.reserved || s.state == SerialState.out,
+      );
+      final out = (await _qtyOutByAsset())[assetId] ?? 0;
+      if (busy.isNotEmpty || out > 0) {
+        throw RuleException.one(
+          '${a.name} is out or reserved. Return or release it first.',
+        );
+      }
+    }
+    await db.transaction(() async {
+      await updateAsset(assetId, AssetsCompanion(stateManual: Value(state)));
+      // Free units follow the asset, and come back with it.
+      for (final s in units) {
+        final next = switch (state) {
+          AssetManualState.maintenance =>
+            s.state == SerialState.available ? SerialState.maintenance : null,
+          AssetManualState.retired =>
+            s.state == SerialState.available ||
+                    s.state == SerialState.maintenance
+                ? SerialState.retired
+                : null,
+          null =>
+            s.state == SerialState.maintenance || s.state == SerialState.retired
+                ? SerialState.available
+                : null,
+        };
+        if (next != null) {
+          await (db.update(db.serials)..where((x) => x.id.equals(s.id))).write(
+            SerialsCompanion(state: Value(next), updatedAt: _ts, dirty: _dirty),
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  Future<void> giveBack(
+    String assetId, {
+    required LoanCondition condition,
+    String? note,
+  }) async {
+    final a = await (db.select(
+      db.assets,
+    )..where((x) => x.id.equals(assetId))).getSingle();
+    if (a.ownership != Ownership.rentedIn) {
+      throw RuleException.one(
+        '${a.name} is ours; there is nobody to give it back to.',
+      );
+    }
+    final live = await _liveLines(assetId);
+    if (live.isNotEmpty) {
+      throw RuleException.one(
+        '${a.name} is still promised on ${live.length} line(s). '
+        'Return or cancel those first.',
+      );
+    }
+    final extra = note?.trim();
+    await updateAsset(
+      assetId,
+      AssetsCompanion(
+        rentedInReturnedAt: Value(_clock()),
+        rentedInReturnedBy: Value(_userId()),
+        rentedInConditionOut: Value(condition),
+        rentedInNote: extra == null || extra.isEmpty
+            ? const Value.absent()
+            : Value([?a.rentedInNote, extra].join('\n')),
+        // It cannot be booked once it is out of the building.
+        rentalOk: const Value(false),
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateUnit(String serialId, SerialsCompanion changes) async {
+    final s = await (db.select(
+      db.serials,
+    )..where((x) => x.id.equals(serialId))).getSingle();
+    final problems = <String>[
+      if (changes.name.present && changes.name.value.trim().isEmpty)
+        'The unit needs a serial number.',
+      if (changes.unitCost.present && changes.unitCost.value < 0)
+        'The cost cannot be negative.',
+      if (changes.declaredValue.present && changes.declaredValue.value < 0)
+        'The value cannot be negative.',
+    ];
+    if (problems.isNotEmpty) throw RuleException(problems);
+    if (changes.name.present && changes.name.value.trim() != s.name) {
+      final n = changes.name.value.trim();
+      final hit = await findByCode(n);
+      if (hit.asset != null || hit.serial != null) {
+        throw RuleException.one('$n is already used by another asset or unit.');
+      }
+      changes = changes.copyWith(name: Value(n), barcode: Value(n));
+    }
+    await (db.update(db.serials)..where((x) => x.id.equals(serialId))).write(
+      changes.copyWith(updatedAt: _ts, dirty: _dirty),
+    );
+  }
+
+  @override
+  Future<void> setUnitState(String serialId, SerialState state) async {
+    const manual = {
+      SerialState.available,
+      SerialState.maintenance,
+      SerialState.retired,
+      SerialState.lost,
+    };
+    final s = await (db.select(
+      db.serials,
+    )..where((x) => x.id.equals(serialId))).getSingle();
+    if (!manual.contains(state) || !manual.contains(s.state)) {
+      throw RuleException.one(
+        '${s.name} is out or reserved; its state follows its order.',
+      );
+    }
+    await (db.update(db.serials)..where((x) => x.id.equals(serialId))).write(
+      SerialsCompanion(state: Value(state), updatedAt: _ts, dirty: _dirty),
+    );
   }
 
   @override
@@ -1174,6 +1426,52 @@ class LocalRepository implements RentoryRepository {
       ),
     );
   }
+
+  @override
+  Future<void> setLineDates(
+    String lineId,
+    DateTime? start,
+    DateTime? end,
+  ) async {
+    final line = await _line(lineId);
+    if (line.rentalState != RentalState.none) {
+      throw RuleException.one(
+        'Booked lines are fixed. Put the order back to draft to change them.',
+      );
+    }
+    if (start != null || end != null) {
+      final o = await _order(line.orderId);
+      final s = start ?? o.dateStart;
+      final e = end ?? o.dateEnd;
+      final problem = datesProblem(s, e);
+      if (problem != null) throw RuleException.one(problem);
+      if (!o.allowLineDatesOutside &&
+          ((s != null && o.dateStart != null && s.isBefore(o.dateStart!)) ||
+              (e != null && o.dateEnd != null && e.isAfter(o.dateEnd!)))) {
+        throw RuleException.one(
+          'Line dates must sit inside the order\'s dates. Allow lines '
+          'outside the main window on the order to change that.',
+        );
+      }
+    }
+    await _setLine(
+      lineId,
+      OrderLinesCompanion(
+        dateStart: Value(start?.toUtc()),
+        dateEnd: Value(end?.toUtc()),
+      ),
+    );
+  }
+
+  @override
+  Future<void> setItemsExamined(String orderId, bool examined) => updateOrder(
+    orderId,
+    OrdersCompanion(
+      itemsExamined: Value(examined),
+      itemsExaminedAt: Value(examined ? _clock() : null),
+      itemsExaminedBy: Value(examined ? _userId() : null),
+    ),
+  );
 
   // ============================================================ paperwork
 

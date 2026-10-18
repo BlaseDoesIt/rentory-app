@@ -93,6 +93,8 @@ class AssetDetail {
     required this.summary,
     required this.serials,
     required this.locationName,
+    required this.sourceName,
+    required this.liveLines,
   });
 
   final AssetSummary summary;
@@ -100,6 +102,12 @@ class AssetDetail {
   /// Its units, by name. Empty for stock counted by quantity.
   final List<Serial> serials;
   final String? locationName;
+
+  /// The contact it was bought from.
+  final String? sourceName;
+
+  /// Order lines still holding it (not returned, order still open).
+  final int liveLines;
   Asset get asset => summary.asset;
 }
 
@@ -174,6 +182,14 @@ abstract interface class RentoryRepository {
     double? discount,
   });
 
+  /// Gives a draft line its own dates. Null [start] and [end] put it back on
+  /// the order's dates. Must sit inside the order's window unless the order
+  /// allows otherwise.
+  Future<void> setLineDates(String lineId, DateTime? start, DateTime? end);
+
+  /// Somebody went over what came back and confirmed its condition.
+  Future<void> setItemsExamined(String orderId, bool examined);
+
   // ------------------------------------------------- inventory
 
   Future<AssetDetail> loadAsset(String assetId);
@@ -197,7 +213,32 @@ abstract interface class RentoryRepository {
     double priceDay = 0,
     double declaredValue = 0,
     String? notes,
+
+    /// Anything else to set: ownership and loan, acquisition, rental switch.
+    AssetsCompanion more = const AssetsCompanion(),
   });
+
+  /// Edit an asset. Codes and barcodes are checked like [createAsset].
+  Future<void> updateAsset(String assetId, AssetsCompanion changes);
+
+  /// Maintenance, retired, or null to hand status back to the quantities.
+  /// Free units follow; refused while anything is out or reserved.
+  Future<void> setAssetStatus(String assetId, AssetManualState? state);
+
+  /// A rented-in asset goes back to its owner, closing the loan. Refused
+  /// while any open order still counts on it.
+  Future<void> giveBack(
+    String assetId, {
+    required LoanCondition condition,
+    String? note,
+  });
+
+  /// Edit one unit: note, cost, value, source, location, name.
+  Future<void> updateUnit(String serialId, SerialsCompanion changes);
+
+  /// Available, maintenance, retired or lost, by hand. Refused while the
+  /// unit is out or reserved.
+  Future<void> setUnitState(String serialId, SerialState state);
 
   /// More units for a serial asset.
   Future<void> addUnits(String assetId, List<String> names);

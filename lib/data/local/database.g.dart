@@ -1033,6 +1033,15 @@ class $DocumentTypesTable extends DocumentTypes
     requiredDuringInsert: false,
     defaultValue: const Constant(10),
   );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _activeMeta = const VerificationMeta('active');
   @override
   late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
@@ -1055,6 +1064,7 @@ class $DocumentTypesTable extends DocumentTypes
     odooId,
     name,
     sequence,
+    note,
     active,
   ];
   @override
@@ -1110,6 +1120,12 @@ class $DocumentTypesTable extends DocumentTypes
         sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
       );
     }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
     if (data.containsKey('active')) {
       context.handle(
         _activeMeta,
@@ -1153,6 +1169,10 @@ class $DocumentTypesTable extends DocumentTypes
         DriftSqlType.int,
         data['${effectivePrefix}sequence'],
       )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
       active: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}active'],
@@ -1174,6 +1194,9 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
   final int? odooId;
   final String name;
   final int sequence;
+
+  /// What the counter should know about taking this one.
+  final String? note;
   final bool active;
   const DocumentType({
     required this.id,
@@ -1183,6 +1206,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
     this.odooId,
     required this.name,
     required this.sequence,
+    this.note,
     required this.active,
   });
   @override
@@ -1197,6 +1221,9 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
     }
     map['name'] = Variable<String>(name);
     map['sequence'] = Variable<int>(sequence);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
     map['active'] = Variable<bool>(active);
     return map;
   }
@@ -1212,6 +1239,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
           : Value(odooId),
       name: Value(name),
       sequence: Value(sequence),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       active: Value(active),
     );
   }
@@ -1229,6 +1257,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
       odooId: serializer.fromJson<int?>(json['odooId']),
       name: serializer.fromJson<String>(json['name']),
       sequence: serializer.fromJson<int>(json['sequence']),
+      note: serializer.fromJson<String?>(json['note']),
       active: serializer.fromJson<bool>(json['active']),
     );
   }
@@ -1243,6 +1272,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
       'odooId': serializer.toJson<int?>(odooId),
       'name': serializer.toJson<String>(name),
       'sequence': serializer.toJson<int>(sequence),
+      'note': serializer.toJson<String?>(note),
       'active': serializer.toJson<bool>(active),
     };
   }
@@ -1255,6 +1285,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
     Value<int?> odooId = const Value.absent(),
     String? name,
     int? sequence,
+    Value<String?> note = const Value.absent(),
     bool? active,
   }) => DocumentType(
     id: id ?? this.id,
@@ -1264,6 +1295,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
     odooId: odooId.present ? odooId.value : this.odooId,
     name: name ?? this.name,
     sequence: sequence ?? this.sequence,
+    note: note.present ? note.value : this.note,
     active: active ?? this.active,
   );
   DocumentType copyWithCompanion(DocumentTypesCompanion data) {
@@ -1275,6 +1307,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
       odooId: data.odooId.present ? data.odooId.value : this.odooId,
       name: data.name.present ? data.name.value : this.name,
       sequence: data.sequence.present ? data.sequence.value : this.sequence,
+      note: data.note.present ? data.note.value : this.note,
       active: data.active.present ? data.active.value : this.active,
     );
   }
@@ -1289,6 +1322,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
           ..write('odooId: $odooId, ')
           ..write('name: $name, ')
           ..write('sequence: $sequence, ')
+          ..write('note: $note, ')
           ..write('active: $active')
           ..write(')'))
         .toString();
@@ -1303,6 +1337,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
     odooId,
     name,
     sequence,
+    note,
     active,
   );
   @override
@@ -1316,6 +1351,7 @@ class DocumentType extends DataClass implements Insertable<DocumentType> {
           other.odooId == this.odooId &&
           other.name == this.name &&
           other.sequence == this.sequence &&
+          other.note == this.note &&
           other.active == this.active);
 }
 
@@ -1327,6 +1363,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
   final Value<int?> odooId;
   final Value<String> name;
   final Value<int> sequence;
+  final Value<String?> note;
   final Value<bool> active;
   final Value<int> rowid;
   const DocumentTypesCompanion({
@@ -1337,6 +1374,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
     this.odooId = const Value.absent(),
     this.name = const Value.absent(),
     this.sequence = const Value.absent(),
+    this.note = const Value.absent(),
     this.active = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1348,6 +1386,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
     this.odooId = const Value.absent(),
     required String name,
     this.sequence = const Value.absent(),
+    this.note = const Value.absent(),
     this.active = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name);
@@ -1359,6 +1398,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
     Expression<int>? odooId,
     Expression<String>? name,
     Expression<int>? sequence,
+    Expression<String>? note,
     Expression<bool>? active,
     Expression<int>? rowid,
   }) {
@@ -1370,6 +1410,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
       if (odooId != null) 'odoo_id': odooId,
       if (name != null) 'name': name,
       if (sequence != null) 'sequence': sequence,
+      if (note != null) 'note': note,
       if (active != null) 'active': active,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1383,6 +1424,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
     Value<int?>? odooId,
     Value<String>? name,
     Value<int>? sequence,
+    Value<String?>? note,
     Value<bool>? active,
     Value<int>? rowid,
   }) {
@@ -1394,6 +1436,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
       odooId: odooId ?? this.odooId,
       name: name ?? this.name,
       sequence: sequence ?? this.sequence,
+      note: note ?? this.note,
       active: active ?? this.active,
       rowid: rowid ?? this.rowid,
     );
@@ -1423,6 +1466,9 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
     if (sequence.present) {
       map['sequence'] = Variable<int>(sequence.value);
     }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
     if (active.present) {
       map['active'] = Variable<bool>(active.value);
     }
@@ -1442,6 +1488,7 @@ class DocumentTypesCompanion extends UpdateCompanion<DocumentType> {
           ..write('odooId: $odooId, ')
           ..write('name: $name, ')
           ..write('sequence: $sequence, ')
+          ..write('note: $note, ')
           ..write('active: $active, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1523,6 +1570,18 @@ class $CustomerDiscountsTable extends CustomerDiscounts
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sequenceMeta = const VerificationMeta(
+    'sequence',
+  );
+  @override
+  late final GeneratedColumn<int> sequence = GeneratedColumn<int>(
+    'sequence',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(10),
+  );
   static const VerificationMeta _customerIdMeta = const VerificationMeta(
     'customerId',
   );
@@ -1536,6 +1595,17 @@ class $CustomerDiscountsTable extends CustomerDiscounts
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES customers (id)',
     ),
+  );
+  static const VerificationMeta _customerNameMeta = const VerificationMeta(
+    'customerName',
+  );
+  @override
+  late final GeneratedColumn<String> customerName = GeneratedColumn<String>(
+    'customer_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   @override
   late final GeneratedColumnWithTypeConverter<DiscountType, String>
@@ -1609,7 +1679,9 @@ class $CustomerDiscountsTable extends CustomerDiscounts
     dirty,
     odooId,
     name,
+    sequence,
     customerId,
+    customerName,
     discountType,
     discountValue,
     dateFrom,
@@ -1664,10 +1736,25 @@ class $CustomerDiscountsTable extends CustomerDiscounts
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
+    if (data.containsKey('sequence')) {
+      context.handle(
+        _sequenceMeta,
+        sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
+      );
+    }
     if (data.containsKey('customer_id')) {
       context.handle(
         _customerIdMeta,
         customerId.isAcceptableOrUnknown(data['customer_id']!, _customerIdMeta),
+      );
+    }
+    if (data.containsKey('customer_name')) {
+      context.handle(
+        _customerNameMeta,
+        customerName.isAcceptableOrUnknown(
+          data['customer_name']!,
+          _customerNameMeta,
+        ),
       );
     }
     if (data.containsKey('discount_value')) {
@@ -1736,9 +1823,17 @@ class $CustomerDiscountsTable extends CustomerDiscounts
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      sequence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sequence'],
+      )!,
       customerId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}customer_id'],
+      ),
+      customerName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_name'],
       ),
       discountType: $CustomerDiscountsTable.$converterdiscountType.fromSql(
         attachedDatabase.typeMapping.read(
@@ -1786,7 +1881,13 @@ class CustomerDiscount extends DataClass
   final bool dirty;
   final int? odooId;
   final String name;
+
+  /// When two rules match, the lowest wins.
+  final int sequence;
   final String? customerId;
+
+  /// Fallback match for orders typed in without a customer record.
+  final String? customerName;
   final DiscountType discountType;
   final double discountValue;
   final DateTime? dateFrom;
@@ -1800,7 +1901,9 @@ class CustomerDiscount extends DataClass
     required this.dirty,
     this.odooId,
     required this.name,
+    required this.sequence,
     this.customerId,
+    this.customerName,
     required this.discountType,
     required this.discountValue,
     this.dateFrom,
@@ -1819,8 +1922,12 @@ class CustomerDiscount extends DataClass
       map['odoo_id'] = Variable<int>(odooId);
     }
     map['name'] = Variable<String>(name);
+    map['sequence'] = Variable<int>(sequence);
     if (!nullToAbsent || customerId != null) {
       map['customer_id'] = Variable<String>(customerId);
+    }
+    if (!nullToAbsent || customerName != null) {
+      map['customer_name'] = Variable<String>(customerName);
     }
     {
       map['discount_type'] = Variable<String>(
@@ -1851,9 +1958,13 @@ class CustomerDiscount extends DataClass
           ? const Value.absent()
           : Value(odooId),
       name: Value(name),
+      sequence: Value(sequence),
       customerId: customerId == null && nullToAbsent
           ? const Value.absent()
           : Value(customerId),
+      customerName: customerName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerName),
       discountType: Value(discountType),
       discountValue: Value(discountValue),
       dateFrom: dateFrom == null && nullToAbsent
@@ -1879,7 +1990,9 @@ class CustomerDiscount extends DataClass
       dirty: serializer.fromJson<bool>(json['dirty']),
       odooId: serializer.fromJson<int?>(json['odooId']),
       name: serializer.fromJson<String>(json['name']),
+      sequence: serializer.fromJson<int>(json['sequence']),
       customerId: serializer.fromJson<String?>(json['customerId']),
+      customerName: serializer.fromJson<String?>(json['customerName']),
       discountType: serializer.fromJson<DiscountType>(json['discountType']),
       discountValue: serializer.fromJson<double>(json['discountValue']),
       dateFrom: serializer.fromJson<DateTime?>(json['dateFrom']),
@@ -1898,7 +2011,9 @@ class CustomerDiscount extends DataClass
       'dirty': serializer.toJson<bool>(dirty),
       'odooId': serializer.toJson<int?>(odooId),
       'name': serializer.toJson<String>(name),
+      'sequence': serializer.toJson<int>(sequence),
       'customerId': serializer.toJson<String?>(customerId),
+      'customerName': serializer.toJson<String?>(customerName),
       'discountType': serializer.toJson<DiscountType>(discountType),
       'discountValue': serializer.toJson<double>(discountValue),
       'dateFrom': serializer.toJson<DateTime?>(dateFrom),
@@ -1915,7 +2030,9 @@ class CustomerDiscount extends DataClass
     bool? dirty,
     Value<int?> odooId = const Value.absent(),
     String? name,
+    int? sequence,
     Value<String?> customerId = const Value.absent(),
+    Value<String?> customerName = const Value.absent(),
     DiscountType? discountType,
     double? discountValue,
     Value<DateTime?> dateFrom = const Value.absent(),
@@ -1929,7 +2046,9 @@ class CustomerDiscount extends DataClass
     dirty: dirty ?? this.dirty,
     odooId: odooId.present ? odooId.value : this.odooId,
     name: name ?? this.name,
+    sequence: sequence ?? this.sequence,
     customerId: customerId.present ? customerId.value : this.customerId,
+    customerName: customerName.present ? customerName.value : this.customerName,
     discountType: discountType ?? this.discountType,
     discountValue: discountValue ?? this.discountValue,
     dateFrom: dateFrom.present ? dateFrom.value : this.dateFrom,
@@ -1945,9 +2064,13 @@ class CustomerDiscount extends DataClass
       dirty: data.dirty.present ? data.dirty.value : this.dirty,
       odooId: data.odooId.present ? data.odooId.value : this.odooId,
       name: data.name.present ? data.name.value : this.name,
+      sequence: data.sequence.present ? data.sequence.value : this.sequence,
       customerId: data.customerId.present
           ? data.customerId.value
           : this.customerId,
+      customerName: data.customerName.present
+          ? data.customerName.value
+          : this.customerName,
       discountType: data.discountType.present
           ? data.discountType.value
           : this.discountType,
@@ -1970,7 +2093,9 @@ class CustomerDiscount extends DataClass
           ..write('dirty: $dirty, ')
           ..write('odooId: $odooId, ')
           ..write('name: $name, ')
+          ..write('sequence: $sequence, ')
           ..write('customerId: $customerId, ')
+          ..write('customerName: $customerName, ')
           ..write('discountType: $discountType, ')
           ..write('discountValue: $discountValue, ')
           ..write('dateFrom: $dateFrom, ')
@@ -1989,7 +2114,9 @@ class CustomerDiscount extends DataClass
     dirty,
     odooId,
     name,
+    sequence,
     customerId,
+    customerName,
     discountType,
     discountValue,
     dateFrom,
@@ -2007,7 +2134,9 @@ class CustomerDiscount extends DataClass
           other.dirty == this.dirty &&
           other.odooId == this.odooId &&
           other.name == this.name &&
+          other.sequence == this.sequence &&
           other.customerId == this.customerId &&
+          other.customerName == this.customerName &&
           other.discountType == this.discountType &&
           other.discountValue == this.discountValue &&
           other.dateFrom == this.dateFrom &&
@@ -2023,7 +2152,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
   final Value<bool> dirty;
   final Value<int?> odooId;
   final Value<String> name;
+  final Value<int> sequence;
   final Value<String?> customerId;
+  final Value<String?> customerName;
   final Value<DiscountType> discountType;
   final Value<double> discountValue;
   final Value<DateTime?> dateFrom;
@@ -2038,7 +2169,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
     this.dirty = const Value.absent(),
     this.odooId = const Value.absent(),
     this.name = const Value.absent(),
+    this.sequence = const Value.absent(),
     this.customerId = const Value.absent(),
+    this.customerName = const Value.absent(),
     this.discountType = const Value.absent(),
     this.discountValue = const Value.absent(),
     this.dateFrom = const Value.absent(),
@@ -2054,7 +2187,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
     this.dirty = const Value.absent(),
     this.odooId = const Value.absent(),
     required String name,
+    this.sequence = const Value.absent(),
     this.customerId = const Value.absent(),
+    this.customerName = const Value.absent(),
     this.discountType = const Value.absent(),
     this.discountValue = const Value.absent(),
     this.dateFrom = const Value.absent(),
@@ -2070,7 +2205,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
     Expression<bool>? dirty,
     Expression<int>? odooId,
     Expression<String>? name,
+    Expression<int>? sequence,
     Expression<String>? customerId,
+    Expression<String>? customerName,
     Expression<String>? discountType,
     Expression<double>? discountValue,
     Expression<DateTime>? dateFrom,
@@ -2086,7 +2223,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
       if (dirty != null) 'dirty': dirty,
       if (odooId != null) 'odoo_id': odooId,
       if (name != null) 'name': name,
+      if (sequence != null) 'sequence': sequence,
       if (customerId != null) 'customer_id': customerId,
+      if (customerName != null) 'customer_name': customerName,
       if (discountType != null) 'discount_type': discountType,
       if (discountValue != null) 'discount_value': discountValue,
       if (dateFrom != null) 'date_from': dateFrom,
@@ -2104,7 +2243,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
     Value<bool>? dirty,
     Value<int?>? odooId,
     Value<String>? name,
+    Value<int>? sequence,
     Value<String?>? customerId,
+    Value<String?>? customerName,
     Value<DiscountType>? discountType,
     Value<double>? discountValue,
     Value<DateTime?>? dateFrom,
@@ -2120,7 +2261,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
       dirty: dirty ?? this.dirty,
       odooId: odooId ?? this.odooId,
       name: name ?? this.name,
+      sequence: sequence ?? this.sequence,
       customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
       discountType: discountType ?? this.discountType,
       discountValue: discountValue ?? this.discountValue,
       dateFrom: dateFrom ?? this.dateFrom,
@@ -2152,8 +2295,14 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
+    if (sequence.present) {
+      map['sequence'] = Variable<int>(sequence.value);
+    }
     if (customerId.present) {
       map['customer_id'] = Variable<String>(customerId.value);
+    }
+    if (customerName.present) {
+      map['customer_name'] = Variable<String>(customerName.value);
     }
     if (discountType.present) {
       map['discount_type'] = Variable<String>(
@@ -2192,7 +2341,9 @@ class CustomerDiscountsCompanion extends UpdateCompanion<CustomerDiscount> {
           ..write('dirty: $dirty, ')
           ..write('odooId: $odooId, ')
           ..write('name: $name, ')
+          ..write('sequence: $sequence, ')
           ..write('customerId: $customerId, ')
+          ..write('customerName: $customerName, ')
           ..write('discountType: $discountType, ')
           ..write('discountValue: $discountValue, ')
           ..write('dateFrom: $dateFrom, ')
@@ -3520,6 +3671,208 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
     defaultValue: const Constant(true),
   );
   @override
+  late final GeneratedColumnWithTypeConverter<AssetManualState?, String>
+  stateManual = GeneratedColumn<String>(
+    'state_manual',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<AssetManualState?>($AssetsTable.$converterstateManualn);
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES customers (id)',
+    ),
+  );
+  static const VerificationMeta _evaluationUrlMeta = const VerificationMeta(
+    'evaluationUrl',
+  );
+  @override
+  late final GeneratedColumn<String> evaluationUrl = GeneratedColumn<String>(
+    'evaluation_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _acquisitionDateMeta = const VerificationMeta(
+    'acquisitionDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> acquisitionDate =
+      GeneratedColumn<DateTime>(
+        'acquisition_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _unitCostMeta = const VerificationMeta(
+    'unitCost',
+  );
+  @override
+  late final GeneratedColumn<double> unitCost = GeneratedColumn<double>(
+    'unit_cost',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Ownership, String> ownership =
+      GeneratedColumn<String>(
+        'ownership',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('owned'),
+      ).withConverter<Ownership>($AssetsTable.$converterownership);
+  static const VerificationMeta _supplierNameMeta = const VerificationMeta(
+    'supplierName',
+  );
+  @override
+  late final GeneratedColumn<String> supplierName = GeneratedColumn<String>(
+    'supplier_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _supplierPhoneMeta = const VerificationMeta(
+    'supplierPhone',
+  );
+  @override
+  late final GeneratedColumn<String> supplierPhone = GeneratedColumn<String>(
+    'supplier_phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _supplierReferenceMeta = const VerificationMeta(
+    'supplierReference',
+  );
+  @override
+  late final GeneratedColumn<String> supplierReference =
+      GeneratedColumn<String>(
+        'supplier_reference',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _rentedInDateStartMeta = const VerificationMeta(
+    'rentedInDateStart',
+  );
+  @override
+  late final GeneratedColumn<DateTime> rentedInDateStart =
+      GeneratedColumn<DateTime>(
+        'rented_in_date_start',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _rentedInDateEndMeta = const VerificationMeta(
+    'rentedInDateEnd',
+  );
+  @override
+  late final GeneratedColumn<DateTime> rentedInDateEnd =
+      GeneratedColumn<DateTime>(
+        'rented_in_date_end',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _rentedInCostDayMeta = const VerificationMeta(
+    'rentedInCostDay',
+  );
+  @override
+  late final GeneratedColumn<double> rentedInCostDay = GeneratedColumn<double>(
+    'rented_in_cost_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _rentedInDepositMeta = const VerificationMeta(
+    'rentedInDeposit',
+  );
+  @override
+  late final GeneratedColumn<double> rentedInDeposit = GeneratedColumn<double>(
+    'rented_in_deposit',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _rentedInReturnedAtMeta =
+      const VerificationMeta('rentedInReturnedAt');
+  @override
+  late final GeneratedColumn<DateTime> rentedInReturnedAt =
+      GeneratedColumn<DateTime>(
+        'rented_in_returned_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _rentedInReturnedByMeta =
+      const VerificationMeta('rentedInReturnedBy');
+  @override
+  late final GeneratedColumn<String> rentedInReturnedBy =
+      GeneratedColumn<String>(
+        'rented_in_returned_by',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<LoanCondition, String>
+  rentedInConditionIn = GeneratedColumn<String>(
+    'rented_in_condition_in',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('good'),
+  ).withConverter<LoanCondition>($AssetsTable.$converterrentedInConditionIn);
+  @override
+  late final GeneratedColumnWithTypeConverter<LoanCondition?, String>
+  rentedInConditionOut = GeneratedColumn<String>(
+    'rented_in_condition_out',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<LoanCondition?>($AssetsTable.$converterrentedInConditionOutn);
+  static const VerificationMeta _rentedInNoteMeta = const VerificationMeta(
+    'rentedInNote',
+  );
+  @override
+  late final GeneratedColumn<String> rentedInNote = GeneratedColumn<String>(
+    'rented_in_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     updatedAt,
@@ -3539,6 +3892,24 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
     imagePath,
     notes,
     active,
+    stateManual,
+    sourceId,
+    evaluationUrl,
+    acquisitionDate,
+    unitCost,
+    ownership,
+    supplierName,
+    supplierPhone,
+    supplierReference,
+    rentedInDateStart,
+    rentedInDateEnd,
+    rentedInCostDay,
+    rentedInDeposit,
+    rentedInReturnedAt,
+    rentedInReturnedBy,
+    rentedInConditionIn,
+    rentedInConditionOut,
+    rentedInNote,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3659,6 +4030,126 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
         active.isAcceptableOrUnknown(data['active']!, _activeMeta),
       );
     }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
+    if (data.containsKey('evaluation_url')) {
+      context.handle(
+        _evaluationUrlMeta,
+        evaluationUrl.isAcceptableOrUnknown(
+          data['evaluation_url']!,
+          _evaluationUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('acquisition_date')) {
+      context.handle(
+        _acquisitionDateMeta,
+        acquisitionDate.isAcceptableOrUnknown(
+          data['acquisition_date']!,
+          _acquisitionDateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('unit_cost')) {
+      context.handle(
+        _unitCostMeta,
+        unitCost.isAcceptableOrUnknown(data['unit_cost']!, _unitCostMeta),
+      );
+    }
+    if (data.containsKey('supplier_name')) {
+      context.handle(
+        _supplierNameMeta,
+        supplierName.isAcceptableOrUnknown(
+          data['supplier_name']!,
+          _supplierNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('supplier_phone')) {
+      context.handle(
+        _supplierPhoneMeta,
+        supplierPhone.isAcceptableOrUnknown(
+          data['supplier_phone']!,
+          _supplierPhoneMeta,
+        ),
+      );
+    }
+    if (data.containsKey('supplier_reference')) {
+      context.handle(
+        _supplierReferenceMeta,
+        supplierReference.isAcceptableOrUnknown(
+          data['supplier_reference']!,
+          _supplierReferenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rented_in_date_start')) {
+      context.handle(
+        _rentedInDateStartMeta,
+        rentedInDateStart.isAcceptableOrUnknown(
+          data['rented_in_date_start']!,
+          _rentedInDateStartMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rented_in_date_end')) {
+      context.handle(
+        _rentedInDateEndMeta,
+        rentedInDateEnd.isAcceptableOrUnknown(
+          data['rented_in_date_end']!,
+          _rentedInDateEndMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rented_in_cost_day')) {
+      context.handle(
+        _rentedInCostDayMeta,
+        rentedInCostDay.isAcceptableOrUnknown(
+          data['rented_in_cost_day']!,
+          _rentedInCostDayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rented_in_deposit')) {
+      context.handle(
+        _rentedInDepositMeta,
+        rentedInDeposit.isAcceptableOrUnknown(
+          data['rented_in_deposit']!,
+          _rentedInDepositMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rented_in_returned_at')) {
+      context.handle(
+        _rentedInReturnedAtMeta,
+        rentedInReturnedAt.isAcceptableOrUnknown(
+          data['rented_in_returned_at']!,
+          _rentedInReturnedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rented_in_returned_by')) {
+      context.handle(
+        _rentedInReturnedByMeta,
+        rentedInReturnedBy.isAcceptableOrUnknown(
+          data['rented_in_returned_by']!,
+          _rentedInReturnedByMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rented_in_note')) {
+      context.handle(
+        _rentedInNoteMeta,
+        rentedInNote.isAcceptableOrUnknown(
+          data['rented_in_note']!,
+          _rentedInNoteMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3742,6 +4233,87 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
         DriftSqlType.bool,
         data['${effectivePrefix}active'],
       )!,
+      stateManual: $AssetsTable.$converterstateManualn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}state_manual'],
+        ),
+      ),
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      ),
+      evaluationUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}evaluation_url'],
+      ),
+      acquisitionDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}acquisition_date'],
+      ),
+      unitCost: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_cost'],
+      )!,
+      ownership: $AssetsTable.$converterownership.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}ownership'],
+        )!,
+      ),
+      supplierName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplier_name'],
+      ),
+      supplierPhone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplier_phone'],
+      ),
+      supplierReference: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplier_reference'],
+      ),
+      rentedInDateStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}rented_in_date_start'],
+      ),
+      rentedInDateEnd: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}rented_in_date_end'],
+      ),
+      rentedInCostDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}rented_in_cost_day'],
+      )!,
+      rentedInDeposit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}rented_in_deposit'],
+      )!,
+      rentedInReturnedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}rented_in_returned_at'],
+      ),
+      rentedInReturnedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rented_in_returned_by'],
+      ),
+      rentedInConditionIn: $AssetsTable.$converterrentedInConditionIn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}rented_in_condition_in'],
+        )!,
+      ),
+      rentedInConditionOut: $AssetsTable.$converterrentedInConditionOutn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}rented_in_condition_out'],
+            ),
+          ),
+      rentedInNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rented_in_note'],
+      ),
     );
   }
 
@@ -3752,6 +4324,20 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
 
   static TypeConverter<Tracking, String> $convertertracking =
       const KeyConverter(Tracking.values);
+  static TypeConverter<AssetManualState, String> $converterstateManual =
+      const KeyConverter(AssetManualState.values);
+  static TypeConverter<AssetManualState?, String?> $converterstateManualn =
+      NullAwareTypeConverter.wrap($converterstateManual);
+  static TypeConverter<Ownership, String> $converterownership =
+      const KeyConverter(Ownership.values);
+  static TypeConverter<LoanCondition, String> $converterrentedInConditionIn =
+      const KeyConverter(LoanCondition.values);
+  static TypeConverter<LoanCondition, String> $converterrentedInConditionOut =
+      const KeyConverter(LoanCondition.values);
+  static TypeConverter<LoanCondition?, String?>
+  $converterrentedInConditionOutn = NullAwareTypeConverter.wrap(
+    $converterrentedInConditionOut,
+  );
 }
 
 class Asset extends DataClass implements Insertable<Asset> {
@@ -3775,6 +4361,30 @@ class Asset extends DataClass implements Insertable<Asset> {
   final String? imagePath;
   final String? notes;
   final bool active;
+
+  /// Maintenance or retired, set by hand. Either keeps it off bookings.
+  final AssetManualState? stateManual;
+
+  /// Who it came from (a contact).
+  final String? sourceId;
+  final String? evaluationUrl;
+  final DateTime? acquisitionDate;
+
+  /// What one of these cost.
+  final double unitCost;
+  final Ownership ownership;
+  final String? supplierName;
+  final String? supplierPhone;
+  final String? supplierReference;
+  final DateTime? rentedInDateStart;
+  final DateTime? rentedInDateEnd;
+  final double rentedInCostDay;
+  final double rentedInDeposit;
+  final DateTime? rentedInReturnedAt;
+  final String? rentedInReturnedBy;
+  final LoanCondition rentedInConditionIn;
+  final LoanCondition? rentedInConditionOut;
+  final String? rentedInNote;
   const Asset({
     required this.id,
     required this.updatedAt,
@@ -3794,6 +4404,24 @@ class Asset extends DataClass implements Insertable<Asset> {
     this.imagePath,
     this.notes,
     required this.active,
+    this.stateManual,
+    this.sourceId,
+    this.evaluationUrl,
+    this.acquisitionDate,
+    required this.unitCost,
+    required this.ownership,
+    this.supplierName,
+    this.supplierPhone,
+    this.supplierReference,
+    this.rentedInDateStart,
+    this.rentedInDateEnd,
+    required this.rentedInCostDay,
+    required this.rentedInDeposit,
+    this.rentedInReturnedAt,
+    this.rentedInReturnedBy,
+    required this.rentedInConditionIn,
+    this.rentedInConditionOut,
+    this.rentedInNote,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3834,6 +4462,64 @@ class Asset extends DataClass implements Insertable<Asset> {
       map['notes'] = Variable<String>(notes);
     }
     map['active'] = Variable<bool>(active);
+    if (!nullToAbsent || stateManual != null) {
+      map['state_manual'] = Variable<String>(
+        $AssetsTable.$converterstateManualn.toSql(stateManual),
+      );
+    }
+    if (!nullToAbsent || sourceId != null) {
+      map['source_id'] = Variable<String>(sourceId);
+    }
+    if (!nullToAbsent || evaluationUrl != null) {
+      map['evaluation_url'] = Variable<String>(evaluationUrl);
+    }
+    if (!nullToAbsent || acquisitionDate != null) {
+      map['acquisition_date'] = Variable<DateTime>(acquisitionDate);
+    }
+    map['unit_cost'] = Variable<double>(unitCost);
+    {
+      map['ownership'] = Variable<String>(
+        $AssetsTable.$converterownership.toSql(ownership),
+      );
+    }
+    if (!nullToAbsent || supplierName != null) {
+      map['supplier_name'] = Variable<String>(supplierName);
+    }
+    if (!nullToAbsent || supplierPhone != null) {
+      map['supplier_phone'] = Variable<String>(supplierPhone);
+    }
+    if (!nullToAbsent || supplierReference != null) {
+      map['supplier_reference'] = Variable<String>(supplierReference);
+    }
+    if (!nullToAbsent || rentedInDateStart != null) {
+      map['rented_in_date_start'] = Variable<DateTime>(rentedInDateStart);
+    }
+    if (!nullToAbsent || rentedInDateEnd != null) {
+      map['rented_in_date_end'] = Variable<DateTime>(rentedInDateEnd);
+    }
+    map['rented_in_cost_day'] = Variable<double>(rentedInCostDay);
+    map['rented_in_deposit'] = Variable<double>(rentedInDeposit);
+    if (!nullToAbsent || rentedInReturnedAt != null) {
+      map['rented_in_returned_at'] = Variable<DateTime>(rentedInReturnedAt);
+    }
+    if (!nullToAbsent || rentedInReturnedBy != null) {
+      map['rented_in_returned_by'] = Variable<String>(rentedInReturnedBy);
+    }
+    {
+      map['rented_in_condition_in'] = Variable<String>(
+        $AssetsTable.$converterrentedInConditionIn.toSql(rentedInConditionIn),
+      );
+    }
+    if (!nullToAbsent || rentedInConditionOut != null) {
+      map['rented_in_condition_out'] = Variable<String>(
+        $AssetsTable.$converterrentedInConditionOutn.toSql(
+          rentedInConditionOut,
+        ),
+      );
+    }
+    if (!nullToAbsent || rentedInNote != null) {
+      map['rented_in_note'] = Variable<String>(rentedInNote);
+    }
     return map;
   }
 
@@ -3869,6 +4555,50 @@ class Asset extends DataClass implements Insertable<Asset> {
           ? const Value.absent()
           : Value(notes),
       active: Value(active),
+      stateManual: stateManual == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stateManual),
+      sourceId: sourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceId),
+      evaluationUrl: evaluationUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(evaluationUrl),
+      acquisitionDate: acquisitionDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(acquisitionDate),
+      unitCost: Value(unitCost),
+      ownership: Value(ownership),
+      supplierName: supplierName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplierName),
+      supplierPhone: supplierPhone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplierPhone),
+      supplierReference: supplierReference == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplierReference),
+      rentedInDateStart: rentedInDateStart == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rentedInDateStart),
+      rentedInDateEnd: rentedInDateEnd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rentedInDateEnd),
+      rentedInCostDay: Value(rentedInCostDay),
+      rentedInDeposit: Value(rentedInDeposit),
+      rentedInReturnedAt: rentedInReturnedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rentedInReturnedAt),
+      rentedInReturnedBy: rentedInReturnedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rentedInReturnedBy),
+      rentedInConditionIn: Value(rentedInConditionIn),
+      rentedInConditionOut: rentedInConditionOut == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rentedInConditionOut),
+      rentedInNote: rentedInNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rentedInNote),
     );
   }
 
@@ -3896,6 +4626,36 @@ class Asset extends DataClass implements Insertable<Asset> {
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       notes: serializer.fromJson<String?>(json['notes']),
       active: serializer.fromJson<bool>(json['active']),
+      stateManual: serializer.fromJson<AssetManualState?>(json['stateManual']),
+      sourceId: serializer.fromJson<String?>(json['sourceId']),
+      evaluationUrl: serializer.fromJson<String?>(json['evaluationUrl']),
+      acquisitionDate: serializer.fromJson<DateTime?>(json['acquisitionDate']),
+      unitCost: serializer.fromJson<double>(json['unitCost']),
+      ownership: serializer.fromJson<Ownership>(json['ownership']),
+      supplierName: serializer.fromJson<String?>(json['supplierName']),
+      supplierPhone: serializer.fromJson<String?>(json['supplierPhone']),
+      supplierReference: serializer.fromJson<String?>(
+        json['supplierReference'],
+      ),
+      rentedInDateStart: serializer.fromJson<DateTime?>(
+        json['rentedInDateStart'],
+      ),
+      rentedInDateEnd: serializer.fromJson<DateTime?>(json['rentedInDateEnd']),
+      rentedInCostDay: serializer.fromJson<double>(json['rentedInCostDay']),
+      rentedInDeposit: serializer.fromJson<double>(json['rentedInDeposit']),
+      rentedInReturnedAt: serializer.fromJson<DateTime?>(
+        json['rentedInReturnedAt'],
+      ),
+      rentedInReturnedBy: serializer.fromJson<String?>(
+        json['rentedInReturnedBy'],
+      ),
+      rentedInConditionIn: serializer.fromJson<LoanCondition>(
+        json['rentedInConditionIn'],
+      ),
+      rentedInConditionOut: serializer.fromJson<LoanCondition?>(
+        json['rentedInConditionOut'],
+      ),
+      rentedInNote: serializer.fromJson<String?>(json['rentedInNote']),
     );
   }
   @override
@@ -3920,6 +4680,28 @@ class Asset extends DataClass implements Insertable<Asset> {
       'imagePath': serializer.toJson<String?>(imagePath),
       'notes': serializer.toJson<String?>(notes),
       'active': serializer.toJson<bool>(active),
+      'stateManual': serializer.toJson<AssetManualState?>(stateManual),
+      'sourceId': serializer.toJson<String?>(sourceId),
+      'evaluationUrl': serializer.toJson<String?>(evaluationUrl),
+      'acquisitionDate': serializer.toJson<DateTime?>(acquisitionDate),
+      'unitCost': serializer.toJson<double>(unitCost),
+      'ownership': serializer.toJson<Ownership>(ownership),
+      'supplierName': serializer.toJson<String?>(supplierName),
+      'supplierPhone': serializer.toJson<String?>(supplierPhone),
+      'supplierReference': serializer.toJson<String?>(supplierReference),
+      'rentedInDateStart': serializer.toJson<DateTime?>(rentedInDateStart),
+      'rentedInDateEnd': serializer.toJson<DateTime?>(rentedInDateEnd),
+      'rentedInCostDay': serializer.toJson<double>(rentedInCostDay),
+      'rentedInDeposit': serializer.toJson<double>(rentedInDeposit),
+      'rentedInReturnedAt': serializer.toJson<DateTime?>(rentedInReturnedAt),
+      'rentedInReturnedBy': serializer.toJson<String?>(rentedInReturnedBy),
+      'rentedInConditionIn': serializer.toJson<LoanCondition>(
+        rentedInConditionIn,
+      ),
+      'rentedInConditionOut': serializer.toJson<LoanCondition?>(
+        rentedInConditionOut,
+      ),
+      'rentedInNote': serializer.toJson<String?>(rentedInNote),
     };
   }
 
@@ -3942,6 +4724,24 @@ class Asset extends DataClass implements Insertable<Asset> {
     Value<String?> imagePath = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     bool? active,
+    Value<AssetManualState?> stateManual = const Value.absent(),
+    Value<String?> sourceId = const Value.absent(),
+    Value<String?> evaluationUrl = const Value.absent(),
+    Value<DateTime?> acquisitionDate = const Value.absent(),
+    double? unitCost,
+    Ownership? ownership,
+    Value<String?> supplierName = const Value.absent(),
+    Value<String?> supplierPhone = const Value.absent(),
+    Value<String?> supplierReference = const Value.absent(),
+    Value<DateTime?> rentedInDateStart = const Value.absent(),
+    Value<DateTime?> rentedInDateEnd = const Value.absent(),
+    double? rentedInCostDay,
+    double? rentedInDeposit,
+    Value<DateTime?> rentedInReturnedAt = const Value.absent(),
+    Value<String?> rentedInReturnedBy = const Value.absent(),
+    LoanCondition? rentedInConditionIn,
+    Value<LoanCondition?> rentedInConditionOut = const Value.absent(),
+    Value<String?> rentedInNote = const Value.absent(),
   }) => Asset(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3961,6 +4761,42 @@ class Asset extends DataClass implements Insertable<Asset> {
     imagePath: imagePath.present ? imagePath.value : this.imagePath,
     notes: notes.present ? notes.value : this.notes,
     active: active ?? this.active,
+    stateManual: stateManual.present ? stateManual.value : this.stateManual,
+    sourceId: sourceId.present ? sourceId.value : this.sourceId,
+    evaluationUrl: evaluationUrl.present
+        ? evaluationUrl.value
+        : this.evaluationUrl,
+    acquisitionDate: acquisitionDate.present
+        ? acquisitionDate.value
+        : this.acquisitionDate,
+    unitCost: unitCost ?? this.unitCost,
+    ownership: ownership ?? this.ownership,
+    supplierName: supplierName.present ? supplierName.value : this.supplierName,
+    supplierPhone: supplierPhone.present
+        ? supplierPhone.value
+        : this.supplierPhone,
+    supplierReference: supplierReference.present
+        ? supplierReference.value
+        : this.supplierReference,
+    rentedInDateStart: rentedInDateStart.present
+        ? rentedInDateStart.value
+        : this.rentedInDateStart,
+    rentedInDateEnd: rentedInDateEnd.present
+        ? rentedInDateEnd.value
+        : this.rentedInDateEnd,
+    rentedInCostDay: rentedInCostDay ?? this.rentedInCostDay,
+    rentedInDeposit: rentedInDeposit ?? this.rentedInDeposit,
+    rentedInReturnedAt: rentedInReturnedAt.present
+        ? rentedInReturnedAt.value
+        : this.rentedInReturnedAt,
+    rentedInReturnedBy: rentedInReturnedBy.present
+        ? rentedInReturnedBy.value
+        : this.rentedInReturnedBy,
+    rentedInConditionIn: rentedInConditionIn ?? this.rentedInConditionIn,
+    rentedInConditionOut: rentedInConditionOut.present
+        ? rentedInConditionOut.value
+        : this.rentedInConditionOut,
+    rentedInNote: rentedInNote.present ? rentedInNote.value : this.rentedInNote,
   );
   Asset copyWithCompanion(AssetsCompanion data) {
     return Asset(
@@ -3990,6 +4826,54 @@ class Asset extends DataClass implements Insertable<Asset> {
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       notes: data.notes.present ? data.notes.value : this.notes,
       active: data.active.present ? data.active.value : this.active,
+      stateManual: data.stateManual.present
+          ? data.stateManual.value
+          : this.stateManual,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      evaluationUrl: data.evaluationUrl.present
+          ? data.evaluationUrl.value
+          : this.evaluationUrl,
+      acquisitionDate: data.acquisitionDate.present
+          ? data.acquisitionDate.value
+          : this.acquisitionDate,
+      unitCost: data.unitCost.present ? data.unitCost.value : this.unitCost,
+      ownership: data.ownership.present ? data.ownership.value : this.ownership,
+      supplierName: data.supplierName.present
+          ? data.supplierName.value
+          : this.supplierName,
+      supplierPhone: data.supplierPhone.present
+          ? data.supplierPhone.value
+          : this.supplierPhone,
+      supplierReference: data.supplierReference.present
+          ? data.supplierReference.value
+          : this.supplierReference,
+      rentedInDateStart: data.rentedInDateStart.present
+          ? data.rentedInDateStart.value
+          : this.rentedInDateStart,
+      rentedInDateEnd: data.rentedInDateEnd.present
+          ? data.rentedInDateEnd.value
+          : this.rentedInDateEnd,
+      rentedInCostDay: data.rentedInCostDay.present
+          ? data.rentedInCostDay.value
+          : this.rentedInCostDay,
+      rentedInDeposit: data.rentedInDeposit.present
+          ? data.rentedInDeposit.value
+          : this.rentedInDeposit,
+      rentedInReturnedAt: data.rentedInReturnedAt.present
+          ? data.rentedInReturnedAt.value
+          : this.rentedInReturnedAt,
+      rentedInReturnedBy: data.rentedInReturnedBy.present
+          ? data.rentedInReturnedBy.value
+          : this.rentedInReturnedBy,
+      rentedInConditionIn: data.rentedInConditionIn.present
+          ? data.rentedInConditionIn.value
+          : this.rentedInConditionIn,
+      rentedInConditionOut: data.rentedInConditionOut.present
+          ? data.rentedInConditionOut.value
+          : this.rentedInConditionOut,
+      rentedInNote: data.rentedInNote.present
+          ? data.rentedInNote.value
+          : this.rentedInNote,
     );
   }
 
@@ -4013,13 +4897,31 @@ class Asset extends DataClass implements Insertable<Asset> {
           ..write('locationId: $locationId, ')
           ..write('imagePath: $imagePath, ')
           ..write('notes: $notes, ')
-          ..write('active: $active')
+          ..write('active: $active, ')
+          ..write('stateManual: $stateManual, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('evaluationUrl: $evaluationUrl, ')
+          ..write('acquisitionDate: $acquisitionDate, ')
+          ..write('unitCost: $unitCost, ')
+          ..write('ownership: $ownership, ')
+          ..write('supplierName: $supplierName, ')
+          ..write('supplierPhone: $supplierPhone, ')
+          ..write('supplierReference: $supplierReference, ')
+          ..write('rentedInDateStart: $rentedInDateStart, ')
+          ..write('rentedInDateEnd: $rentedInDateEnd, ')
+          ..write('rentedInCostDay: $rentedInCostDay, ')
+          ..write('rentedInDeposit: $rentedInDeposit, ')
+          ..write('rentedInReturnedAt: $rentedInReturnedAt, ')
+          ..write('rentedInReturnedBy: $rentedInReturnedBy, ')
+          ..write('rentedInConditionIn: $rentedInConditionIn, ')
+          ..write('rentedInConditionOut: $rentedInConditionOut, ')
+          ..write('rentedInNote: $rentedInNote')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     updatedAt,
     deleted,
@@ -4038,7 +4940,25 @@ class Asset extends DataClass implements Insertable<Asset> {
     imagePath,
     notes,
     active,
-  );
+    stateManual,
+    sourceId,
+    evaluationUrl,
+    acquisitionDate,
+    unitCost,
+    ownership,
+    supplierName,
+    supplierPhone,
+    supplierReference,
+    rentedInDateStart,
+    rentedInDateEnd,
+    rentedInCostDay,
+    rentedInDeposit,
+    rentedInReturnedAt,
+    rentedInReturnedBy,
+    rentedInConditionIn,
+    rentedInConditionOut,
+    rentedInNote,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4060,7 +4980,25 @@ class Asset extends DataClass implements Insertable<Asset> {
           other.locationId == this.locationId &&
           other.imagePath == this.imagePath &&
           other.notes == this.notes &&
-          other.active == this.active);
+          other.active == this.active &&
+          other.stateManual == this.stateManual &&
+          other.sourceId == this.sourceId &&
+          other.evaluationUrl == this.evaluationUrl &&
+          other.acquisitionDate == this.acquisitionDate &&
+          other.unitCost == this.unitCost &&
+          other.ownership == this.ownership &&
+          other.supplierName == this.supplierName &&
+          other.supplierPhone == this.supplierPhone &&
+          other.supplierReference == this.supplierReference &&
+          other.rentedInDateStart == this.rentedInDateStart &&
+          other.rentedInDateEnd == this.rentedInDateEnd &&
+          other.rentedInCostDay == this.rentedInCostDay &&
+          other.rentedInDeposit == this.rentedInDeposit &&
+          other.rentedInReturnedAt == this.rentedInReturnedAt &&
+          other.rentedInReturnedBy == this.rentedInReturnedBy &&
+          other.rentedInConditionIn == this.rentedInConditionIn &&
+          other.rentedInConditionOut == this.rentedInConditionOut &&
+          other.rentedInNote == this.rentedInNote);
 }
 
 class AssetsCompanion extends UpdateCompanion<Asset> {
@@ -4082,6 +5020,24 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
   final Value<String?> imagePath;
   final Value<String?> notes;
   final Value<bool> active;
+  final Value<AssetManualState?> stateManual;
+  final Value<String?> sourceId;
+  final Value<String?> evaluationUrl;
+  final Value<DateTime?> acquisitionDate;
+  final Value<double> unitCost;
+  final Value<Ownership> ownership;
+  final Value<String?> supplierName;
+  final Value<String?> supplierPhone;
+  final Value<String?> supplierReference;
+  final Value<DateTime?> rentedInDateStart;
+  final Value<DateTime?> rentedInDateEnd;
+  final Value<double> rentedInCostDay;
+  final Value<double> rentedInDeposit;
+  final Value<DateTime?> rentedInReturnedAt;
+  final Value<String?> rentedInReturnedBy;
+  final Value<LoanCondition> rentedInConditionIn;
+  final Value<LoanCondition?> rentedInConditionOut;
+  final Value<String?> rentedInNote;
   final Value<int> rowid;
   const AssetsCompanion({
     this.id = const Value.absent(),
@@ -4102,6 +5058,24 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     this.imagePath = const Value.absent(),
     this.notes = const Value.absent(),
     this.active = const Value.absent(),
+    this.stateManual = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.evaluationUrl = const Value.absent(),
+    this.acquisitionDate = const Value.absent(),
+    this.unitCost = const Value.absent(),
+    this.ownership = const Value.absent(),
+    this.supplierName = const Value.absent(),
+    this.supplierPhone = const Value.absent(),
+    this.supplierReference = const Value.absent(),
+    this.rentedInDateStart = const Value.absent(),
+    this.rentedInDateEnd = const Value.absent(),
+    this.rentedInCostDay = const Value.absent(),
+    this.rentedInDeposit = const Value.absent(),
+    this.rentedInReturnedAt = const Value.absent(),
+    this.rentedInReturnedBy = const Value.absent(),
+    this.rentedInConditionIn = const Value.absent(),
+    this.rentedInConditionOut = const Value.absent(),
+    this.rentedInNote = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AssetsCompanion.insert({
@@ -4123,6 +5097,24 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     this.imagePath = const Value.absent(),
     this.notes = const Value.absent(),
     this.active = const Value.absent(),
+    this.stateManual = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.evaluationUrl = const Value.absent(),
+    this.acquisitionDate = const Value.absent(),
+    this.unitCost = const Value.absent(),
+    this.ownership = const Value.absent(),
+    this.supplierName = const Value.absent(),
+    this.supplierPhone = const Value.absent(),
+    this.supplierReference = const Value.absent(),
+    this.rentedInDateStart = const Value.absent(),
+    this.rentedInDateEnd = const Value.absent(),
+    this.rentedInCostDay = const Value.absent(),
+    this.rentedInDeposit = const Value.absent(),
+    this.rentedInReturnedAt = const Value.absent(),
+    this.rentedInReturnedBy = const Value.absent(),
+    this.rentedInConditionIn = const Value.absent(),
+    this.rentedInConditionOut = const Value.absent(),
+    this.rentedInNote = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name);
   static Insertable<Asset> custom({
@@ -4144,6 +5136,24 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     Expression<String>? imagePath,
     Expression<String>? notes,
     Expression<bool>? active,
+    Expression<String>? stateManual,
+    Expression<String>? sourceId,
+    Expression<String>? evaluationUrl,
+    Expression<DateTime>? acquisitionDate,
+    Expression<double>? unitCost,
+    Expression<String>? ownership,
+    Expression<String>? supplierName,
+    Expression<String>? supplierPhone,
+    Expression<String>? supplierReference,
+    Expression<DateTime>? rentedInDateStart,
+    Expression<DateTime>? rentedInDateEnd,
+    Expression<double>? rentedInCostDay,
+    Expression<double>? rentedInDeposit,
+    Expression<DateTime>? rentedInReturnedAt,
+    Expression<String>? rentedInReturnedBy,
+    Expression<String>? rentedInConditionIn,
+    Expression<String>? rentedInConditionOut,
+    Expression<String>? rentedInNote,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4165,6 +5175,28 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
       if (imagePath != null) 'image_path': imagePath,
       if (notes != null) 'notes': notes,
       if (active != null) 'active': active,
+      if (stateManual != null) 'state_manual': stateManual,
+      if (sourceId != null) 'source_id': sourceId,
+      if (evaluationUrl != null) 'evaluation_url': evaluationUrl,
+      if (acquisitionDate != null) 'acquisition_date': acquisitionDate,
+      if (unitCost != null) 'unit_cost': unitCost,
+      if (ownership != null) 'ownership': ownership,
+      if (supplierName != null) 'supplier_name': supplierName,
+      if (supplierPhone != null) 'supplier_phone': supplierPhone,
+      if (supplierReference != null) 'supplier_reference': supplierReference,
+      if (rentedInDateStart != null) 'rented_in_date_start': rentedInDateStart,
+      if (rentedInDateEnd != null) 'rented_in_date_end': rentedInDateEnd,
+      if (rentedInCostDay != null) 'rented_in_cost_day': rentedInCostDay,
+      if (rentedInDeposit != null) 'rented_in_deposit': rentedInDeposit,
+      if (rentedInReturnedAt != null)
+        'rented_in_returned_at': rentedInReturnedAt,
+      if (rentedInReturnedBy != null)
+        'rented_in_returned_by': rentedInReturnedBy,
+      if (rentedInConditionIn != null)
+        'rented_in_condition_in': rentedInConditionIn,
+      if (rentedInConditionOut != null)
+        'rented_in_condition_out': rentedInConditionOut,
+      if (rentedInNote != null) 'rented_in_note': rentedInNote,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4188,6 +5220,24 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     Value<String?>? imagePath,
     Value<String?>? notes,
     Value<bool>? active,
+    Value<AssetManualState?>? stateManual,
+    Value<String?>? sourceId,
+    Value<String?>? evaluationUrl,
+    Value<DateTime?>? acquisitionDate,
+    Value<double>? unitCost,
+    Value<Ownership>? ownership,
+    Value<String?>? supplierName,
+    Value<String?>? supplierPhone,
+    Value<String?>? supplierReference,
+    Value<DateTime?>? rentedInDateStart,
+    Value<DateTime?>? rentedInDateEnd,
+    Value<double>? rentedInCostDay,
+    Value<double>? rentedInDeposit,
+    Value<DateTime?>? rentedInReturnedAt,
+    Value<String?>? rentedInReturnedBy,
+    Value<LoanCondition>? rentedInConditionIn,
+    Value<LoanCondition?>? rentedInConditionOut,
+    Value<String?>? rentedInNote,
     Value<int>? rowid,
   }) {
     return AssetsCompanion(
@@ -4209,6 +5259,24 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
       imagePath: imagePath ?? this.imagePath,
       notes: notes ?? this.notes,
       active: active ?? this.active,
+      stateManual: stateManual ?? this.stateManual,
+      sourceId: sourceId ?? this.sourceId,
+      evaluationUrl: evaluationUrl ?? this.evaluationUrl,
+      acquisitionDate: acquisitionDate ?? this.acquisitionDate,
+      unitCost: unitCost ?? this.unitCost,
+      ownership: ownership ?? this.ownership,
+      supplierName: supplierName ?? this.supplierName,
+      supplierPhone: supplierPhone ?? this.supplierPhone,
+      supplierReference: supplierReference ?? this.supplierReference,
+      rentedInDateStart: rentedInDateStart ?? this.rentedInDateStart,
+      rentedInDateEnd: rentedInDateEnd ?? this.rentedInDateEnd,
+      rentedInCostDay: rentedInCostDay ?? this.rentedInCostDay,
+      rentedInDeposit: rentedInDeposit ?? this.rentedInDeposit,
+      rentedInReturnedAt: rentedInReturnedAt ?? this.rentedInReturnedAt,
+      rentedInReturnedBy: rentedInReturnedBy ?? this.rentedInReturnedBy,
+      rentedInConditionIn: rentedInConditionIn ?? this.rentedInConditionIn,
+      rentedInConditionOut: rentedInConditionOut ?? this.rentedInConditionOut,
+      rentedInNote: rentedInNote ?? this.rentedInNote,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4272,6 +5340,74 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     if (active.present) {
       map['active'] = Variable<bool>(active.value);
     }
+    if (stateManual.present) {
+      map['state_manual'] = Variable<String>(
+        $AssetsTable.$converterstateManualn.toSql(stateManual.value),
+      );
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (evaluationUrl.present) {
+      map['evaluation_url'] = Variable<String>(evaluationUrl.value);
+    }
+    if (acquisitionDate.present) {
+      map['acquisition_date'] = Variable<DateTime>(acquisitionDate.value);
+    }
+    if (unitCost.present) {
+      map['unit_cost'] = Variable<double>(unitCost.value);
+    }
+    if (ownership.present) {
+      map['ownership'] = Variable<String>(
+        $AssetsTable.$converterownership.toSql(ownership.value),
+      );
+    }
+    if (supplierName.present) {
+      map['supplier_name'] = Variable<String>(supplierName.value);
+    }
+    if (supplierPhone.present) {
+      map['supplier_phone'] = Variable<String>(supplierPhone.value);
+    }
+    if (supplierReference.present) {
+      map['supplier_reference'] = Variable<String>(supplierReference.value);
+    }
+    if (rentedInDateStart.present) {
+      map['rented_in_date_start'] = Variable<DateTime>(rentedInDateStart.value);
+    }
+    if (rentedInDateEnd.present) {
+      map['rented_in_date_end'] = Variable<DateTime>(rentedInDateEnd.value);
+    }
+    if (rentedInCostDay.present) {
+      map['rented_in_cost_day'] = Variable<double>(rentedInCostDay.value);
+    }
+    if (rentedInDeposit.present) {
+      map['rented_in_deposit'] = Variable<double>(rentedInDeposit.value);
+    }
+    if (rentedInReturnedAt.present) {
+      map['rented_in_returned_at'] = Variable<DateTime>(
+        rentedInReturnedAt.value,
+      );
+    }
+    if (rentedInReturnedBy.present) {
+      map['rented_in_returned_by'] = Variable<String>(rentedInReturnedBy.value);
+    }
+    if (rentedInConditionIn.present) {
+      map['rented_in_condition_in'] = Variable<String>(
+        $AssetsTable.$converterrentedInConditionIn.toSql(
+          rentedInConditionIn.value,
+        ),
+      );
+    }
+    if (rentedInConditionOut.present) {
+      map['rented_in_condition_out'] = Variable<String>(
+        $AssetsTable.$converterrentedInConditionOutn.toSql(
+          rentedInConditionOut.value,
+        ),
+      );
+    }
+    if (rentedInNote.present) {
+      map['rented_in_note'] = Variable<String>(rentedInNote.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4299,6 +5435,24 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
           ..write('imagePath: $imagePath, ')
           ..write('notes: $notes, ')
           ..write('active: $active, ')
+          ..write('stateManual: $stateManual, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('evaluationUrl: $evaluationUrl, ')
+          ..write('acquisitionDate: $acquisitionDate, ')
+          ..write('unitCost: $unitCost, ')
+          ..write('ownership: $ownership, ')
+          ..write('supplierName: $supplierName, ')
+          ..write('supplierPhone: $supplierPhone, ')
+          ..write('supplierReference: $supplierReference, ')
+          ..write('rentedInDateStart: $rentedInDateStart, ')
+          ..write('rentedInDateEnd: $rentedInDateEnd, ')
+          ..write('rentedInCostDay: $rentedInCostDay, ')
+          ..write('rentedInDeposit: $rentedInDeposit, ')
+          ..write('rentedInReturnedAt: $rentedInReturnedAt, ')
+          ..write('rentedInReturnedBy: $rentedInReturnedBy, ')
+          ..write('rentedInConditionIn: $rentedInConditionIn, ')
+          ..write('rentedInConditionOut: $rentedInConditionOut, ')
+          ..write('rentedInNote: $rentedInNote, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4483,6 +5637,55 @@ class $SerialsTable extends Serials with TableInfo<$SerialsTable, Serial> {
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES customers (id)',
+    ),
+  );
+  static const VerificationMeta _evaluationUrlMeta = const VerificationMeta(
+    'evaluationUrl',
+  );
+  @override
+  late final GeneratedColumn<String> evaluationUrl = GeneratedColumn<String>(
+    'evaluation_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _acquisitionDateMeta = const VerificationMeta(
+    'acquisitionDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> acquisitionDate =
+      GeneratedColumn<DateTime>(
+        'acquisition_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _unitCostMeta = const VerificationMeta(
+    'unitCost',
+  );
+  @override
+  late final GeneratedColumn<double> unitCost = GeneratedColumn<double>(
+    'unit_cost',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4500,6 +5703,10 @@ class $SerialsTable extends Serials with TableInfo<$SerialsTable, Serial> {
     declaredValue,
     note,
     active,
+    sourceId,
+    evaluationUrl,
+    acquisitionDate,
+    unitCost,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4607,6 +5814,36 @@ class $SerialsTable extends Serials with TableInfo<$SerialsTable, Serial> {
         active.isAcceptableOrUnknown(data['active']!, _activeMeta),
       );
     }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
+    if (data.containsKey('evaluation_url')) {
+      context.handle(
+        _evaluationUrlMeta,
+        evaluationUrl.isAcceptableOrUnknown(
+          data['evaluation_url']!,
+          _evaluationUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('acquisition_date')) {
+      context.handle(
+        _acquisitionDateMeta,
+        acquisitionDate.isAcceptableOrUnknown(
+          data['acquisition_date']!,
+          _acquisitionDateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('unit_cost')) {
+      context.handle(
+        _unitCostMeta,
+        unitCost.isAcceptableOrUnknown(data['unit_cost']!, _unitCostMeta),
+      );
+    }
     return context;
   }
 
@@ -4678,6 +5915,22 @@ class $SerialsTable extends Serials with TableInfo<$SerialsTable, Serial> {
         DriftSqlType.bool,
         data['${effectivePrefix}active'],
       )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      ),
+      evaluationUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}evaluation_url'],
+      ),
+      acquisitionDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}acquisition_date'],
+      ),
+      unitCost: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_cost'],
+      )!,
     );
   }
 
@@ -4706,6 +5959,10 @@ class Serial extends DataClass implements Insertable<Serial> {
   final double declaredValue;
   final String? note;
   final bool active;
+  final String? sourceId;
+  final String? evaluationUrl;
+  final DateTime? acquisitionDate;
+  final double unitCost;
   const Serial({
     required this.id,
     required this.updatedAt,
@@ -4722,6 +5979,10 @@ class Serial extends DataClass implements Insertable<Serial> {
     required this.declaredValue,
     this.note,
     required this.active,
+    this.sourceId,
+    this.evaluationUrl,
+    this.acquisitionDate,
+    required this.unitCost,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4757,6 +6018,16 @@ class Serial extends DataClass implements Insertable<Serial> {
       map['note'] = Variable<String>(note);
     }
     map['active'] = Variable<bool>(active);
+    if (!nullToAbsent || sourceId != null) {
+      map['source_id'] = Variable<String>(sourceId);
+    }
+    if (!nullToAbsent || evaluationUrl != null) {
+      map['evaluation_url'] = Variable<String>(evaluationUrl);
+    }
+    if (!nullToAbsent || acquisitionDate != null) {
+      map['acquisition_date'] = Variable<DateTime>(acquisitionDate);
+    }
+    map['unit_cost'] = Variable<double>(unitCost);
     return map;
   }
 
@@ -4787,6 +6058,16 @@ class Serial extends DataClass implements Insertable<Serial> {
       declaredValue: Value(declaredValue),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       active: Value(active),
+      sourceId: sourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceId),
+      evaluationUrl: evaluationUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(evaluationUrl),
+      acquisitionDate: acquisitionDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(acquisitionDate),
+      unitCost: Value(unitCost),
     );
   }
 
@@ -4811,6 +6092,10 @@ class Serial extends DataClass implements Insertable<Serial> {
       declaredValue: serializer.fromJson<double>(json['declaredValue']),
       note: serializer.fromJson<String?>(json['note']),
       active: serializer.fromJson<bool>(json['active']),
+      sourceId: serializer.fromJson<String?>(json['sourceId']),
+      evaluationUrl: serializer.fromJson<String?>(json['evaluationUrl']),
+      acquisitionDate: serializer.fromJson<DateTime?>(json['acquisitionDate']),
+      unitCost: serializer.fromJson<double>(json['unitCost']),
     );
   }
   @override
@@ -4832,6 +6117,10 @@ class Serial extends DataClass implements Insertable<Serial> {
       'declaredValue': serializer.toJson<double>(declaredValue),
       'note': serializer.toJson<String?>(note),
       'active': serializer.toJson<bool>(active),
+      'sourceId': serializer.toJson<String?>(sourceId),
+      'evaluationUrl': serializer.toJson<String?>(evaluationUrl),
+      'acquisitionDate': serializer.toJson<DateTime?>(acquisitionDate),
+      'unitCost': serializer.toJson<double>(unitCost),
     };
   }
 
@@ -4851,6 +6140,10 @@ class Serial extends DataClass implements Insertable<Serial> {
     double? declaredValue,
     Value<String?> note = const Value.absent(),
     bool? active,
+    Value<String?> sourceId = const Value.absent(),
+    Value<String?> evaluationUrl = const Value.absent(),
+    Value<DateTime?> acquisitionDate = const Value.absent(),
+    double? unitCost,
   }) => Serial(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -4871,6 +6164,14 @@ class Serial extends DataClass implements Insertable<Serial> {
     declaredValue: declaredValue ?? this.declaredValue,
     note: note.present ? note.value : this.note,
     active: active ?? this.active,
+    sourceId: sourceId.present ? sourceId.value : this.sourceId,
+    evaluationUrl: evaluationUrl.present
+        ? evaluationUrl.value
+        : this.evaluationUrl,
+    acquisitionDate: acquisitionDate.present
+        ? acquisitionDate.value
+        : this.acquisitionDate,
+    unitCost: unitCost ?? this.unitCost,
   );
   Serial copyWithCompanion(SerialsCompanion data) {
     return Serial(
@@ -4897,6 +6198,14 @@ class Serial extends DataClass implements Insertable<Serial> {
           : this.declaredValue,
       note: data.note.present ? data.note.value : this.note,
       active: data.active.present ? data.active.value : this.active,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      evaluationUrl: data.evaluationUrl.present
+          ? data.evaluationUrl.value
+          : this.evaluationUrl,
+      acquisitionDate: data.acquisitionDate.present
+          ? data.acquisitionDate.value
+          : this.acquisitionDate,
+      unitCost: data.unitCost.present ? data.unitCost.value : this.unitCost,
     );
   }
 
@@ -4917,7 +6226,11 @@ class Serial extends DataClass implements Insertable<Serial> {
           ..write('currentLineId: $currentLineId, ')
           ..write('declaredValue: $declaredValue, ')
           ..write('note: $note, ')
-          ..write('active: $active')
+          ..write('active: $active, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('evaluationUrl: $evaluationUrl, ')
+          ..write('acquisitionDate: $acquisitionDate, ')
+          ..write('unitCost: $unitCost')
           ..write(')'))
         .toString();
   }
@@ -4939,6 +6252,10 @@ class Serial extends DataClass implements Insertable<Serial> {
     declaredValue,
     note,
     active,
+    sourceId,
+    evaluationUrl,
+    acquisitionDate,
+    unitCost,
   );
   @override
   bool operator ==(Object other) =>
@@ -4958,7 +6275,11 @@ class Serial extends DataClass implements Insertable<Serial> {
           other.currentLineId == this.currentLineId &&
           other.declaredValue == this.declaredValue &&
           other.note == this.note &&
-          other.active == this.active);
+          other.active == this.active &&
+          other.sourceId == this.sourceId &&
+          other.evaluationUrl == this.evaluationUrl &&
+          other.acquisitionDate == this.acquisitionDate &&
+          other.unitCost == this.unitCost);
 }
 
 class SerialsCompanion extends UpdateCompanion<Serial> {
@@ -4977,6 +6298,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
   final Value<double> declaredValue;
   final Value<String?> note;
   final Value<bool> active;
+  final Value<String?> sourceId;
+  final Value<String?> evaluationUrl;
+  final Value<DateTime?> acquisitionDate;
+  final Value<double> unitCost;
   final Value<int> rowid;
   const SerialsCompanion({
     this.id = const Value.absent(),
@@ -4994,6 +6319,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
     this.declaredValue = const Value.absent(),
     this.note = const Value.absent(),
     this.active = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.evaluationUrl = const Value.absent(),
+    this.acquisitionDate = const Value.absent(),
+    this.unitCost = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SerialsCompanion.insert({
@@ -5012,6 +6341,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
     this.declaredValue = const Value.absent(),
     this.note = const Value.absent(),
     this.active = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.evaluationUrl = const Value.absent(),
+    this.acquisitionDate = const Value.absent(),
+    this.unitCost = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : assetId = Value(assetId),
        name = Value(name);
@@ -5031,6 +6364,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
     Expression<double>? declaredValue,
     Expression<String>? note,
     Expression<bool>? active,
+    Expression<String>? sourceId,
+    Expression<String>? evaluationUrl,
+    Expression<DateTime>? acquisitionDate,
+    Expression<double>? unitCost,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5049,6 +6386,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
       if (declaredValue != null) 'declared_value': declaredValue,
       if (note != null) 'note': note,
       if (active != null) 'active': active,
+      if (sourceId != null) 'source_id': sourceId,
+      if (evaluationUrl != null) 'evaluation_url': evaluationUrl,
+      if (acquisitionDate != null) 'acquisition_date': acquisitionDate,
+      if (unitCost != null) 'unit_cost': unitCost,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5069,6 +6410,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
     Value<double>? declaredValue,
     Value<String?>? note,
     Value<bool>? active,
+    Value<String?>? sourceId,
+    Value<String?>? evaluationUrl,
+    Value<DateTime?>? acquisitionDate,
+    Value<double>? unitCost,
     Value<int>? rowid,
   }) {
     return SerialsCompanion(
@@ -5087,6 +6432,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
       declaredValue: declaredValue ?? this.declaredValue,
       note: note ?? this.note,
       active: active ?? this.active,
+      sourceId: sourceId ?? this.sourceId,
+      evaluationUrl: evaluationUrl ?? this.evaluationUrl,
+      acquisitionDate: acquisitionDate ?? this.acquisitionDate,
+      unitCost: unitCost ?? this.unitCost,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5141,6 +6490,18 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
     if (active.present) {
       map['active'] = Variable<bool>(active.value);
     }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (evaluationUrl.present) {
+      map['evaluation_url'] = Variable<String>(evaluationUrl.value);
+    }
+    if (acquisitionDate.present) {
+      map['acquisition_date'] = Variable<DateTime>(acquisitionDate.value);
+    }
+    if (unitCost.present) {
+      map['unit_cost'] = Variable<double>(unitCost.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5165,6 +6526,10 @@ class SerialsCompanion extends UpdateCompanion<Serial> {
           ..write('declaredValue: $declaredValue, ')
           ..write('note: $note, ')
           ..write('active: $active, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('evaluationUrl: $evaluationUrl, ')
+          ..write('acquisitionDate: $acquisitionDate, ')
+          ..write('unitCost: $unitCost, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5586,6 +6951,50 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _allowLineDatesOutsideMeta =
+      const VerificationMeta('allowLineDatesOutside');
+  @override
+  late final GeneratedColumn<bool> allowLineDatesOutside =
+      GeneratedColumn<bool>(
+        'allow_line_dates_outside',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("allow_line_dates_outside" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<SignatureTarget?, String>
+  signatureTarget = GeneratedColumn<String>(
+    'signature_target',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<SignatureTarget?>($OrdersTable.$convertersignatureTargetn);
+  @override
+  late final GeneratedColumnWithTypeConverter<CaptureMethod?, String>
+  captureMethod = GeneratedColumn<String>(
+    'capture_method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<CaptureMethod?>($OrdersTable.$convertercaptureMethodn);
+  static const VerificationMeta _photosUrlMeta = const VerificationMeta(
+    'photosUrl',
+  );
+  @override
+  late final GeneratedColumn<String> photosUrl = GeneratedColumn<String>(
+    'photos_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5622,6 +7031,10 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
     signatureDate,
     userId,
     note,
+    allowLineDatesOutside,
+    signatureTarget,
+    captureMethod,
+    photosUrl,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5884,6 +7297,21 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('allow_line_dates_outside')) {
+      context.handle(
+        _allowLineDatesOutsideMeta,
+        allowLineDatesOutside.isAcceptableOrUnknown(
+          data['allow_line_dates_outside']!,
+          _allowLineDatesOutsideMeta,
+        ),
+      );
+    }
+    if (data.containsKey('photos_url')) {
+      context.handle(
+        _photosUrlMeta,
+        photosUrl.isAcceptableOrUnknown(data['photos_url']!, _photosUrlMeta),
+      );
+    }
     return context;
   }
 
@@ -6033,6 +7461,26 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      allowLineDatesOutside: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}allow_line_dates_outside'],
+      )!,
+      signatureTarget: $OrdersTable.$convertersignatureTargetn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}signature_target'],
+        ),
+      ),
+      captureMethod: $OrdersTable.$convertercaptureMethodn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}capture_method'],
+        ),
+      ),
+      photosUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photos_url'],
+      ),
     );
   }
 
@@ -6046,6 +7494,14 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
   );
   static TypeConverter<DiscountType, String> $converterdiscountType =
       const KeyConverter(DiscountType.values);
+  static TypeConverter<SignatureTarget, String> $convertersignatureTarget =
+      const KeyConverter(SignatureTarget.values);
+  static TypeConverter<SignatureTarget?, String?> $convertersignatureTargetn =
+      NullAwareTypeConverter.wrap($convertersignatureTarget);
+  static TypeConverter<CaptureMethod, String> $convertercaptureMethod =
+      const KeyConverter(CaptureMethod.values);
+  static TypeConverter<CaptureMethod?, String?> $convertercaptureMethodn =
+      NullAwareTypeConverter.wrap($convertercaptureMethod);
 }
 
 class Order extends DataClass implements Insertable<Order> {
@@ -6085,6 +7541,14 @@ class Order extends DataClass implements Insertable<Order> {
   final DateTime? signatureDate;
   final String? userId;
   final String? note;
+
+  /// Lines may run outside the order's own dates.
+  final bool allowLineDatesOutside;
+
+  /// Which document the saved signature signs.
+  final SignatureTarget? signatureTarget;
+  final CaptureMethod? captureMethod;
+  final String? photosUrl;
   const Order({
     required this.id,
     required this.updatedAt,
@@ -6120,6 +7584,10 @@ class Order extends DataClass implements Insertable<Order> {
     this.signatureDate,
     this.userId,
     this.note,
+    required this.allowLineDatesOutside,
+    this.signatureTarget,
+    this.captureMethod,
+    this.photosUrl,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6200,6 +7668,20 @@ class Order extends DataClass implements Insertable<Order> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    map['allow_line_dates_outside'] = Variable<bool>(allowLineDatesOutside);
+    if (!nullToAbsent || signatureTarget != null) {
+      map['signature_target'] = Variable<String>(
+        $OrdersTable.$convertersignatureTargetn.toSql(signatureTarget),
+      );
+    }
+    if (!nullToAbsent || captureMethod != null) {
+      map['capture_method'] = Variable<String>(
+        $OrdersTable.$convertercaptureMethodn.toSql(captureMethod),
+      );
+    }
+    if (!nullToAbsent || photosUrl != null) {
+      map['photos_url'] = Variable<String>(photosUrl);
+    }
     return map;
   }
 
@@ -6271,6 +7753,16 @@ class Order extends DataClass implements Insertable<Order> {
           ? const Value.absent()
           : Value(userId),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      allowLineDatesOutside: Value(allowLineDatesOutside),
+      signatureTarget: signatureTarget == null && nullToAbsent
+          ? const Value.absent()
+          : Value(signatureTarget),
+      captureMethod: captureMethod == null && nullToAbsent
+          ? const Value.absent()
+          : Value(captureMethod),
+      photosUrl: photosUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photosUrl),
     );
   }
 
@@ -6322,6 +7814,14 @@ class Order extends DataClass implements Insertable<Order> {
       signatureDate: serializer.fromJson<DateTime?>(json['signatureDate']),
       userId: serializer.fromJson<String?>(json['userId']),
       note: serializer.fromJson<String?>(json['note']),
+      allowLineDatesOutside: serializer.fromJson<bool>(
+        json['allowLineDatesOutside'],
+      ),
+      signatureTarget: serializer.fromJson<SignatureTarget?>(
+        json['signatureTarget'],
+      ),
+      captureMethod: serializer.fromJson<CaptureMethod?>(json['captureMethod']),
+      photosUrl: serializer.fromJson<String?>(json['photosUrl']),
     );
   }
   @override
@@ -6362,6 +7862,10 @@ class Order extends DataClass implements Insertable<Order> {
       'signatureDate': serializer.toJson<DateTime?>(signatureDate),
       'userId': serializer.toJson<String?>(userId),
       'note': serializer.toJson<String?>(note),
+      'allowLineDatesOutside': serializer.toJson<bool>(allowLineDatesOutside),
+      'signatureTarget': serializer.toJson<SignatureTarget?>(signatureTarget),
+      'captureMethod': serializer.toJson<CaptureMethod?>(captureMethod),
+      'photosUrl': serializer.toJson<String?>(photosUrl),
     };
   }
 
@@ -6400,6 +7904,10 @@ class Order extends DataClass implements Insertable<Order> {
     Value<DateTime?> signatureDate = const Value.absent(),
     Value<String?> userId = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    bool? allowLineDatesOutside,
+    Value<SignatureTarget?> signatureTarget = const Value.absent(),
+    Value<CaptureMethod?> captureMethod = const Value.absent(),
+    Value<String?> photosUrl = const Value.absent(),
   }) => Order(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -6454,6 +7962,14 @@ class Order extends DataClass implements Insertable<Order> {
         : this.signatureDate,
     userId: userId.present ? userId.value : this.userId,
     note: note.present ? note.value : this.note,
+    allowLineDatesOutside: allowLineDatesOutside ?? this.allowLineDatesOutside,
+    signatureTarget: signatureTarget.present
+        ? signatureTarget.value
+        : this.signatureTarget,
+    captureMethod: captureMethod.present
+        ? captureMethod.value
+        : this.captureMethod,
+    photosUrl: photosUrl.present ? photosUrl.value : this.photosUrl,
   );
   Order copyWithCompanion(OrdersCompanion data) {
     return Order(
@@ -6537,6 +8053,16 @@ class Order extends DataClass implements Insertable<Order> {
           : this.signatureDate,
       userId: data.userId.present ? data.userId.value : this.userId,
       note: data.note.present ? data.note.value : this.note,
+      allowLineDatesOutside: data.allowLineDatesOutside.present
+          ? data.allowLineDatesOutside.value
+          : this.allowLineDatesOutside,
+      signatureTarget: data.signatureTarget.present
+          ? data.signatureTarget.value
+          : this.signatureTarget,
+      captureMethod: data.captureMethod.present
+          ? data.captureMethod.value
+          : this.captureMethod,
+      photosUrl: data.photosUrl.present ? data.photosUrl.value : this.photosUrl,
     );
   }
 
@@ -6576,7 +8102,11 @@ class Order extends DataClass implements Insertable<Order> {
           ..write('signatureName: $signatureName, ')
           ..write('signatureDate: $signatureDate, ')
           ..write('userId: $userId, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('allowLineDatesOutside: $allowLineDatesOutside, ')
+          ..write('signatureTarget: $signatureTarget, ')
+          ..write('captureMethod: $captureMethod, ')
+          ..write('photosUrl: $photosUrl')
           ..write(')'))
         .toString();
   }
@@ -6617,6 +8147,10 @@ class Order extends DataClass implements Insertable<Order> {
     signatureDate,
     userId,
     note,
+    allowLineDatesOutside,
+    signatureTarget,
+    captureMethod,
+    photosUrl,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -6655,7 +8189,11 @@ class Order extends DataClass implements Insertable<Order> {
           other.signatureName == this.signatureName &&
           other.signatureDate == this.signatureDate &&
           other.userId == this.userId &&
-          other.note == this.note);
+          other.note == this.note &&
+          other.allowLineDatesOutside == this.allowLineDatesOutside &&
+          other.signatureTarget == this.signatureTarget &&
+          other.captureMethod == this.captureMethod &&
+          other.photosUrl == this.photosUrl);
 }
 
 class OrdersCompanion extends UpdateCompanion<Order> {
@@ -6693,6 +8231,10 @@ class OrdersCompanion extends UpdateCompanion<Order> {
   final Value<DateTime?> signatureDate;
   final Value<String?> userId;
   final Value<String?> note;
+  final Value<bool> allowLineDatesOutside;
+  final Value<SignatureTarget?> signatureTarget;
+  final Value<CaptureMethod?> captureMethod;
+  final Value<String?> photosUrl;
   final Value<int> rowid;
   const OrdersCompanion({
     this.id = const Value.absent(),
@@ -6729,6 +8271,10 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     this.signatureDate = const Value.absent(),
     this.userId = const Value.absent(),
     this.note = const Value.absent(),
+    this.allowLineDatesOutside = const Value.absent(),
+    this.signatureTarget = const Value.absent(),
+    this.captureMethod = const Value.absent(),
+    this.photosUrl = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   OrdersCompanion.insert({
@@ -6766,6 +8312,10 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     this.signatureDate = const Value.absent(),
     this.userId = const Value.absent(),
     this.note = const Value.absent(),
+    this.allowLineDatesOutside = const Value.absent(),
+    this.signatureTarget = const Value.absent(),
+    this.captureMethod = const Value.absent(),
+    this.photosUrl = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   static Insertable<Order> custom({
@@ -6803,6 +8353,10 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     Expression<DateTime>? signatureDate,
     Expression<String>? userId,
     Expression<String>? note,
+    Expression<bool>? allowLineDatesOutside,
+    Expression<String>? signatureTarget,
+    Expression<String>? captureMethod,
+    Expression<String>? photosUrl,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -6844,6 +8398,11 @@ class OrdersCompanion extends UpdateCompanion<Order> {
       if (signatureDate != null) 'signature_date': signatureDate,
       if (userId != null) 'user_id': userId,
       if (note != null) 'note': note,
+      if (allowLineDatesOutside != null)
+        'allow_line_dates_outside': allowLineDatesOutside,
+      if (signatureTarget != null) 'signature_target': signatureTarget,
+      if (captureMethod != null) 'capture_method': captureMethod,
+      if (photosUrl != null) 'photos_url': photosUrl,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -6883,6 +8442,10 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     Value<DateTime?>? signatureDate,
     Value<String?>? userId,
     Value<String?>? note,
+    Value<bool>? allowLineDatesOutside,
+    Value<SignatureTarget?>? signatureTarget,
+    Value<CaptureMethod?>? captureMethod,
+    Value<String?>? photosUrl,
     Value<int>? rowid,
   }) {
     return OrdersCompanion(
@@ -6921,6 +8484,11 @@ class OrdersCompanion extends UpdateCompanion<Order> {
       signatureDate: signatureDate ?? this.signatureDate,
       userId: userId ?? this.userId,
       note: note ?? this.note,
+      allowLineDatesOutside:
+          allowLineDatesOutside ?? this.allowLineDatesOutside,
+      signatureTarget: signatureTarget ?? this.signatureTarget,
+      captureMethod: captureMethod ?? this.captureMethod,
+      photosUrl: photosUrl ?? this.photosUrl,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -7040,6 +8608,24 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (allowLineDatesOutside.present) {
+      map['allow_line_dates_outside'] = Variable<bool>(
+        allowLineDatesOutside.value,
+      );
+    }
+    if (signatureTarget.present) {
+      map['signature_target'] = Variable<String>(
+        $OrdersTable.$convertersignatureTargetn.toSql(signatureTarget.value),
+      );
+    }
+    if (captureMethod.present) {
+      map['capture_method'] = Variable<String>(
+        $OrdersTable.$convertercaptureMethodn.toSql(captureMethod.value),
+      );
+    }
+    if (photosUrl.present) {
+      map['photos_url'] = Variable<String>(photosUrl.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -7083,6 +8669,10 @@ class OrdersCompanion extends UpdateCompanion<Order> {
           ..write('signatureDate: $signatureDate, ')
           ..write('userId: $userId, ')
           ..write('note: $note, ')
+          ..write('allowLineDatesOutside: $allowLineDatesOutside, ')
+          ..write('signatureTarget: $signatureTarget, ')
+          ..write('captureMethod: $captureMethod, ')
+          ..write('photosUrl: $photosUrl, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9384,6 +10974,17 @@ class $ReturnChecksTable extends ReturnChecks
       'REFERENCES serials (id)',
     ),
   );
+  static const VerificationMeta _serialNameMeta = const VerificationMeta(
+    'serialName',
+  );
+  @override
+  late final GeneratedColumn<String> serialName = GeneratedColumn<String>(
+    'serial_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   late final GeneratedColumnWithTypeConverter<Condition, String> condition =
       GeneratedColumn<String>(
@@ -9435,6 +11036,7 @@ class $ReturnChecksTable extends ReturnChecks
     lineId,
     orderId,
     serialId,
+    serialName,
     condition,
     note,
     returnedAt,
@@ -9501,6 +11103,12 @@ class $ReturnChecksTable extends ReturnChecks
         serialId.isAcceptableOrUnknown(data['serial_id']!, _serialIdMeta),
       );
     }
+    if (data.containsKey('serial_name')) {
+      context.handle(
+        _serialNameMeta,
+        serialName.isAcceptableOrUnknown(data['serial_name']!, _serialNameMeta),
+      );
+    }
     if (data.containsKey('note')) {
       context.handle(
         _noteMeta,
@@ -9562,6 +11170,10 @@ class $ReturnChecksTable extends ReturnChecks
         DriftSqlType.string,
         data['${effectivePrefix}serial_id'],
       ),
+      serialName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}serial_name'],
+      ),
       condition: $ReturnChecksTable.$convertercondition.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
@@ -9601,6 +11213,10 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
   final String lineId;
   final String orderId;
   final String? serialId;
+
+  /// The serial number at check-in, so the receipt still reads right if the
+  /// unit is renamed or archived later.
+  final String? serialName;
   final Condition condition;
   final String? note;
   final DateTime returnedAt;
@@ -9614,6 +11230,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     required this.lineId,
     required this.orderId,
     this.serialId,
+    this.serialName,
     required this.condition,
     this.note,
     required this.returnedAt,
@@ -9633,6 +11250,9 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     map['order_id'] = Variable<String>(orderId);
     if (!nullToAbsent || serialId != null) {
       map['serial_id'] = Variable<String>(serialId);
+    }
+    if (!nullToAbsent || serialName != null) {
+      map['serial_name'] = Variable<String>(serialName);
     }
     {
       map['condition'] = Variable<String>(
@@ -9663,6 +11283,9 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       serialId: serialId == null && nullToAbsent
           ? const Value.absent()
           : Value(serialId),
+      serialName: serialName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serialName),
       condition: Value(condition),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       returnedAt: Value(returnedAt),
@@ -9686,6 +11309,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       lineId: serializer.fromJson<String>(json['lineId']),
       orderId: serializer.fromJson<String>(json['orderId']),
       serialId: serializer.fromJson<String?>(json['serialId']),
+      serialName: serializer.fromJson<String?>(json['serialName']),
       condition: serializer.fromJson<Condition>(json['condition']),
       note: serializer.fromJson<String?>(json['note']),
       returnedAt: serializer.fromJson<DateTime>(json['returnedAt']),
@@ -9704,6 +11328,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       'lineId': serializer.toJson<String>(lineId),
       'orderId': serializer.toJson<String>(orderId),
       'serialId': serializer.toJson<String?>(serialId),
+      'serialName': serializer.toJson<String?>(serialName),
       'condition': serializer.toJson<Condition>(condition),
       'note': serializer.toJson<String?>(note),
       'returnedAt': serializer.toJson<DateTime>(returnedAt),
@@ -9720,6 +11345,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     String? lineId,
     String? orderId,
     Value<String?> serialId = const Value.absent(),
+    Value<String?> serialName = const Value.absent(),
     Condition? condition,
     Value<String?> note = const Value.absent(),
     DateTime? returnedAt,
@@ -9733,6 +11359,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     lineId: lineId ?? this.lineId,
     orderId: orderId ?? this.orderId,
     serialId: serialId.present ? serialId.value : this.serialId,
+    serialName: serialName.present ? serialName.value : this.serialName,
     condition: condition ?? this.condition,
     note: note.present ? note.value : this.note,
     returnedAt: returnedAt ?? this.returnedAt,
@@ -9748,6 +11375,9 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
       lineId: data.lineId.present ? data.lineId.value : this.lineId,
       orderId: data.orderId.present ? data.orderId.value : this.orderId,
       serialId: data.serialId.present ? data.serialId.value : this.serialId,
+      serialName: data.serialName.present
+          ? data.serialName.value
+          : this.serialName,
       condition: data.condition.present ? data.condition.value : this.condition,
       note: data.note.present ? data.note.value : this.note,
       returnedAt: data.returnedAt.present
@@ -9770,6 +11400,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
           ..write('lineId: $lineId, ')
           ..write('orderId: $orderId, ')
           ..write('serialId: $serialId, ')
+          ..write('serialName: $serialName, ')
           ..write('condition: $condition, ')
           ..write('note: $note, ')
           ..write('returnedAt: $returnedAt, ')
@@ -9788,6 +11419,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
     lineId,
     orderId,
     serialId,
+    serialName,
     condition,
     note,
     returnedAt,
@@ -9805,6 +11437,7 @@ class ReturnCheck extends DataClass implements Insertable<ReturnCheck> {
           other.lineId == this.lineId &&
           other.orderId == this.orderId &&
           other.serialId == this.serialId &&
+          other.serialName == this.serialName &&
           other.condition == this.condition &&
           other.note == this.note &&
           other.returnedAt == this.returnedAt &&
@@ -9820,6 +11453,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
   final Value<String> lineId;
   final Value<String> orderId;
   final Value<String?> serialId;
+  final Value<String?> serialName;
   final Value<Condition> condition;
   final Value<String?> note;
   final Value<DateTime> returnedAt;
@@ -9834,6 +11468,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     this.lineId = const Value.absent(),
     this.orderId = const Value.absent(),
     this.serialId = const Value.absent(),
+    this.serialName = const Value.absent(),
     this.condition = const Value.absent(),
     this.note = const Value.absent(),
     this.returnedAt = const Value.absent(),
@@ -9849,6 +11484,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     required String lineId,
     required String orderId,
     this.serialId = const Value.absent(),
+    this.serialName = const Value.absent(),
     this.condition = const Value.absent(),
     this.note = const Value.absent(),
     required DateTime returnedAt,
@@ -9866,6 +11502,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     Expression<String>? lineId,
     Expression<String>? orderId,
     Expression<String>? serialId,
+    Expression<String>? serialName,
     Expression<String>? condition,
     Expression<String>? note,
     Expression<DateTime>? returnedAt,
@@ -9881,6 +11518,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
       if (lineId != null) 'line_id': lineId,
       if (orderId != null) 'order_id': orderId,
       if (serialId != null) 'serial_id': serialId,
+      if (serialName != null) 'serial_name': serialName,
       if (condition != null) 'condition': condition,
       if (note != null) 'note': note,
       if (returnedAt != null) 'returned_at': returnedAt,
@@ -9898,6 +11536,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     Value<String>? lineId,
     Value<String>? orderId,
     Value<String?>? serialId,
+    Value<String?>? serialName,
     Value<Condition>? condition,
     Value<String?>? note,
     Value<DateTime>? returnedAt,
@@ -9913,6 +11552,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
       lineId: lineId ?? this.lineId,
       orderId: orderId ?? this.orderId,
       serialId: serialId ?? this.serialId,
+      serialName: serialName ?? this.serialName,
       condition: condition ?? this.condition,
       note: note ?? this.note,
       returnedAt: returnedAt ?? this.returnedAt,
@@ -9948,6 +11588,9 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
     if (serialId.present) {
       map['serial_id'] = Variable<String>(serialId.value);
     }
+    if (serialName.present) {
+      map['serial_name'] = Variable<String>(serialName.value);
+    }
     if (condition.present) {
       map['condition'] = Variable<String>(
         $ReturnChecksTable.$convertercondition.toSql(condition.value),
@@ -9979,6 +11622,7 @@ class ReturnChecksCompanion extends UpdateCompanion<ReturnCheck> {
           ..write('lineId: $lineId, ')
           ..write('orderId: $orderId, ')
           ..write('serialId: $serialId, ')
+          ..write('serialName: $serialName, ')
           ..write('condition: $condition, ')
           ..write('note: $note, ')
           ..write('returnedAt: $returnedAt, ')
@@ -10117,6 +11761,18 @@ class $PhotosTable extends Photos with TableInfo<$PhotosTable, Photo> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sequenceMeta = const VerificationMeta(
+    'sequence',
+  );
+  @override
+  late final GeneratedColumn<int> sequence = GeneratedColumn<int>(
+    'sequence',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(10),
+  );
   static const VerificationMeta _takenAtMeta = const VerificationMeta(
     'takenAt',
   );
@@ -10151,6 +11807,7 @@ class $PhotosTable extends Photos with TableInfo<$PhotosTable, Photo> {
     lineId,
     storagePath,
     localPath,
+    sequence,
     takenAt,
     note,
   ];
@@ -10232,6 +11889,12 @@ class $PhotosTable extends Photos with TableInfo<$PhotosTable, Photo> {
         localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta),
       );
     }
+    if (data.containsKey('sequence')) {
+      context.handle(
+        _sequenceMeta,
+        sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
+      );
+    }
     if (data.containsKey('taken_at')) {
       context.handle(
         _takenAtMeta,
@@ -10297,6 +11960,10 @@ class $PhotosTable extends Photos with TableInfo<$PhotosTable, Photo> {
         DriftSqlType.string,
         data['${effectivePrefix}local_path'],
       ),
+      sequence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sequence'],
+      )!,
       takenAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}taken_at'],
@@ -10330,6 +11997,9 @@ class Photo extends DataClass implements Insertable<Photo> {
 
   /// File on this device, until it is uploaded (or for offline viewing).
   final String? localPath;
+
+  /// Order in a gallery: the first is the one people see.
+  final int sequence;
   final DateTime takenAt;
   final String? note;
   const Photo({
@@ -10344,6 +12014,7 @@ class Photo extends DataClass implements Insertable<Photo> {
     this.lineId,
     this.storagePath,
     this.localPath,
+    required this.sequence,
     required this.takenAt,
     this.note,
   });
@@ -10375,6 +12046,7 @@ class Photo extends DataClass implements Insertable<Photo> {
     if (!nullToAbsent || localPath != null) {
       map['local_path'] = Variable<String>(localPath);
     }
+    map['sequence'] = Variable<int>(sequence);
     map['taken_at'] = Variable<DateTime>(takenAt);
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
@@ -10409,6 +12081,7 @@ class Photo extends DataClass implements Insertable<Photo> {
       localPath: localPath == null && nullToAbsent
           ? const Value.absent()
           : Value(localPath),
+      sequence: Value(sequence),
       takenAt: Value(takenAt),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
     );
@@ -10431,6 +12104,7 @@ class Photo extends DataClass implements Insertable<Photo> {
       lineId: serializer.fromJson<String?>(json['lineId']),
       storagePath: serializer.fromJson<String?>(json['storagePath']),
       localPath: serializer.fromJson<String?>(json['localPath']),
+      sequence: serializer.fromJson<int>(json['sequence']),
       takenAt: serializer.fromJson<DateTime>(json['takenAt']),
       note: serializer.fromJson<String?>(json['note']),
     );
@@ -10450,6 +12124,7 @@ class Photo extends DataClass implements Insertable<Photo> {
       'lineId': serializer.toJson<String?>(lineId),
       'storagePath': serializer.toJson<String?>(storagePath),
       'localPath': serializer.toJson<String?>(localPath),
+      'sequence': serializer.toJson<int>(sequence),
       'takenAt': serializer.toJson<DateTime>(takenAt),
       'note': serializer.toJson<String?>(note),
     };
@@ -10467,6 +12142,7 @@ class Photo extends DataClass implements Insertable<Photo> {
     Value<String?> lineId = const Value.absent(),
     Value<String?> storagePath = const Value.absent(),
     Value<String?> localPath = const Value.absent(),
+    int? sequence,
     DateTime? takenAt,
     Value<String?> note = const Value.absent(),
   }) => Photo(
@@ -10481,6 +12157,7 @@ class Photo extends DataClass implements Insertable<Photo> {
     lineId: lineId.present ? lineId.value : this.lineId,
     storagePath: storagePath.present ? storagePath.value : this.storagePath,
     localPath: localPath.present ? localPath.value : this.localPath,
+    sequence: sequence ?? this.sequence,
     takenAt: takenAt ?? this.takenAt,
     note: note.present ? note.value : this.note,
   );
@@ -10499,6 +12176,7 @@ class Photo extends DataClass implements Insertable<Photo> {
           ? data.storagePath.value
           : this.storagePath,
       localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      sequence: data.sequence.present ? data.sequence.value : this.sequence,
       takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
       note: data.note.present ? data.note.value : this.note,
     );
@@ -10518,6 +12196,7 @@ class Photo extends DataClass implements Insertable<Photo> {
           ..write('lineId: $lineId, ')
           ..write('storagePath: $storagePath, ')
           ..write('localPath: $localPath, ')
+          ..write('sequence: $sequence, ')
           ..write('takenAt: $takenAt, ')
           ..write('note: $note')
           ..write(')'))
@@ -10537,6 +12216,7 @@ class Photo extends DataClass implements Insertable<Photo> {
     lineId,
     storagePath,
     localPath,
+    sequence,
     takenAt,
     note,
   );
@@ -10555,6 +12235,7 @@ class Photo extends DataClass implements Insertable<Photo> {
           other.lineId == this.lineId &&
           other.storagePath == this.storagePath &&
           other.localPath == this.localPath &&
+          other.sequence == this.sequence &&
           other.takenAt == this.takenAt &&
           other.note == this.note);
 }
@@ -10571,6 +12252,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
   final Value<String?> lineId;
   final Value<String?> storagePath;
   final Value<String?> localPath;
+  final Value<int> sequence;
   final Value<DateTime> takenAt;
   final Value<String?> note;
   final Value<int> rowid;
@@ -10586,6 +12268,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
     this.lineId = const Value.absent(),
     this.storagePath = const Value.absent(),
     this.localPath = const Value.absent(),
+    this.sequence = const Value.absent(),
     this.takenAt = const Value.absent(),
     this.note = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -10602,6 +12285,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
     this.lineId = const Value.absent(),
     this.storagePath = const Value.absent(),
     this.localPath = const Value.absent(),
+    this.sequence = const Value.absent(),
     this.takenAt = const Value.absent(),
     this.note = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -10618,6 +12302,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
     Expression<String>? lineId,
     Expression<String>? storagePath,
     Expression<String>? localPath,
+    Expression<int>? sequence,
     Expression<DateTime>? takenAt,
     Expression<String>? note,
     Expression<int>? rowid,
@@ -10634,6 +12319,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
       if (lineId != null) 'line_id': lineId,
       if (storagePath != null) 'storage_path': storagePath,
       if (localPath != null) 'local_path': localPath,
+      if (sequence != null) 'sequence': sequence,
       if (takenAt != null) 'taken_at': takenAt,
       if (note != null) 'note': note,
       if (rowid != null) 'rowid': rowid,
@@ -10652,6 +12338,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
     Value<String?>? lineId,
     Value<String?>? storagePath,
     Value<String?>? localPath,
+    Value<int>? sequence,
     Value<DateTime>? takenAt,
     Value<String?>? note,
     Value<int>? rowid,
@@ -10668,6 +12355,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
       lineId: lineId ?? this.lineId,
       storagePath: storagePath ?? this.storagePath,
       localPath: localPath ?? this.localPath,
+      sequence: sequence ?? this.sequence,
       takenAt: takenAt ?? this.takenAt,
       note: note ?? this.note,
       rowid: rowid ?? this.rowid,
@@ -10710,6 +12398,9 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
     if (localPath.present) {
       map['local_path'] = Variable<String>(localPath.value);
     }
+    if (sequence.present) {
+      map['sequence'] = Variable<int>(sequence.value);
+    }
     if (takenAt.present) {
       map['taken_at'] = Variable<DateTime>(takenAt.value);
     }
@@ -10736,6 +12427,7 @@ class PhotosCompanion extends UpdateCompanion<Photo> {
           ..write('lineId: $lineId, ')
           ..write('storagePath: $storagePath, ')
           ..write('localPath: $localPath, ')
+          ..write('sequence: $sequence, ')
           ..write('takenAt: $takenAt, ')
           ..write('note: $note, ')
           ..write('rowid: $rowid')
@@ -11296,6 +12988,44 @@ final class $$CustomersTableReferences
     );
   }
 
+  static MultiTypedResultKey<$AssetsTable, List<Asset>> _assetsRefsTable(
+    _$RentoryDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.assets,
+    aliasName: 'customers__id__assets__source_id',
+  );
+
+  $$AssetsTableProcessedTableManager get assetsRefs {
+    final manager = $$AssetsTableTableManager(
+      $_db,
+      $_db.assets,
+    ).filter((f) => f.sourceId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_assetsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$SerialsTable, List<Serial>> _serialsRefsTable(
+    _$RentoryDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.serials,
+    aliasName: 'customers__id__serials__source_id',
+  );
+
+  $$SerialsTableProcessedTableManager get serialsRefs {
+    final manager = $$SerialsTableTableManager(
+      $_db,
+      $_db.serials,
+    ).filter((f) => f.sourceId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_serialsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$OrdersTable, List<Order>> _ordersRefsTable(
     _$RentoryDatabase db,
   ) => MultiTypedResultKey.fromTable(
@@ -11381,6 +13111,56 @@ class $$CustomersTableFilterComposer
           }) => $$CustomerDiscountsTableFilterComposer(
             $db: $db,
             $table: $db.customerDiscounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> assetsRefs(
+    Expression<bool> Function($$AssetsTableFilterComposer f) f,
+  ) {
+    final $$AssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> serialsRefs(
+    Expression<bool> Function($$SerialsTableFilterComposer f) f,
+  ) {
+    final $$SerialsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serials,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SerialsTableFilterComposer(
+            $db: $db,
+            $table: $db.serials,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -11525,6 +13305,56 @@ class $$CustomersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> assetsRefs<T extends Object>(
+    Expression<T> Function($$AssetsTableAnnotationComposer a) f,
+  ) {
+    final $$AssetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> serialsRefs<T extends Object>(
+    Expression<T> Function($$SerialsTableAnnotationComposer a) f,
+  ) {
+    final $$SerialsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serials,
+      getReferencedColumn: (t) => t.sourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SerialsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.serials,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> ordersRefs<T extends Object>(
     Expression<T> Function($$OrdersTableAnnotationComposer a) f,
   ) {
@@ -11564,7 +13394,12 @@ class $$CustomersTableTableManager
           $$CustomersTableUpdateCompanionBuilder,
           (Customer, $$CustomersTableReferences),
           Customer,
-          PrefetchHooks Function({bool customerDiscountsRefs, bool ordersRefs})
+          PrefetchHooks Function({
+            bool customerDiscountsRefs,
+            bool assetsRefs,
+            bool serialsRefs,
+            bool ordersRefs,
+          })
         > {
   $$CustomersTableTableManager(_$RentoryDatabase db, $CustomersTable table)
     : super(
@@ -11630,11 +13465,18 @@ class $$CustomersTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({customerDiscountsRefs = false, ordersRefs = false}) {
+              ({
+                customerDiscountsRefs = false,
+                assetsRefs = false,
+                serialsRefs = false,
+                ordersRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (customerDiscountsRefs) db.customerDiscounts,
+                    if (assetsRefs) db.assets,
+                    if (serialsRefs) db.serials,
                     if (ordersRefs) db.orders,
                   ],
                   addJoins: null,
@@ -11658,6 +13500,48 @@ class $$CustomersTableTableManager
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.customerId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (assetsRefs)
+                        await $_getPrefetchedData<
+                          Customer,
+                          $CustomersTable,
+                          Asset
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CustomersTableReferences
+                              ._assetsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CustomersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).assetsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (serialsRefs)
+                        await $_getPrefetchedData<
+                          Customer,
+                          $CustomersTable,
+                          Serial
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CustomersTableReferences
+                              ._serialsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CustomersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serialsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceId == item.id,
                               ),
                           typedResults: items,
                         ),
@@ -11702,7 +13586,12 @@ typedef $$CustomersTableProcessedTableManager =
       $$CustomersTableUpdateCompanionBuilder,
       (Customer, $$CustomersTableReferences),
       Customer,
-      PrefetchHooks Function({bool customerDiscountsRefs, bool ordersRefs})
+      PrefetchHooks Function({
+        bool customerDiscountsRefs,
+        bool assetsRefs,
+        bool serialsRefs,
+        bool ordersRefs,
+      })
     >;
 typedef $$DocumentTypesTableCreateCompanionBuilder =
     DocumentTypesCompanion Function({
@@ -11713,6 +13602,7 @@ typedef $$DocumentTypesTableCreateCompanionBuilder =
       Value<int?> odooId,
       required String name,
       Value<int> sequence,
+      Value<String?> note,
       Value<bool> active,
       Value<int> rowid,
     });
@@ -11725,6 +13615,7 @@ typedef $$DocumentTypesTableUpdateCompanionBuilder =
       Value<int?> odooId,
       Value<String> name,
       Value<int> sequence,
+      Value<String?> note,
       Value<bool> active,
       Value<int> rowid,
     });
@@ -11799,6 +13690,11 @@ class $$DocumentTypesTableFilterComposer
 
   ColumnFilters<int> get sequence => $composableBuilder(
     column: $table.sequence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11877,6 +13773,11 @@ class $$DocumentTypesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get active => $composableBuilder(
     column: $table.active,
     builder: (column) => ColumnOrderings(column),
@@ -11912,6 +13813,9 @@ class $$DocumentTypesTableAnnotationComposer
 
   GeneratedColumn<int> get sequence =>
       $composableBuilder(column: $table.sequence, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
 
   GeneratedColumn<bool> get active =>
       $composableBuilder(column: $table.active, builder: (column) => column);
@@ -11979,6 +13883,7 @@ class $$DocumentTypesTableTableManager
                 Value<int?> odooId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int> sequence = const Value.absent(),
+                Value<String?> note = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DocumentTypesCompanion(
@@ -11989,6 +13894,7 @@ class $$DocumentTypesTableTableManager
                 odooId: odooId,
                 name: name,
                 sequence: sequence,
+                note: note,
                 active: active,
                 rowid: rowid,
               ),
@@ -12001,6 +13907,7 @@ class $$DocumentTypesTableTableManager
                 Value<int?> odooId = const Value.absent(),
                 required String name,
                 Value<int> sequence = const Value.absent(),
+                Value<String?> note = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DocumentTypesCompanion.insert(
@@ -12011,6 +13918,7 @@ class $$DocumentTypesTableTableManager
                 odooId: odooId,
                 name: name,
                 sequence: sequence,
+                note: note,
                 active: active,
                 rowid: rowid,
               ),
@@ -12082,7 +13990,9 @@ typedef $$CustomerDiscountsTableCreateCompanionBuilder =
       Value<bool> dirty,
       Value<int?> odooId,
       required String name,
+      Value<int> sequence,
       Value<String?> customerId,
+      Value<String?> customerName,
       Value<DiscountType> discountType,
       Value<double> discountValue,
       Value<DateTime?> dateFrom,
@@ -12099,7 +14009,9 @@ typedef $$CustomerDiscountsTableUpdateCompanionBuilder =
       Value<bool> dirty,
       Value<int?> odooId,
       Value<String> name,
+      Value<int> sequence,
       Value<String?> customerId,
+      Value<String?> customerName,
       Value<DiscountType> discountType,
       Value<double> discountValue,
       Value<DateTime?> dateFrom,
@@ -12194,6 +14106,16 @@ class $$CustomerDiscountsTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerName => $composableBuilder(
+    column: $table.customerName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12316,6 +14238,16 @@ class $$CustomerDiscountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get customerName => $composableBuilder(
+    column: $table.customerName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get discountType => $composableBuilder(
     column: $table.discountType,
     builder: (column) => ColumnOrderings(column),
@@ -12396,6 +14328,14 @@ class $$CustomerDiscountsTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get sequence =>
+      $composableBuilder(column: $table.sequence, builder: (column) => column);
+
+  GeneratedColumn<String> get customerName => $composableBuilder(
+    column: $table.customerName,
+    builder: (column) => column,
+  );
 
   GeneratedColumnWithTypeConverter<DiscountType, String> get discountType =>
       $composableBuilder(
@@ -12508,7 +14448,9 @@ class $$CustomerDiscountsTableTableManager
                 Value<bool> dirty = const Value.absent(),
                 Value<int?> odooId = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<int> sequence = const Value.absent(),
                 Value<String?> customerId = const Value.absent(),
+                Value<String?> customerName = const Value.absent(),
                 Value<DiscountType> discountType = const Value.absent(),
                 Value<double> discountValue = const Value.absent(),
                 Value<DateTime?> dateFrom = const Value.absent(),
@@ -12523,7 +14465,9 @@ class $$CustomerDiscountsTableTableManager
                 dirty: dirty,
                 odooId: odooId,
                 name: name,
+                sequence: sequence,
                 customerId: customerId,
+                customerName: customerName,
                 discountType: discountType,
                 discountValue: discountValue,
                 dateFrom: dateFrom,
@@ -12540,7 +14484,9 @@ class $$CustomerDiscountsTableTableManager
                 Value<bool> dirty = const Value.absent(),
                 Value<int?> odooId = const Value.absent(),
                 required String name,
+                Value<int> sequence = const Value.absent(),
                 Value<String?> customerId = const Value.absent(),
+                Value<String?> customerName = const Value.absent(),
                 Value<DiscountType> discountType = const Value.absent(),
                 Value<double> discountValue = const Value.absent(),
                 Value<DateTime?> dateFrom = const Value.absent(),
@@ -12555,7 +14501,9 @@ class $$CustomerDiscountsTableTableManager
                 dirty: dirty,
                 odooId: odooId,
                 name: name,
+                sequence: sequence,
                 customerId: customerId,
+                customerName: customerName,
                 discountType: discountType,
                 discountValue: discountValue,
                 dateFrom: dateFrom,
@@ -13497,6 +15445,24 @@ typedef $$AssetsTableCreateCompanionBuilder = AssetsCompanion Function({
   Value<String?> imagePath,
   Value<String?> notes,
   Value<bool> active,
+  Value<AssetManualState?> stateManual,
+  Value<String?> sourceId,
+  Value<String?> evaluationUrl,
+  Value<DateTime?> acquisitionDate,
+  Value<double> unitCost,
+  Value<Ownership> ownership,
+  Value<String?> supplierName,
+  Value<String?> supplierPhone,
+  Value<String?> supplierReference,
+  Value<DateTime?> rentedInDateStart,
+  Value<DateTime?> rentedInDateEnd,
+  Value<double> rentedInCostDay,
+  Value<double> rentedInDeposit,
+  Value<DateTime?> rentedInReturnedAt,
+  Value<String?> rentedInReturnedBy,
+  Value<LoanCondition> rentedInConditionIn,
+  Value<LoanCondition?> rentedInConditionOut,
+  Value<String?> rentedInNote,
   Value<int> rowid,
 });
 typedef $$AssetsTableUpdateCompanionBuilder = AssetsCompanion Function({
@@ -13518,6 +15484,24 @@ typedef $$AssetsTableUpdateCompanionBuilder = AssetsCompanion Function({
   Value<String?> imagePath,
   Value<String?> notes,
   Value<bool> active,
+  Value<AssetManualState?> stateManual,
+  Value<String?> sourceId,
+  Value<String?> evaluationUrl,
+  Value<DateTime?> acquisitionDate,
+  Value<double> unitCost,
+  Value<Ownership> ownership,
+  Value<String?> supplierName,
+  Value<String?> supplierPhone,
+  Value<String?> supplierReference,
+  Value<DateTime?> rentedInDateStart,
+  Value<DateTime?> rentedInDateEnd,
+  Value<double> rentedInCostDay,
+  Value<double> rentedInDeposit,
+  Value<DateTime?> rentedInReturnedAt,
+  Value<String?> rentedInReturnedBy,
+  Value<LoanCondition> rentedInConditionIn,
+  Value<LoanCondition?> rentedInConditionOut,
+  Value<String?> rentedInNote,
   Value<int> rowid,
 });
 
@@ -13553,6 +15537,23 @@ final class $$AssetsTableReferences
       $_db.locations,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_locationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $CustomersTable _sourceIdTable(_$RentoryDatabase db) =>
+      db.customers.createAlias('assets__source_id__customers__id');
+
+  $$CustomersTableProcessedTableManager? get sourceId {
+    final $_column = $_itemColumn<String>('source_id');
+    if ($_column == null) return null;
+    final manager = $$CustomersTableTableManager(
+      $_db,
+      $_db.customers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -13687,6 +15688,95 @@ class $$AssetsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<AssetManualState?, AssetManualState, String>
+  get stateManual => $composableBuilder(
+    column: $table.stateManual,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get evaluationUrl => $composableBuilder(
+    column: $table.evaluationUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get acquisitionDate => $composableBuilder(
+    column: $table.acquisitionDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitCost => $composableBuilder(
+    column: $table.unitCost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Ownership, Ownership, String> get ownership =>
+      $composableBuilder(
+        column: $table.ownership,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get supplierName => $composableBuilder(
+    column: $table.supplierName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplierPhone => $composableBuilder(
+    column: $table.supplierPhone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplierReference => $composableBuilder(
+    column: $table.supplierReference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get rentedInDateStart => $composableBuilder(
+    column: $table.rentedInDateStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get rentedInDateEnd => $composableBuilder(
+    column: $table.rentedInDateEnd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get rentedInCostDay => $composableBuilder(
+    column: $table.rentedInCostDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get rentedInDeposit => $composableBuilder(
+    column: $table.rentedInDeposit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get rentedInReturnedAt => $composableBuilder(
+    column: $table.rentedInReturnedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rentedInReturnedBy => $composableBuilder(
+    column: $table.rentedInReturnedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LoanCondition, LoanCondition, String>
+  get rentedInConditionIn => $composableBuilder(
+    column: $table.rentedInConditionIn,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LoanCondition?, LoanCondition, String>
+  get rentedInConditionOut => $composableBuilder(
+    column: $table.rentedInConditionOut,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get rentedInNote => $composableBuilder(
+    column: $table.rentedInNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CategoriesTableFilterComposer get categoryId {
     final $$CategoriesTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -13724,6 +15814,29 @@ class $$AssetsTableFilterComposer
           }) => $$LocationsTableFilterComposer(
             $db: $db,
             $table: $db.locations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomersTableFilterComposer get sourceId {
+    final $$CustomersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableFilterComposer(
+            $db: $db,
+            $table: $db.customers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -13873,6 +15986,91 @@ class $$AssetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get stateManual => $composableBuilder(
+    column: $table.stateManual,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get evaluationUrl => $composableBuilder(
+    column: $table.evaluationUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get acquisitionDate => $composableBuilder(
+    column: $table.acquisitionDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitCost => $composableBuilder(
+    column: $table.unitCost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownership => $composableBuilder(
+    column: $table.ownership,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplierName => $composableBuilder(
+    column: $table.supplierName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplierPhone => $composableBuilder(
+    column: $table.supplierPhone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplierReference => $composableBuilder(
+    column: $table.supplierReference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get rentedInDateStart => $composableBuilder(
+    column: $table.rentedInDateStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get rentedInDateEnd => $composableBuilder(
+    column: $table.rentedInDateEnd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get rentedInCostDay => $composableBuilder(
+    column: $table.rentedInCostDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get rentedInDeposit => $composableBuilder(
+    column: $table.rentedInDeposit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get rentedInReturnedAt => $composableBuilder(
+    column: $table.rentedInReturnedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rentedInReturnedBy => $composableBuilder(
+    column: $table.rentedInReturnedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rentedInConditionIn => $composableBuilder(
+    column: $table.rentedInConditionIn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rentedInConditionOut => $composableBuilder(
+    column: $table.rentedInConditionOut,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rentedInNote => $composableBuilder(
+    column: $table.rentedInNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categoryId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -13910,6 +16108,29 @@ class $$AssetsTableOrderingComposer
           }) => $$LocationsTableOrderingComposer(
             $db: $db,
             $table: $db.locations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomersTableOrderingComposer get sourceId {
+    final $$CustomersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableOrderingComposer(
+            $db: $db,
+            $table: $db.customers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -13981,6 +16202,90 @@ class $$AssetsTableAnnotationComposer
   GeneratedColumn<bool> get active =>
       $composableBuilder(column: $table.active, builder: (column) => column);
 
+  GeneratedColumnWithTypeConverter<AssetManualState?, String> get stateManual =>
+      $composableBuilder(
+        column: $table.stateManual,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get evaluationUrl => $composableBuilder(
+    column: $table.evaluationUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get acquisitionDate => $composableBuilder(
+    column: $table.acquisitionDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get unitCost =>
+      $composableBuilder(column: $table.unitCost, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Ownership, String> get ownership =>
+      $composableBuilder(column: $table.ownership, builder: (column) => column);
+
+  GeneratedColumn<String> get supplierName => $composableBuilder(
+    column: $table.supplierName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get supplierPhone => $composableBuilder(
+    column: $table.supplierPhone,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get supplierReference => $composableBuilder(
+    column: $table.supplierReference,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get rentedInDateStart => $composableBuilder(
+    column: $table.rentedInDateStart,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get rentedInDateEnd => $composableBuilder(
+    column: $table.rentedInDateEnd,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get rentedInCostDay => $composableBuilder(
+    column: $table.rentedInCostDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get rentedInDeposit => $composableBuilder(
+    column: $table.rentedInDeposit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get rentedInReturnedAt => $composableBuilder(
+    column: $table.rentedInReturnedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get rentedInReturnedBy => $composableBuilder(
+    column: $table.rentedInReturnedBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<LoanCondition, String>
+  get rentedInConditionIn => $composableBuilder(
+    column: $table.rentedInConditionIn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<LoanCondition?, String>
+  get rentedInConditionOut => $composableBuilder(
+    column: $table.rentedInConditionOut,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get rentedInNote => $composableBuilder(
+    column: $table.rentedInNote,
+    builder: (column) => column,
+  );
+
   $$CategoriesTableAnnotationComposer get categoryId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -14018,6 +16323,29 @@ class $$AssetsTableAnnotationComposer
           }) => $$LocationsTableAnnotationComposer(
             $db: $db,
             $table: $db.locations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomersTableAnnotationComposer get sourceId {
+    final $$CustomersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.customers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -14094,6 +16422,7 @@ class $$AssetsTableTableManager
           PrefetchHooks Function({
             bool categoryId,
             bool locationId,
+            bool sourceId,
             bool serialsRefs,
             bool orderLinesRefs,
           })
@@ -14129,6 +16458,25 @@ class $$AssetsTableTableManager
                 Value<String?> imagePath = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> active = const Value.absent(),
+                Value<AssetManualState?> stateManual = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> evaluationUrl = const Value.absent(),
+                Value<DateTime?> acquisitionDate = const Value.absent(),
+                Value<double> unitCost = const Value.absent(),
+                Value<Ownership> ownership = const Value.absent(),
+                Value<String?> supplierName = const Value.absent(),
+                Value<String?> supplierPhone = const Value.absent(),
+                Value<String?> supplierReference = const Value.absent(),
+                Value<DateTime?> rentedInDateStart = const Value.absent(),
+                Value<DateTime?> rentedInDateEnd = const Value.absent(),
+                Value<double> rentedInCostDay = const Value.absent(),
+                Value<double> rentedInDeposit = const Value.absent(),
+                Value<DateTime?> rentedInReturnedAt = const Value.absent(),
+                Value<String?> rentedInReturnedBy = const Value.absent(),
+                Value<LoanCondition> rentedInConditionIn = const Value.absent(),
+                Value<LoanCondition?> rentedInConditionOut =
+                    const Value.absent(),
+                Value<String?> rentedInNote = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AssetsCompanion(
                 id: id,
@@ -14149,6 +16497,24 @@ class $$AssetsTableTableManager
                 imagePath: imagePath,
                 notes: notes,
                 active: active,
+                stateManual: stateManual,
+                sourceId: sourceId,
+                evaluationUrl: evaluationUrl,
+                acquisitionDate: acquisitionDate,
+                unitCost: unitCost,
+                ownership: ownership,
+                supplierName: supplierName,
+                supplierPhone: supplierPhone,
+                supplierReference: supplierReference,
+                rentedInDateStart: rentedInDateStart,
+                rentedInDateEnd: rentedInDateEnd,
+                rentedInCostDay: rentedInCostDay,
+                rentedInDeposit: rentedInDeposit,
+                rentedInReturnedAt: rentedInReturnedAt,
+                rentedInReturnedBy: rentedInReturnedBy,
+                rentedInConditionIn: rentedInConditionIn,
+                rentedInConditionOut: rentedInConditionOut,
+                rentedInNote: rentedInNote,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14171,6 +16537,25 @@ class $$AssetsTableTableManager
                 Value<String?> imagePath = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> active = const Value.absent(),
+                Value<AssetManualState?> stateManual = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> evaluationUrl = const Value.absent(),
+                Value<DateTime?> acquisitionDate = const Value.absent(),
+                Value<double> unitCost = const Value.absent(),
+                Value<Ownership> ownership = const Value.absent(),
+                Value<String?> supplierName = const Value.absent(),
+                Value<String?> supplierPhone = const Value.absent(),
+                Value<String?> supplierReference = const Value.absent(),
+                Value<DateTime?> rentedInDateStart = const Value.absent(),
+                Value<DateTime?> rentedInDateEnd = const Value.absent(),
+                Value<double> rentedInCostDay = const Value.absent(),
+                Value<double> rentedInDeposit = const Value.absent(),
+                Value<DateTime?> rentedInReturnedAt = const Value.absent(),
+                Value<String?> rentedInReturnedBy = const Value.absent(),
+                Value<LoanCondition> rentedInConditionIn = const Value.absent(),
+                Value<LoanCondition?> rentedInConditionOut =
+                    const Value.absent(),
+                Value<String?> rentedInNote = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AssetsCompanion.insert(
                 id: id,
@@ -14191,6 +16576,24 @@ class $$AssetsTableTableManager
                 imagePath: imagePath,
                 notes: notes,
                 active: active,
+                stateManual: stateManual,
+                sourceId: sourceId,
+                evaluationUrl: evaluationUrl,
+                acquisitionDate: acquisitionDate,
+                unitCost: unitCost,
+                ownership: ownership,
+                supplierName: supplierName,
+                supplierPhone: supplierPhone,
+                supplierReference: supplierReference,
+                rentedInDateStart: rentedInDateStart,
+                rentedInDateEnd: rentedInDateEnd,
+                rentedInCostDay: rentedInCostDay,
+                rentedInDeposit: rentedInDeposit,
+                rentedInReturnedAt: rentedInReturnedAt,
+                rentedInReturnedBy: rentedInReturnedBy,
+                rentedInConditionIn: rentedInConditionIn,
+                rentedInConditionOut: rentedInConditionOut,
+                rentedInNote: rentedInNote,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -14205,6 +16608,7 @@ class $$AssetsTableTableManager
               ({
                 categoryId = false,
                 locationId = false,
+                sourceId = false,
                 serialsRefs = false,
                 orderLinesRefs = false,
               }) {
@@ -14249,6 +16653,17 @@ class $$AssetsTableTableManager
                                 ._locationIdTable(db),
                             referencedColumn: $$AssetsTableReferences
                                 ._locationIdTable(db)
+                                .id,
+                          ) as T;
+                        }
+                        if (sourceId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.sourceId,
+                            referencedTable: $$AssetsTableReferences
+                                ._sourceIdTable(db),
+                            referencedColumn: $$AssetsTableReferences
+                                ._sourceIdTable(db)
                                 .id,
                           ) as T;
                         }
@@ -14318,6 +16733,7 @@ typedef $$AssetsTableProcessedTableManager =
       PrefetchHooks Function({
         bool categoryId,
         bool locationId,
+        bool sourceId,
         bool serialsRefs,
         bool orderLinesRefs,
       })
@@ -14338,6 +16754,10 @@ typedef $$SerialsTableCreateCompanionBuilder = SerialsCompanion Function({
   Value<double> declaredValue,
   Value<String?> note,
   Value<bool> active,
+  Value<String?> sourceId,
+  Value<String?> evaluationUrl,
+  Value<DateTime?> acquisitionDate,
+  Value<double> unitCost,
   Value<int> rowid,
 });
 typedef $$SerialsTableUpdateCompanionBuilder = SerialsCompanion Function({
@@ -14356,6 +16776,10 @@ typedef $$SerialsTableUpdateCompanionBuilder = SerialsCompanion Function({
   Value<double> declaredValue,
   Value<String?> note,
   Value<bool> active,
+  Value<String?> sourceId,
+  Value<String?> evaluationUrl,
+  Value<DateTime?> acquisitionDate,
+  Value<double> unitCost,
   Value<int> rowid,
 });
 
@@ -14391,6 +16815,23 @@ final class $$SerialsTableReferences
       $_db.locations,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_locationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $CustomersTable _sourceIdTable(_$RentoryDatabase db) =>
+      db.customers.createAlias('serials__source_id__customers__id');
+
+  $$CustomersTableProcessedTableManager? get sourceId {
+    final $_column = $_itemColumn<String>('source_id');
+    if ($_column == null) return null;
+    final manager = $$CustomersTableTableManager(
+      $_db,
+      $_db.customers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -14512,6 +16953,21 @@ class $$SerialsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get evaluationUrl => $composableBuilder(
+    column: $table.evaluationUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get acquisitionDate => $composableBuilder(
+    column: $table.acquisitionDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitCost => $composableBuilder(
+    column: $table.unitCost,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$AssetsTableFilterComposer get assetId {
     final $$AssetsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -14549,6 +17005,29 @@ class $$SerialsTableFilterComposer
           }) => $$LocationsTableFilterComposer(
             $db: $db,
             $table: $db.locations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomersTableFilterComposer get sourceId {
+    final $$CustomersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableFilterComposer(
+            $db: $db,
+            $table: $db.customers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -14683,6 +17162,21 @@ class $$SerialsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get evaluationUrl => $composableBuilder(
+    column: $table.evaluationUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get acquisitionDate => $composableBuilder(
+    column: $table.acquisitionDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitCost => $composableBuilder(
+    column: $table.unitCost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AssetsTableOrderingComposer get assetId {
     final $$AssetsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -14720,6 +17214,29 @@ class $$SerialsTableOrderingComposer
           }) => $$LocationsTableOrderingComposer(
             $db: $db,
             $table: $db.locations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomersTableOrderingComposer get sourceId {
+    final $$CustomersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableOrderingComposer(
+            $db: $db,
+            $table: $db.customers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -14784,6 +17301,19 @@ class $$SerialsTableAnnotationComposer
   GeneratedColumn<bool> get active =>
       $composableBuilder(column: $table.active, builder: (column) => column);
 
+  GeneratedColumn<String> get evaluationUrl => $composableBuilder(
+    column: $table.evaluationUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get acquisitionDate => $composableBuilder(
+    column: $table.acquisitionDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get unitCost =>
+      $composableBuilder(column: $table.unitCost, builder: (column) => column);
+
   $$AssetsTableAnnotationComposer get assetId {
     final $$AssetsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -14821,6 +17351,29 @@ class $$SerialsTableAnnotationComposer
           }) => $$LocationsTableAnnotationComposer(
             $db: $db,
             $table: $db.locations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomersTableAnnotationComposer get sourceId {
+    final $$CustomersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.customers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -14897,6 +17450,7 @@ class $$SerialsTableTableManager
           PrefetchHooks Function({
             bool assetId,
             bool locationId,
+            bool sourceId,
             bool orderLineSerialsRefs,
             bool returnChecksRefs,
           })
@@ -14929,6 +17483,10 @@ class $$SerialsTableTableManager
                 Value<double> declaredValue = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> active = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> evaluationUrl = const Value.absent(),
+                Value<DateTime?> acquisitionDate = const Value.absent(),
+                Value<double> unitCost = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SerialsCompanion(
                 id: id,
@@ -14946,6 +17504,10 @@ class $$SerialsTableTableManager
                 declaredValue: declaredValue,
                 note: note,
                 active: active,
+                sourceId: sourceId,
+                evaluationUrl: evaluationUrl,
+                acquisitionDate: acquisitionDate,
+                unitCost: unitCost,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14965,6 +17527,10 @@ class $$SerialsTableTableManager
                 Value<double> declaredValue = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> active = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> evaluationUrl = const Value.absent(),
+                Value<DateTime?> acquisitionDate = const Value.absent(),
+                Value<double> unitCost = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SerialsCompanion.insert(
                 id: id,
@@ -14982,6 +17548,10 @@ class $$SerialsTableTableManager
                 declaredValue: declaredValue,
                 note: note,
                 active: active,
+                sourceId: sourceId,
+                evaluationUrl: evaluationUrl,
+                acquisitionDate: acquisitionDate,
+                unitCost: unitCost,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -14996,6 +17566,7 @@ class $$SerialsTableTableManager
               ({
                 assetId = false,
                 locationId = false,
+                sourceId = false,
                 orderLineSerialsRefs = false,
                 returnChecksRefs = false,
               }) {
@@ -15040,6 +17611,17 @@ class $$SerialsTableTableManager
                                 ._locationIdTable(db),
                             referencedColumn: $$SerialsTableReferences
                                 ._locationIdTable(db)
+                                .id,
+                          ) as T;
+                        }
+                        if (sourceId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.sourceId,
+                            referencedTable: $$SerialsTableReferences
+                                ._sourceIdTable(db),
+                            referencedColumn: $$SerialsTableReferences
+                                ._sourceIdTable(db)
                                 .id,
                           ) as T;
                         }
@@ -15113,6 +17695,7 @@ typedef $$SerialsTableProcessedTableManager =
       PrefetchHooks Function({
         bool assetId,
         bool locationId,
+        bool sourceId,
         bool orderLineSerialsRefs,
         bool returnChecksRefs,
       })
@@ -15152,6 +17735,10 @@ typedef $$OrdersTableCreateCompanionBuilder = OrdersCompanion Function({
   Value<DateTime?> signatureDate,
   Value<String?> userId,
   Value<String?> note,
+  Value<bool> allowLineDatesOutside,
+  Value<SignatureTarget?> signatureTarget,
+  Value<CaptureMethod?> captureMethod,
+  Value<String?> photosUrl,
   Value<int> rowid,
 });
 typedef $$OrdersTableUpdateCompanionBuilder = OrdersCompanion Function({
@@ -15189,6 +17776,10 @@ typedef $$OrdersTableUpdateCompanionBuilder = OrdersCompanion Function({
   Value<DateTime?> signatureDate,
   Value<String?> userId,
   Value<String?> note,
+  Value<bool> allowLineDatesOutside,
+  Value<SignatureTarget?> signatureTarget,
+  Value<CaptureMethod?> captureMethod,
+  Value<String?> photosUrl,
   Value<int> rowid,
 });
 
@@ -15457,6 +18048,28 @@ class $$OrdersTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get allowLineDatesOutside => $composableBuilder(
+    column: $table.allowLineDatesOutside,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SignatureTarget?, SignatureTarget, String>
+  get signatureTarget => $composableBuilder(
+    column: $table.signatureTarget,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<CaptureMethod?, CaptureMethod, String>
+  get captureMethod => $composableBuilder(
+    column: $table.captureMethod,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get photosUrl => $composableBuilder(
+    column: $table.photosUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15751,6 +18364,26 @@ class $$OrdersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get allowLineDatesOutside => $composableBuilder(
+    column: $table.allowLineDatesOutside,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signatureTarget => $composableBuilder(
+    column: $table.signatureTarget,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get captureMethod => $composableBuilder(
+    column: $table.captureMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get photosUrl => $composableBuilder(
+    column: $table.photosUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CustomersTableOrderingComposer get customerId {
     final $$CustomersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -15946,6 +18579,26 @@ class $$OrdersTableAnnotationComposer
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
 
+  GeneratedColumn<bool> get allowLineDatesOutside => $composableBuilder(
+    column: $table.allowLineDatesOutside,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<SignatureTarget?, String>
+  get signatureTarget => $composableBuilder(
+    column: $table.signatureTarget,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<CaptureMethod?, String> get captureMethod =>
+      $composableBuilder(
+        column: $table.captureMethod,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get photosUrl =>
+      $composableBuilder(column: $table.photosUrl, builder: (column) => column);
+
   $$CustomersTableAnnotationComposer get customerId {
     final $$CustomersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -16137,6 +18790,10 @@ class $$OrdersTableTableManager
                 Value<DateTime?> signatureDate = const Value.absent(),
                 Value<String?> userId = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<bool> allowLineDatesOutside = const Value.absent(),
+                Value<SignatureTarget?> signatureTarget = const Value.absent(),
+                Value<CaptureMethod?> captureMethod = const Value.absent(),
+                Value<String?> photosUrl = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OrdersCompanion(
                 id: id,
@@ -16173,6 +18830,10 @@ class $$OrdersTableTableManager
                 signatureDate: signatureDate,
                 userId: userId,
                 note: note,
+                allowLineDatesOutside: allowLineDatesOutside,
+                signatureTarget: signatureTarget,
+                captureMethod: captureMethod,
+                photosUrl: photosUrl,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -16211,6 +18872,10 @@ class $$OrdersTableTableManager
                 Value<DateTime?> signatureDate = const Value.absent(),
                 Value<String?> userId = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<bool> allowLineDatesOutside = const Value.absent(),
+                Value<SignatureTarget?> signatureTarget = const Value.absent(),
+                Value<CaptureMethod?> captureMethod = const Value.absent(),
+                Value<String?> photosUrl = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OrdersCompanion.insert(
                 id: id,
@@ -16247,6 +18912,10 @@ class $$OrdersTableTableManager
                 signatureDate: signatureDate,
                 userId: userId,
                 note: note,
+                allowLineDatesOutside: allowLineDatesOutside,
+                signatureTarget: signatureTarget,
+                captureMethod: captureMethod,
+                photosUrl: photosUrl,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -18272,6 +20941,7 @@ typedef $$ReturnChecksTableCreateCompanionBuilder =
       required String lineId,
       required String orderId,
       Value<String?> serialId,
+      Value<String?> serialName,
       Value<Condition> condition,
       Value<String?> note,
       required DateTime returnedAt,
@@ -18288,6 +20958,7 @@ typedef $$ReturnChecksTableUpdateCompanionBuilder =
       Value<String> lineId,
       Value<String> orderId,
       Value<String?> serialId,
+      Value<String?> serialName,
       Value<Condition> condition,
       Value<String?> note,
       Value<DateTime> returnedAt,
@@ -18382,6 +21053,11 @@ class $$ReturnChecksTableFilterComposer
 
   ColumnFilters<int> get odooId => $composableBuilder(
     column: $table.odooId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serialName => $composableBuilder(
+    column: $table.serialName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18510,6 +21186,11 @@ class $$ReturnChecksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get serialName => $composableBuilder(
+    column: $table.serialName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get condition => $composableBuilder(
     column: $table.condition,
     builder: (column) => ColumnOrderings(column),
@@ -18623,6 +21304,11 @@ class $$ReturnChecksTableAnnotationComposer
 
   GeneratedColumn<int> get odooId =>
       $composableBuilder(column: $table.odooId, builder: (column) => column);
+
+  GeneratedColumn<String> get serialName => $composableBuilder(
+    column: $table.serialName,
+    builder: (column) => column,
+  );
 
   GeneratedColumnWithTypeConverter<Condition, String> get condition =>
       $composableBuilder(column: $table.condition, builder: (column) => column);
@@ -18748,6 +21434,7 @@ class $$ReturnChecksTableTableManager
                 Value<String> lineId = const Value.absent(),
                 Value<String> orderId = const Value.absent(),
                 Value<String?> serialId = const Value.absent(),
+                Value<String?> serialName = const Value.absent(),
                 Value<Condition> condition = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<DateTime> returnedAt = const Value.absent(),
@@ -18762,6 +21449,7 @@ class $$ReturnChecksTableTableManager
                 lineId: lineId,
                 orderId: orderId,
                 serialId: serialId,
+                serialName: serialName,
                 condition: condition,
                 note: note,
                 returnedAt: returnedAt,
@@ -18778,6 +21466,7 @@ class $$ReturnChecksTableTableManager
                 required String lineId,
                 required String orderId,
                 Value<String?> serialId = const Value.absent(),
+                Value<String?> serialName = const Value.absent(),
                 Value<Condition> condition = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 required DateTime returnedAt,
@@ -18792,6 +21481,7 @@ class $$ReturnChecksTableTableManager
                 lineId: lineId,
                 orderId: orderId,
                 serialId: serialId,
+                serialName: serialName,
                 condition: condition,
                 note: note,
                 returnedAt: returnedAt,
@@ -18898,6 +21588,7 @@ typedef $$PhotosTableCreateCompanionBuilder = PhotosCompanion Function({
   Value<String?> lineId,
   Value<String?> storagePath,
   Value<String?> localPath,
+  Value<int> sequence,
   Value<DateTime> takenAt,
   Value<String?> note,
   Value<int> rowid,
@@ -18914,6 +21605,7 @@ typedef $$PhotosTableUpdateCompanionBuilder = PhotosCompanion Function({
   Value<String?> lineId,
   Value<String?> storagePath,
   Value<String?> localPath,
+  Value<int> sequence,
   Value<DateTime> takenAt,
   Value<String?> note,
   Value<int> rowid,
@@ -18980,6 +21672,11 @@ class $$PhotosTableFilterComposer
 
   ColumnFilters<String> get localPath => $composableBuilder(
     column: $table.localPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sequence => $composableBuilder(
+    column: $table.sequence,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19058,6 +21755,11 @@ class $$PhotosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get takenAt => $composableBuilder(
     column: $table.takenAt,
     builder: (column) => ColumnOrderings(column),
@@ -19113,6 +21815,9 @@ class $$PhotosTableAnnotationComposer
   GeneratedColumn<String> get localPath =>
       $composableBuilder(column: $table.localPath, builder: (column) => column);
 
+  GeneratedColumn<int> get sequence =>
+      $composableBuilder(column: $table.sequence, builder: (column) => column);
+
   GeneratedColumn<DateTime> get takenAt =>
       $composableBuilder(column: $table.takenAt, builder: (column) => column);
 
@@ -19159,6 +21864,7 @@ class $$PhotosTableTableManager
                 Value<String?> lineId = const Value.absent(),
                 Value<String?> storagePath = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
+                Value<int> sequence = const Value.absent(),
                 Value<DateTime> takenAt = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -19174,6 +21880,7 @@ class $$PhotosTableTableManager
                 lineId: lineId,
                 storagePath: storagePath,
                 localPath: localPath,
+                sequence: sequence,
                 takenAt: takenAt,
                 note: note,
                 rowid: rowid,
@@ -19191,6 +21898,7 @@ class $$PhotosTableTableManager
                 Value<String?> lineId = const Value.absent(),
                 Value<String?> storagePath = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
+                Value<int> sequence = const Value.absent(),
                 Value<DateTime> takenAt = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -19206,6 +21914,7 @@ class $$PhotosTableTableManager
                 lineId: lineId,
                 storagePath: storagePath,
                 localPath: localPath,
+                sequence: sequence,
                 takenAt: takenAt,
                 note: note,
                 rowid: rowid,

@@ -352,4 +352,139 @@ void main() {
       await expectLater(bad(), throwsA(isA<RuleException>()));
     }
   });
+
+  test(
+    'rented in: bookings stay inside the loan; give back closes it',
+    () async {
+      final lens = await repo.createAsset(
+        name: 'Borrowed lens',
+        tracking: Tracking.none,
+        quantity: 1,
+        more: AssetsCompanion(
+          ownership: const Value(Ownership.rentedIn),
+          supplierName: const Value('Lens House'),
+          rentedInDateStart: Value(DateTime.utc(2026, 10, 4)),
+          rentedInDateEnd: Value(DateTime.utc(2026, 10, 8)),
+        ),
+      );
+      // Runs past the due-back date.
+      final late = await order(fromDay: 6, toDay: 9);
+      await repo.addLine(late, type: LineType.asset, assetId: lens);
+      await expectLater(repo.book(late), throwsA(isA<RuleException>()));
+      // Inside the loan: fine.
+      final ok = await order(fromDay: 5, toDay: 7);
+      await repo.addLine(ok, type: LineType.asset, assetId: lens);
+      await repo.book(ok);
+
+      // Still promised: cannot go back yet.
+      await expectLater(
+        repo.giveBack(lens, condition: LoanCondition.good),
+        throwsA(isA<RuleException>()),
+      );
+      await repo.cancel(ok);
+      // A draft still counts on it too, as in Rentory.
+      await expectLater(
+        repo.giveBack(lens, condition: LoanCondition.good),
+        throwsA(isA<RuleException>()),
+      );
+      await repo.cancel(late);
+      await repo.giveBack(lens, condition: LoanCondition.minor, note: 'scuff');
+      final d = await repo.loadAsset(lens);
+      expect(d.asset.rentedInReturnedAt, now);
+      expect(d.asset.rentedInConditionOut, LoanCondition.minor);
+      expect(d.asset.rentalOk, isFalse);
+      expect(d.summary.total, 0);
+    },
+  );
+
+  test('maintenance parks an asset and its free units', () async {
+    final o = await order();
+    final line = await repo.addLine(o, type: LineType.asset, assetId: camera);
+    await repo.autofillSerials(line);
+    await repo.book(o);
+    // One unit reserved: refused.
+    await expectLater(
+      repo.setAssetStatus(camera, AssetManualState.maintenance),
+      throwsA(isA<RuleException>()),
+    );
+    await repo.cancel(o);
+
+    await repo.setAssetStatus(camera, AssetManualState.maintenance);
+    expect(await stateOf('FX6-001'), SerialState.maintenance);
+    expect((await repo.loadAsset(camera)).summary.total, 0);
+    final p = await order();
+    await expectLater(
+      repo.addLine(p, type: LineType.asset, assetId: camera),
+      throwsA(isA<RuleException>()),
+    );
+
+    await repo.setAssetStatus(camera, null);
+    expect(await stateOf('FX6-002'), SerialState.available);
+    expect((await repo.loadAsset(camera)).summary.total, 2);
+  });
+
+  test('units: edit, rename clash, manual state', () async {
+    final unit = (await repo.loadAsset(camera)).serials.first;
+    await repo.updateUnit(
+      unit.id,
+      SerialsCompanion(
+        note: const Value('scratch on hood'),
+        unitCost: const Value(4200),
+        name: const Value('FX6-101'),
+      ),
+    );
+    var u = (await repo.loadAsset(camera)).serials
+        .firstWhere((s) => s.id == unit.id);
+    expect((u.name, u.barcode, u.unitCost), ('FX6-101', 'FX6-101', 4200.0));
+    await expectLater(
+      repo.updateUnit(unit.id, const SerialsCompanion(name: Value('FX6-002'))),
+      throwsA(isA<RuleException>()),
+    );
+    await repo.setUnitState(unit.id, SerialState.lost);
+    expect(await stateOf('FX6-101'), SerialState.lost);
+    await expectLater(
+      repo.setUnitState(unit.id, SerialState.out),
+      throwsA(isA<RuleException>()),
+    );
+  });
+
+  test('line dates stay inside the order unless it allows otherwise', () async {
+    final o = await order(fromDay: 5, toDay: 8);
+    final line = await repo.addLine(o, type: LineType.asset, assetId: tripod);
+    await repo.setLineDates(
+      line,
+      DateTime.utc(2026, 10, 6, 9),
+      DateTime.utc(2026, 10, 7, 9),
+    );
+    var d = await repo.loadOrder(o);
+    expect(d.lines.single.days, 1);
+    await expectLater(
+      repo.setLineDates(line, null, DateTime.utc(2026, 10, 10, 9)),
+      throwsA(isA<RuleException>()),
+    );
+    await repo.updateOrder(
+      o,
+      const OrdersCompanion(allowLineDatesOutside: Value(true)),
+    );
+    await repo.setLineDates(line, null, DateTime.utc(2026, 10, 10, 9));
+    await repo.setLineDates(line, null, null);
+    d = await repo.loadOrder(o);
+    expect(d.lines.single.line.dateStart, isNull);
+    expect(d.lines.single.days, 3);
+  });
+
+  test('return checks keep the serial number; items examined', () async {
+    final o = await order();
+    final line = await repo.addLine(o, type: LineType.asset, assetId: camera);
+    await repo.autofillSerials(line);
+    await repo.book(o);
+    await repo.pickupAll(o, force: true);
+    await repo.returnLine(line);
+    final check = (await repo.loadOrder(o)).lines.single.returnChecks.single;
+    expect(check.serialName, 'FX6-001');
+
+    await repo.setItemsExamined(o, true);
+    final row = (await repo.loadOrder(o)).order;
+    expect((row.itemsExamined, row.itemsExaminedBy), (true, 'u1'));
+  });
 }

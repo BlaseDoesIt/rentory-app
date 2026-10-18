@@ -142,6 +142,66 @@ enum Role implements Keyed {
   static Role fromKey(String key) => _byKey(values, key, (e) => e.key);
 }
 
+/// Whether we own an asset or hold it on loan from a supplier.
+enum Ownership implements Keyed {
+  owned('owned'),
+  rentedIn('rented_in');
+
+  const Ownership(this.key);
+  @override
+  final String key;
+  static Ownership fromKey(String key) => _byKey(values, key, (e) => e.key);
+}
+
+/// Set by hand on an asset: it cannot be rented while either is set.
+enum AssetManualState implements Keyed {
+  maintenance('maintenance'),
+  retired('retired');
+
+  const AssetManualState(this.key);
+  @override
+  final String key;
+  static AssetManualState fromKey(String key) =>
+      _byKey(values, key, (e) => e.key);
+}
+
+/// Condition of a rented-in piece when it arrived or went back to its owner.
+enum LoanCondition implements Keyed {
+  good('good'),
+  minor('minor'),
+  damaged('damaged'),
+  lost('lost');
+
+  const LoanCondition(this.key);
+  @override
+  final String key;
+  static LoanCondition fromKey(String key) => _byKey(values, key, (e) => e.key);
+}
+
+/// How the items going out were photographed.
+enum CaptureMethod implements Keyed {
+  phone('phone'),
+  macro('macro');
+
+  const CaptureMethod(this.key);
+  @override
+  final String key;
+  static CaptureMethod fromKey(String key) => _byKey(values, key, (e) => e.key);
+}
+
+/// Which document a saved signature signs.
+enum SignatureTarget implements Keyed {
+  rentalContract('rental_contract'),
+  pickupReturnReceipt('pickup_return_receipt'),
+  loanContract('loan_contract');
+
+  const SignatureTarget(this.key);
+  @override
+  final String key;
+  static SignatureTarget fromKey(String key) =>
+      _byKey(values, key, (e) => e.key);
+}
+
 T _byKey<T>(List<T> values, String key, String Function(T) keyOf) {
   for (final v in values) {
     if (keyOf(v) == key) return v;

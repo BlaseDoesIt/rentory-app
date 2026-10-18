@@ -52,14 +52,33 @@ class RentoryDatabase extends _$RentoryDatabase {
   RentoryDatabase.memory(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    // The server holds the data; this database is only its cache. On a
-    // schema change, start clean and pull everything again. Version 2
-    // dropped parts.
     onUpgrade: (m, from, to) async {
+      // Version 3 only added columns: add them in place, so edits not yet
+      // pushed survive the upgrade.
+      if (from >= 2) {
+        for (final table in allTables) {
+          final have = {
+            for (final r in await customSelect(
+              'PRAGMA table_info("${table.actualTableName}")',
+            ).get())
+              r.read<String>('name'),
+          };
+          if (have.isEmpty) {
+            await m.createTable(table);
+            continue;
+          }
+          for (final c in table.$columns) {
+            if (!have.contains(c.name)) await m.addColumn(table, c);
+          }
+        }
+        return;
+      }
+      // Before version 2 (parts): this database is only the server's cache,
+      // so start clean and pull everything again.
       final tables = await customSelect(
         "SELECT name FROM sqlite_master WHERE type = 'table' "
         "AND name NOT LIKE 'sqlite_%'",

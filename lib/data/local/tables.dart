@@ -57,12 +57,21 @@ class Customers extends Table with SyncColumns {
 class DocumentTypes extends Table with SyncColumns {
   TextColumn get name => text()();
   IntColumn get sequence => integer().withDefault(const Constant(10))();
+
+  /// What the counter should know about taking this one.
+  TextColumn get note => text().nullable()();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
 }
 
 class CustomerDiscounts extends Table with SyncColumns {
   TextColumn get name => text()();
+
+  /// When two rules match, the lowest wins.
+  IntColumn get sequence => integer().withDefault(const Constant(10))();
   TextColumn get customerId => text().nullable().references(Customers, #id)();
+
+  /// Fallback match for orders typed in without a customer record.
+  TextColumn get customerName => text().nullable()();
   TextColumn get discountType => text()
       .map(const KeyConverter(DiscountType.values))
       .withDefault(const Constant('percent'))();
@@ -107,6 +116,39 @@ class Assets extends Table with SyncColumns {
   TextColumn get imagePath => text().nullable()();
   TextColumn get notes => text().nullable()();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
+
+  /// Maintenance or retired, set by hand. Either keeps it off bookings.
+  TextColumn get stateManual =>
+      text().map(const KeyConverter(AssetManualState.values)).nullable()();
+
+  // Acquisition.
+  /// Who it came from (a contact).
+  TextColumn get sourceId => text().nullable().references(Customers, #id)();
+  TextColumn get evaluationUrl => text().nullable()();
+  DateTimeColumn get acquisitionDate => dateTime().nullable()();
+
+  /// What one of these cost.
+  RealColumn get unitCost => real().withDefault(const Constant(0))();
+
+  // Rented in: held on loan from a supplier.
+  TextColumn get ownership => text()
+      .map(const KeyConverter(Ownership.values))
+      .withDefault(const Constant('owned'))();
+  TextColumn get supplierName => text().nullable()();
+  TextColumn get supplierPhone => text().nullable()();
+  TextColumn get supplierReference => text().nullable()();
+  DateTimeColumn get rentedInDateStart => dateTime().nullable()();
+  DateTimeColumn get rentedInDateEnd => dateTime().nullable()();
+  RealColumn get rentedInCostDay => real().withDefault(const Constant(0))();
+  RealColumn get rentedInDeposit => real().withDefault(const Constant(0))();
+  DateTimeColumn get rentedInReturnedAt => dateTime().nullable()();
+  TextColumn get rentedInReturnedBy => text().nullable()();
+  TextColumn get rentedInConditionIn => text()
+      .map(const KeyConverter(LoanCondition.values))
+      .withDefault(const Constant('good'))();
+  TextColumn get rentedInConditionOut =>
+      text().map(const KeyConverter(LoanCondition.values)).nullable()();
+  TextColumn get rentedInNote => text().nullable()();
 }
 
 class Serials extends Table with SyncColumns {
@@ -122,6 +164,12 @@ class Serials extends Table with SyncColumns {
   RealColumn get declaredValue => real().withDefault(const Constant(0))();
   TextColumn get note => text().nullable()();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
+
+  // This unit's own acquisition: two bodies bought years apart differ.
+  TextColumn get sourceId => text().nullable().references(Customers, #id)();
+  TextColumn get evaluationUrl => text().nullable()();
+  DateTimeColumn get acquisitionDate => dateTime().nullable()();
+  RealColumn get unitCost => real().withDefault(const Constant(0))();
 }
 
 // ---------------------------------------------------------------- orders
@@ -174,6 +222,19 @@ class Orders extends Table with SyncColumns {
 
   TextColumn get userId => text().nullable()();
   TextColumn get note => text().nullable()();
+
+  /// Lines may run outside the order's own dates.
+  BoolColumn get allowLineDatesOutside =>
+      boolean().withDefault(const Constant(false))();
+
+  /// Which document the saved signature signs.
+  TextColumn get signatureTarget =>
+      text().map(const KeyConverter(SignatureTarget.values)).nullable()();
+
+  // How the items going out were captured.
+  TextColumn get captureMethod =>
+      text().map(const KeyConverter(CaptureMethod.values)).nullable()();
+  TextColumn get photosUrl => text().nullable()();
 }
 
 /// Documents the customer left with us for this order.
@@ -224,6 +285,10 @@ class ReturnChecks extends Table with SyncColumns {
   TextColumn get lineId => text().references(OrderLines, #id)();
   TextColumn get orderId => text().references(Orders, #id)();
   TextColumn get serialId => text().nullable().references(Serials, #id)();
+
+  /// The serial number at check-in, so the receipt still reads right if the
+  /// unit is renamed or archived later.
+  TextColumn get serialName => text().nullable()();
   TextColumn get condition => text()
       .map(const KeyConverter(Condition.values))
       .withDefault(const Constant('good'))();
@@ -243,6 +308,9 @@ class Photos extends Table with SyncColumns {
 
   /// File on this device, until it is uploaded (or for offline viewing).
   TextColumn get localPath => text().nullable()();
+
+  /// Order in a gallery: the first is the one people see.
+  IntColumn get sequence => integer().withDefault(const Constant(10))();
   DateTimeColumn get takenAt =>
       dateTime().clientDefault(() => DateTime.now().toUtc())();
   TextColumn get note => text().nullable()();
