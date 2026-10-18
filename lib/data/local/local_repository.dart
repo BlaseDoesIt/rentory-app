@@ -928,9 +928,10 @@ class LocalRepository implements RentoryRepository {
     asset: a,
     categoryName: categories[a.categoryId],
     total: a.tracking == Tracking.serial
-        ? (await _serialFacts(
-            a.id,
-          )).where((s) => s.fitToPromise).length.toDouble()
+        ? (await _serialFacts(a.id))
+              .where((s) => s.fitToPromise)
+              .length
+              .toDouble()
         : a.qtyManual,
     out: out[a.id] ?? 0,
   );
@@ -973,9 +974,11 @@ class LocalRepository implements RentoryRepository {
   Future<String> createCategory(String name) async {
     final clean = name.trim();
     if (clean.isEmpty) throw RuleException.one('The category needs a name.');
-    final same = await (db.select(db.categories)
-          ..where((c) => _alive(c) & c.name.lower().equals(clean.toLowerCase())))
-        .getSingleOrNull();
+    final same =
+        await (db.select(db.categories)..where(
+              (c) => _alive(c) & c.name.lower().equals(clean.toLowerCase()),
+            ))
+            .getSingleOrNull();
     if (same != null) return same.id;
     final row = await db
         .into(db.categories)
