@@ -10,7 +10,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appName => 'رنتوري';
+  String get appName => 'Rentory';
 
   @override
   String get orders => 'الطلبات';
@@ -553,14 +553,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notConfigured =>
-      'تم بناء هذه النسخة من رنتوري بدون عنوان الخادم، لذا لا يمكن تشغيلها. اطلب نسخة جديدة.';
+      'تم بناء هذه النسخة من Rentory بدون عنوان الخادم، لذا لا يمكن تشغيلها. اطلب نسخة جديدة.';
 
   @override
   String get noConnection => 'لا يوجد اتصال';
 
   @override
   String get noConnectionHint =>
-      'يحتاج رنتوري إلى الإنترنت ليعمل. سيتابع فور عودة الاتصال.';
+      'يحتاج Rentory إلى الإنترنت ليعمل. سيتابع فور عودة الاتصال.';
 
   @override
   String get serverProblem => 'تعذر تحميل بيانات فريقك';
