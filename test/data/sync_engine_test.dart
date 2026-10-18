@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -99,6 +101,31 @@ class FakeServer implements RemoteStore {
 
   @override
   Future<void> uploadPhoto(String path, Uint8List bytes) async {}
+}
+
+/// A server that can lose its connection.
+class FlakyServer extends FakeServer {
+  bool down = false;
+
+  void _check() {
+    if (down) throw const SocketException('Network is unreachable');
+  }
+
+  @override
+  Future<void> upsert(String table, List<Map<String, Object?>> rows) async {
+    _check();
+    await super.upsert(table, rows);
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> changesSince(
+    String table,
+    int afterSeq, {
+    int limit = 500,
+  }) async {
+    _check();
+    return super.changesSince(table, afterSeq, limit: limit);
+  }
 }
 
 class Device {
@@ -252,5 +279,52 @@ void main() {
         .customSelect('SELECT COUNT(*) AS n FROM serials WHERE dirty = 1')
         .getSingle();
     expect(dirty.data['n'], 0);
+  });
+
+  test('an edit is pushed without waiting for the timer', () async {
+    final server = FakeServer();
+    final db = RentoryDatabase.memory(NativeDatabase.memory());
+    final sync = SyncEngine(db, server, interval: const Duration(hours: 1));
+    final repo = LocalRepository(db, gateway: SupabaseBookingGateway(sync));
+    sync.start();
+    await sync.syncNow();
+    final o = await repo.createOrder(
+      customerName: 'Right away',
+      start: DateTime.utc(2026, 11, 1),
+      end: DateTime.utc(2026, 11, 2),
+    );
+    await Future<void>.delayed(const Duration(seconds: 1));
+    await sync.syncNow();
+    expect(server.t('orders')[o]?['customer_name'], 'Right away');
+    await sync.dispose();
+    await db.close();
+  });
+
+  test('losing the connection is told apart from a server error', () async {
+    expect(SyncEngine.isConnectionProblem(const SocketException('x')), isTrue);
+    expect(
+      SyncEngine.isConnectionProblem(
+        Exception('ClientException with SocketException: Failed host lookup'),
+      ),
+      isTrue,
+    );
+    expect(
+      SyncEngine.isConnectionProblem(Exception('permission denied')),
+      isFalse,
+    );
+
+    final server = FlakyServer()..down = true;
+    final db = RentoryDatabase.memory(NativeDatabase.memory());
+    final sync = SyncEngine(db, server);
+    await sync.syncNow();
+    expect(sync.unreachable, isTrue);
+    expect(sync.lastStatus.phase, SyncPhase.offline);
+
+    server.down = false;
+    await sync.syncNow();
+    expect(sync.unreachable, isFalse);
+    expect(sync.lastStatus.phase, SyncPhase.idle);
+    await sync.dispose();
+    await db.close();
   });
 }

@@ -914,23 +914,11 @@ abstract class AppLocalizations {
   /// **'available'**
   String get available;
 
-  /// No description provided for @deviceOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'This device only'**
-  String get deviceOnly;
-
   /// No description provided for @sharedWithTeam.
   ///
   /// In en, this message translates to:
   /// **'Shared with team'**
   String get sharedWithTeam;
-
-  /// No description provided for @noServer.
-  ///
-  /// In en, this message translates to:
-  /// **'No server configured. Data stays on this device.'**
-  String get noServer;
 
   /// No description provided for @signedInAs.
   ///
@@ -1057,6 +1045,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not reach the server. {error}'**
   String serverUnreachable(String error);
+
+  /// No description provided for @notConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy of Rentory was built without the server address, so it can\'t run. Ask for a new build.'**
+  String get notConfigured;
+
+  /// No description provided for @noConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection'**
+  String get noConnection;
+
+  /// No description provided for @noConnectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rentory needs the internet to work. It will continue as soon as the connection is back.'**
+  String get noConnectionHint;
+
+  /// No description provided for @serverProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t load your team\'s data'**
+  String get serverProblem;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connecting;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
 }
 
 class _AppLocalizationsDelegate

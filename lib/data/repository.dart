@@ -160,7 +160,7 @@ abstract interface class RentoryRepository {
 
   // ------------------------------------------------- pickup and return
 
-  /// What the signed-in user may do. Standalone (no sign-in) is admin.
+  /// What the signed-in user may do. No user at all (tests) counts as admin.
   Future<Role> currentRole();
 
   Future<List<DocumentType>> documentTypes();

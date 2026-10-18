@@ -45,10 +45,8 @@ class SettingsPage extends StatelessWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.cloud_outlined),
-          title: Text(sync == null ? l.deviceOnly : l.sharedWithTeam),
-          subtitle: Text(
-            sync == null ? l.noServer : l.signedInAs(services.userEmail ?? ''),
-          ),
+          title: Text(l.sharedWithTeam),
+          subtitle: Text(l.signedInAs(services.userEmail ?? '')),
         ),
         if (sync != null) _SyncTile(sync),
         ListTile(

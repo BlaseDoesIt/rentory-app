@@ -163,6 +163,7 @@ void main() {
         db: db,
         language: LanguageController(const Locale('en')),
         files: AppFiles(root: files.path),
+        backend: Backend(repo, null),
       ),
     );
     await settle(tester);
@@ -449,6 +450,7 @@ void main() {
         db: db,
         language: LanguageController(const Locale('ar')),
         files: AppFiles(root: files.path),
+        backend: Backend(repo, null),
       ),
     );
     await settle(tester);

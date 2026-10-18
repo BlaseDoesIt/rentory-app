@@ -6,23 +6,28 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/local/database.dart';
+import '../data/sync/sync_engine.dart';
 import '../features/assets/assets_page.dart';
 import '../features/auth/sign_in_page.dart';
 import '../features/orders/orders_page.dart';
 import '../features/scan/scan_page.dart';
 import '../features/settings/settings_page.dart';
+import 'connection_gate.dart';
 import 'format.dart';
 import 'language.dart';
 import 'services.dart';
 import 'theme.dart';
 
-class RentoryApp extends StatelessWidget {
+/// The whole app. Rentory works online only: it needs the server's address
+/// (build flags or env vars, see [AppConfig]) and a signed-in user.
+class RentoryApp extends StatefulWidget {
   const RentoryApp({
     super.key,
     required this.config,
     required this.db,
     this.language,
     this.files = const AppFiles(),
+    this.backend,
   });
 
   final AppConfig config;
@@ -32,16 +37,58 @@ class RentoryApp extends StatelessWidget {
   final LanguageController? language;
   final AppFiles files;
 
+  /// Skips sign-in and uses this backend as is (tests).
+  @visibleForTesting
+  final Backend? backend;
+
+  @override
+  State<RentoryApp> createState() => _RentoryAppState();
+}
+
+class _RentoryAppState extends State<RentoryApp> {
+  late final LanguageController _language =
+      widget.language ?? LanguageController();
+
+  /// The signed-in session's sync engine, watched by [ConnectionGate].
+  final _sync = ValueNotifier<SyncEngine?>(null);
+
+  @override
+  void initState() {
+    super.initState();
+    _sync.value = widget.backend?.sync;
+  }
+
+  @override
+  void dispose() {
+    _sync.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final language = this.language ?? LanguageController();
     return LanguageScope(
-      controller: language,
+      controller: _language,
       child: ValueListenableBuilder<Locale?>(
-        valueListenable: language,
+        valueListenable: _language,
         builder: (context, locale, _) => _app(locale),
       ),
     );
+  }
+
+  Widget _home() {
+    final backend = widget.backend;
+    if (backend != null) {
+      return Services(
+        db: widget.db,
+        backend: backend,
+        userEmail: null,
+        onSignOut: null,
+        files: widget.files,
+        child: const AppShell(),
+      );
+    }
+    if (!widget.config.hasServer) return const _NotConfigured();
+    return _SignedInRoot(db: widget.db, files: widget.files, sync: _sync);
   }
 
   Widget _app(Locale? locale) {
@@ -67,35 +114,51 @@ class RentoryApp extends StatelessWidget {
           orElse: () => supported.first,
         );
       },
+      // Above the navigator, so open orders are covered too.
       builder: (context, child) {
         Intl.defaultLocale = Localizations.localeOf(context).languageCode;
-        return child!;
+        return ConnectionGate(sync: _sync, child: child!);
       },
-      home: config.hasServer
-          ? _SharedRoot(db: db, files: files)
-          : Services(
-              db: db,
-              backend: Services.standalone(db),
-              userEmail: null,
-              onSignOut: null,
-              files: files,
-              child: const AppShell(),
-            ),
+      home: _home(),
     );
   }
 }
 
-/// Shared mode: sign in first, then sync for as long as the session lasts.
-class _SharedRoot extends StatefulWidget {
-  const _SharedRoot({required this.db, required this.files});
-  final RentoryDatabase db;
-  final AppFiles files;
+/// A build made without the server's address. Nothing works offline, so say
+/// so instead of opening an empty app.
+class _NotConfigured extends StatelessWidget {
+  const _NotConfigured();
 
   @override
-  State<_SharedRoot> createState() => _SharedRootState();
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(l.notConfigured, textAlign: TextAlign.center),
+        ),
+      ),
+    );
+  }
 }
 
-class _SharedRootState extends State<_SharedRoot> {
+/// Sign in first, then sync for as long as the session lasts.
+class _SignedInRoot extends StatefulWidget {
+  const _SignedInRoot({
+    required this.db,
+    required this.files,
+    required this.sync,
+  });
+  final RentoryDatabase db;
+  final AppFiles files;
+  final ValueNotifier<SyncEngine?> sync;
+
+  @override
+  State<_SignedInRoot> createState() => _SignedInRootState();
+}
+
+class _SignedInRootState extends State<_SignedInRoot> {
   final _client = Supabase.instance.client;
   late final StreamSubscription<AuthState> _auth;
   Backend? _backend;
@@ -111,6 +174,7 @@ class _SharedRootState extends State<_SharedRoot> {
   void _apply(Session? session) {
     if (session == null) {
       _backend?.sync?.stop();
+      widget.sync.value = null;
       if (mounted) {
         setState(() => _backend = null);
       } else {
@@ -119,8 +183,9 @@ class _SharedRootState extends State<_SharedRoot> {
       return;
     }
     if (_backend != null) return;
-    final backend = Services.shared(widget.db, _client);
+    final backend = Services.online(widget.db, _client);
     backend.sync!.start();
+    widget.sync.value = backend.sync;
     void set() {
       _backend = backend;
       _email = session.user.email;

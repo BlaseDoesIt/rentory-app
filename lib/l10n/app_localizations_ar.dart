@@ -476,13 +476,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get available => 'متاح';
 
   @override
-  String get deviceOnly => 'هذا الجهاز فقط';
-
-  @override
   String get sharedWithTeam => 'مشترك مع الفريق';
-
-  @override
-  String get noServer => 'لا يوجد خادم. تبقى البيانات على هذا الجهاز.';
 
   @override
   String signedInAs(String email) {
@@ -556,4 +550,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String serverUnreachable(String error) {
     return 'تعذر الوصول إلى الخادم. $error';
   }
+
+  @override
+  String get notConfigured =>
+      'تم بناء هذه النسخة من رنتوري بدون عنوان الخادم، لذا لا يمكن تشغيلها. اطلب نسخة جديدة.';
+
+  @override
+  String get noConnection => 'لا يوجد اتصال';
+
+  @override
+  String get noConnectionHint =>
+      'يحتاج رنتوري إلى الإنترنت ليعمل. سيتابع فور عودة الاتصال.';
+
+  @override
+  String get serverProblem => 'تعذر تحميل بيانات فريقك';
+
+  @override
+  String get connecting => 'جارٍ الاتصال…';
+
+  @override
+  String get tryAgain => 'حاول مجدداً';
 }

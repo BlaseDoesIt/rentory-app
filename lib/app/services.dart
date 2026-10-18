@@ -14,9 +14,9 @@ import '../data/sync/sync_engine.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Where the shared server is. Build flags win (phones get them at build
-/// time: `--dart-define-from-file`); on a PC the user env vars work too.
-/// Neither set means standalone on this device only.
+/// Where the server is. Build flags win (release builds get them at build
+/// time: `--dart-define-from-file`); on a development PC the user env vars
+/// work too. Without either the app can't run.
 class AppConfig {
   const AppConfig({this.supabaseUrl, this.supabaseKey});
 
@@ -63,7 +63,7 @@ class Services extends InheritedWidget {
   final Backend backend;
   RentoryRepository get repo => backend.repo;
 
-  /// Null in standalone mode.
+  /// Null only in tests.
   SyncEngine? get sync => backend.sync;
   final String? userEmail;
   final Future<void> Function()? onSignOut;
@@ -95,12 +95,9 @@ class Services extends InheritedWidget {
   bool updateShouldNotify(Services old) =>
       backend != old.backend || userEmail != old.userEmail;
 
-  /// Standalone: this device's database and its own order numbers.
-  static Backend standalone(RentoryDatabase db) =>
-      Backend(LocalRepository(db, gateway: LocalBookingGateway(db)), null);
-
-  /// Shared through Supabase: bookings refereed by the server.
-  static Backend shared(RentoryDatabase db, SupabaseClient client) {
+  /// Through Supabase: bookings refereed by the server. The local database
+  /// is only a cache of it.
+  static Backend online(RentoryDatabase db, SupabaseClient client) {
     final sync = SyncEngine(db, SupabaseRemoteStore(client));
     final repo = LocalRepository(
       db,

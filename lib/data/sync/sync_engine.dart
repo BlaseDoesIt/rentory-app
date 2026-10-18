@@ -23,7 +23,9 @@ class SyncStatus {
 /// * **Pull**: rows the server stamped after the last sequence number this
 ///   device saw. The newer `updated_at` wins; an unpushed local edit is never
 ///   overwritten by an older server copy.
-/// * **Photos**: files taken offline are uploaded when there is a connection.
+/// * **Photos**: files saved on the device are uploaded on the next pass.
+/// * **Right away**: the app is online only, so every local edit starts a
+///   pass within a moment instead of waiting for the timer.
 ///
 /// Works generically off the drift table metadata, so a new column needs no
 /// change here.
@@ -31,7 +33,7 @@ class SyncEngine {
   SyncEngine(
     this.db,
     this.remote, {
-    this.interval = const Duration(seconds: 15),
+    this.interval = const Duration(seconds: 10),
     this.pullOverlap = 50,
   });
 
@@ -55,16 +57,43 @@ class SyncEngine {
   SyncStatus get lastStatus => _last;
 
   Timer? _timer;
+  Timer? _soon;
+  StreamSubscription<Set<TableUpdate>>? _edits;
   Future<void>? _running;
+
+  /// An edit came in while a pass was running; run another after it.
+  bool _again = false;
+
+  /// The last finished pass could not reach the server. Stays true through
+  /// the retry, so the app stays covered until a pass gets through.
+  bool get unreachable => _unreachable;
+  bool _unreachable = false;
 
   void start() {
     _timer ??= Timer.periodic(interval, (_) => unawaited(syncNow()));
+    _edits ??= db.tableUpdates().listen((_) => _editMade());
     unawaited(syncNow());
   }
 
   void stop() {
     _timer?.cancel();
     _timer = null;
+    _soon?.cancel();
+    _edits?.cancel();
+    _edits = null;
+  }
+
+  /// Push a local edit soon. A burst of writes becomes one pass.
+  void _editMade() {
+    if (_running != null) {
+      _again = true;
+      return;
+    }
+    _soon?.cancel();
+    _soon = Timer(
+      const Duration(milliseconds: 400),
+      () => unawaited(syncNow()),
+    );
   }
 
   Future<void> dispose() async {
@@ -75,6 +104,10 @@ class SyncEngine {
   /// One full pass. Concurrent calls share the pass already running.
   Future<void> syncNow() => _running ??= _pass().whenComplete(() {
     _running = null;
+    if (_again && _edits != null) {
+      _again = false;
+      _editMade();
+    }
   });
 
   Future<void> _pass() async {
@@ -83,26 +116,42 @@ class SyncEngine {
       await push();
       await uploadPhotos();
       await pull();
+      _unreachable = false;
       _emit(SyncStatus(SyncPhase.idle, lastSynced: DateTime.now().toUtc()));
-    } on SocketException catch (e) {
-      _emit(
-        SyncStatus(
-          SyncPhase.offline,
-          lastSynced: _last.lastSynced,
-          message: e.message,
-        ),
-      );
     } on RuleException {
       rethrow;
     } catch (e) {
+      _unreachable = isConnectionProblem(e);
       _emit(
         SyncStatus(
-          SyncPhase.error,
+          _unreachable ? SyncPhase.offline : SyncPhase.error,
           lastSynced: _last.lastSynced,
           message: e.toString(),
         ),
       );
     }
+  }
+
+  /// The server could not be reached at all, as opposed to answering with
+  /// an error. Supabase wraps socket errors in its own exceptions, so the
+  /// text is checked too.
+  static bool isConnectionProblem(Object e) {
+    if (e is SocketException ||
+        e is TimeoutException ||
+        e is HandshakeException) {
+      return true;
+    }
+    final text = e.toString();
+    return const [
+      'SocketException',
+      'Failed host lookup',
+      'Connection closed',
+      'Connection refused',
+      'Connection reset',
+      'Network is unreachable',
+      'ClientException',
+      'AuthRetryableFetchException',
+    ].any(text.contains);
   }
 
   void _emit(SyncStatus s) {

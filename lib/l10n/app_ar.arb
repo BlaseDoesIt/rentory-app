@@ -136,9 +136,7 @@
   "noAssets": "لا توجد معدات.",
   "byUnit": "بالقطعة",
   "available": "متاح",
-  "deviceOnly": "هذا الجهاز فقط",
   "sharedWithTeam": "مشترك مع الفريق",
-  "noServer": "لا يوجد خادم. تبقى البيانات على هذا الجهاز.",
   "signedInAs": "مسجّل الدخول باسم {email}",
   "language": "اللغة",
   "languageDevice": "لغة الجهاز",
@@ -159,5 +157,11 @@
   "signIn": "تسجيل الدخول",
   "createAccount": "إنشاء حساب",
   "accountCreated": "تم إنشاء الحساب. افتح بريدك لتأكيده ثم سجّل الدخول.",
-  "serverUnreachable": "تعذر الوصول إلى الخادم. {error}"
+  "serverUnreachable": "تعذر الوصول إلى الخادم. {error}",
+  "notConfigured": "تم بناء هذه النسخة من رنتوري بدون عنوان الخادم، لذا لا يمكن تشغيلها. اطلب نسخة جديدة.",
+  "noConnection": "لا يوجد اتصال",
+  "noConnectionHint": "يحتاج رنتوري إلى الإنترنت ليعمل. سيتابع فور عودة الاتصال.",
+  "serverProblem": "تعذر تحميل بيانات فريقك",
+  "connecting": "جارٍ الاتصال…",
+  "tryAgain": "حاول مجدداً"
 }

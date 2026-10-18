@@ -1,7 +1,7 @@
 # Rentory
 
 Equipment rental management for PC (Windows, macOS) and mobile (Android, iOS),
-built with Flutter. Works on its own, or connected to Odoo.
+built with Flutter. Online only: it needs the internet and a team account.
 
 ## Backends
 
@@ -9,8 +9,12 @@ All screens talk to one repository layer. The backend behind it is swappable:
 
 | Mode | Source of truth | Status |
 |---|---|---|
-| Standalone | Supabase (shared by all devices), local SQLite cache for offline use | in progress |
-| Odoo | Odoo 19 over the JSON-2 API (`/json/2/<model>/<method>`), local cache + offline queue | later |
+| Supabase | Supabase, shared by the whole team. A local SQLite copy is only a cache | 1.0 |
+| Odoo | Odoo 19 over the JSON-2 API (`/json/2/<model>/<method>`) | later |
+
+Rentory never works offline. Until the first sync finishes, and whenever the
+server can't be reached, a "No connection" screen covers the app (open orders
+included). Every edit is pushed within a moment.
 
 The data model mirrors the Rentory Odoo module (`rentory.order`, `rentory.order.line`,
 `rentory.asset`, `rentory.asset.serial`, `rentory.return.check`, `rentory.asset.photo`,

@@ -222,9 +222,7 @@
   "noAssets": "No assets.",
   "byUnit": "by unit",
   "available": "available",
-  "deviceOnly": "This device only",
   "sharedWithTeam": "Shared with team",
-  "noServer": "No server configured. Data stays on this device.",
   "signedInAs": "Signed in as {email}",
   "@signedInAs": {
     "placeholders": {
@@ -273,5 +271,11 @@
         "type": "String"
       }
     }
-  }
+  },
+  "notConfigured": "This copy of Rentory was built without the server address, so it can't run. Ask for a new build.",
+  "noConnection": "No connection",
+  "noConnectionHint": "Rentory needs the internet to work. It will continue as soon as the connection is back.",
+  "serverProblem": "Can't load your team's data",
+  "connecting": "Connecting…",
+  "tryAgain": "Try again"
 }

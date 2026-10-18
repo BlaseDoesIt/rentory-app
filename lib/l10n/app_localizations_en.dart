@@ -467,13 +467,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get available => 'available';
 
   @override
-  String get deviceOnly => 'This device only';
-
-  @override
   String get sharedWithTeam => 'Shared with team';
-
-  @override
-  String get noServer => 'No server configured. Data stays on this device.';
 
   @override
   String signedInAs(String email) {
@@ -547,4 +541,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String serverUnreachable(String error) {
     return 'Could not reach the server. $error';
   }
+
+  @override
+  String get notConfigured =>
+      'This copy of Rentory was built without the server address, so it can\'t run. Ask for a new build.';
+
+  @override
+  String get noConnection => 'No connection';
+
+  @override
+  String get noConnectionHint =>
+      'Rentory needs the internet to work. It will continue as soon as the connection is back.';
+
+  @override
+  String get serverProblem => 'Can\'t load your team\'s data';
+
+  @override
+  String get connecting => 'Connecting…';
+
+  @override
+  String get tryAgain => 'Try again';
 }

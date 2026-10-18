@@ -75,40 +75,38 @@ class LocalRepository implements RentoryRepository {
   );
 
   @override
-  Stream<List<AssetSummary>> watchAssets({String? search}) => _watch(
-    {db.assets, db.serials, db.orderLines, db.categories},
-    () async {
-      final query = db.select(db.assets)
-        ..where((a) => _alive(a) & a.active.equals(true))
-        ..orderBy([(a) => OrderingTerm.asc(a.name)]);
-      final term = search?.trim();
-      if (term != null && term.isNotEmpty) {
-        final like = '%$term%';
-        query.where(
-          (a) => a.name.like(like) | a.code.like(like) | a.barcode.like(like),
-        );
-      }
-      final assets = await query.get();
-      final categories = {
-        for (final c in await db.select(db.categories).get()) c.id: c.name,
-      };
-      final out = await _qtyOutByAsset();
-      return [
-        for (final a in assets)
-          AssetSummary(
-            asset: a,
-            categoryName: categories[a.categoryId],
-            total: a.tracking == Tracking.serial
-                ? (await _serialFacts(a.id))
-                      .where((s) => s.fitToPromise)
-                      .length
-                      .toDouble()
-                : a.qtyManual,
-            out: out[a.id] ?? 0,
-          ),
-      ];
-    },
-  );
+  Stream<List<AssetSummary>> watchAssets({String? search}) =>
+      _watch({db.assets, db.serials, db.orderLines, db.categories}, () async {
+        final query = db.select(db.assets)
+          ..where((a) => _alive(a) & a.active.equals(true))
+          ..orderBy([(a) => OrderingTerm.asc(a.name)]);
+        final term = search?.trim();
+        if (term != null && term.isNotEmpty) {
+          final like = '%$term%';
+          query.where(
+            (a) => a.name.like(like) | a.code.like(like) | a.barcode.like(like),
+          );
+        }
+        final assets = await query.get();
+        final categories = {
+          for (final c in await db.select(db.categories).get()) c.id: c.name,
+        };
+        final out = await _qtyOutByAsset();
+        return [
+          for (final a in assets)
+            AssetSummary(
+              asset: a,
+              categoryName: categories[a.categoryId],
+              total: a.tracking == Tracking.serial
+                  ? (await _serialFacts(a.id))
+                        .where((s) => s.fitToPromise)
+                        .length
+                        .toDouble()
+                  : a.qtyManual,
+              out: out[a.id] ?? 0,
+            ),
+        ];
+      });
 
   @override
   Future<OrderDetail> loadOrder(String orderId) async =>
@@ -296,11 +294,7 @@ class LocalRepository implements RentoryRepository {
             .get();
     return [
       for (final s in serials)
-        SerialFacts(
-          id: s.id,
-          name: s.name,
-          state: s.state,
-        ),
+        SerialFacts(id: s.id, name: s.name, state: s.state),
     ];
   }
 
@@ -1161,8 +1155,8 @@ class LocalRepository implements RentoryRepository {
       q == q.roundToDouble() ? q.toInt().toString() : q.toStringAsFixed(2);
 }
 
-/// Order numbers from this device alone: `RO/<year>/0001`. Good for a single
-/// device; with several, the Supabase gateway takes over.
+/// Order numbers from this device alone: `RO/<year>/0001`. Tests only; the
+/// app always books through the server.
 class LocalBookingGateway implements BookingGateway {
   LocalBookingGateway(this.db);
   final RentoryDatabase db;
