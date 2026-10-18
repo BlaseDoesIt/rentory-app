@@ -300,4 +300,56 @@ void main() {
     await repo.book(t);
     expect(await repo.currentOrderFor(assetId: tripod), t);
   });
+
+  test('creating assets: by unit, by quantity, clashes refused', () async {
+    final cat = await repo.createCategory('Lenses');
+    expect(await repo.createCategory(' lenses '), cat);
+    final lens = await repo.createAsset(
+      name: 'Sigma 18-35',
+      code: 'LNS-001',
+      categoryId: cat,
+      tracking: Tracking.serial,
+      units: ['SIG-1', ' SIG-2 ', 'sig-1', ''],
+      priceDay: 25,
+    );
+    final d = await repo.loadAsset(lens);
+    expect(d.serials.map((s) => s.name), ['SIG-1', 'SIG-2']);
+    expect(d.summary.total, 2);
+    expect(d.summary.categoryName, 'Lenses');
+    expect(d.asset.barcode, 'LNS-001');
+    expect((await repo.findByCode('SIG-2')).asset?.id, lens);
+
+    await repo.addUnits(lens, ['SIG-3']);
+    expect((await repo.loadAsset(lens)).summary.total, 3);
+
+    final stands = await repo.createAsset(
+      name: 'C-stand',
+      tracking: Tracking.none,
+      quantity: 5,
+      priceDay: 4,
+    );
+    expect((await repo.loadAsset(stands)).summary.total, 5);
+    await expectLater(
+      repo.addUnits(stands, ['X']),
+      throwsA(isA<RuleException>()),
+    );
+
+    // Already scannable: an asset code, a unit name.
+    for (final bad in [
+      () => repo.createAsset(
+        name: 'Copy',
+        code: 'LNS-001',
+        tracking: Tracking.none,
+      ),
+      () => repo.createAsset(
+        name: 'Copy',
+        tracking: Tracking.serial,
+        units: ['FX6-001'],
+      ),
+      () => repo.createAsset(name: ' ', tracking: Tracking.none),
+      () => repo.createAsset(name: 'No units', tracking: Tracking.serial),
+    ]) {
+      await expectLater(bad(), throwsA(isA<RuleException>()));
+    }
+  });
 }

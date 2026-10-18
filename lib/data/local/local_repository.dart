@@ -92,20 +92,7 @@ class LocalRepository implements RentoryRepository {
           for (final c in await db.select(db.categories).get()) c.id: c.name,
         };
         final out = await _qtyOutByAsset();
-        return [
-          for (final a in assets)
-            AssetSummary(
-              asset: a,
-              categoryName: categories[a.categoryId],
-              total: a.tracking == Tracking.serial
-                  ? (await _serialFacts(a.id))
-                        .where((s) => s.fitToPromise)
-                        .length
-                        .toDouble()
-                  : a.qtyManual,
-              out: out[a.id] ?? 0,
-            ),
-        ];
+        return [for (final a in assets) await _summary(a, categories, out)];
       });
 
   @override
@@ -931,6 +918,192 @@ class LocalRepository implements RentoryRepository {
           ..limit(1);
     final row = await query.getSingleOrNull();
     return row?.readTable(db.orders).id;
+  }
+
+  Future<AssetSummary> _summary(
+    Asset a,
+    Map<String, String> categories,
+    Map<String, double> out,
+  ) async => AssetSummary(
+    asset: a,
+    categoryName: categories[a.categoryId],
+    total: a.tracking == Tracking.serial
+        ? (await _serialFacts(
+            a.id,
+          )).where((s) => s.fitToPromise).length.toDouble()
+        : a.qtyManual,
+    out: out[a.id] ?? 0,
+  );
+
+  // ============================================================ inventory
+
+  @override
+  Future<AssetDetail> loadAsset(String assetId) async {
+    final a = await (db.select(
+      db.assets,
+    )..where((x) => x.id.equals(assetId))).getSingle();
+    final categories = {
+      for (final c in await db.select(db.categories).get()) c.id: c.name,
+    };
+    final serials =
+        await (db.select(db.serials)
+              ..where((s) => s.assetId.equals(assetId) & _alive(s))
+              ..orderBy([(s) => OrderingTerm.asc(s.name)]))
+            .get();
+    final location = a.locationId == null
+        ? null
+        : await (db.select(
+            db.locations,
+          )..where((l) => l.id.equals(a.locationId!))).getSingleOrNull();
+    return AssetDetail(
+      summary: await _summary(a, categories, await _qtyOutByAsset()),
+      serials: serials,
+      locationName: location?.name,
+    );
+  }
+
+  @override
+  Future<List<Category>> categories() =>
+      (db.select(db.categories)
+            ..where((c) => _alive(c) & c.active.equals(true))
+            ..orderBy([(c) => OrderingTerm.asc(c.name)]))
+          .get();
+
+  @override
+  Future<String> createCategory(String name) async {
+    final clean = name.trim();
+    if (clean.isEmpty) throw RuleException.one('The category needs a name.');
+    final same = await (db.select(db.categories)
+          ..where((c) => _alive(c) & c.name.lower().equals(clean.toLowerCase())))
+        .getSingleOrNull();
+    if (same != null) return same.id;
+    final row = await db
+        .into(db.categories)
+        .insertReturning(
+          CategoriesCompanion.insert(name: clean, updatedAt: _ts),
+        );
+    return row.id;
+  }
+
+  @override
+  Future<List<Location>> locations() =>
+      (db.select(db.locations)
+            ..where((l) => _alive(l) & l.active.equals(true))
+            ..orderBy([(l) => OrderingTerm.asc(l.name)]))
+          .get();
+
+  /// Codes already taken by something a scanner could find.
+  Future<List<String>> _codeClashes(Iterable<String> codes) async {
+    final clashes = <String>[];
+    for (final c in codes) {
+      final hit = await findByCode(c);
+      if (hit.asset != null || hit.serial != null) clashes.add(c);
+    }
+    return clashes;
+  }
+
+  static List<String> _cleanNames(Iterable<String> names) {
+    final seen = <String>{};
+    return [
+      for (final n in names.map((n) => n.trim()))
+        if (n.isNotEmpty && seen.add(n.toLowerCase())) n,
+    ];
+  }
+
+  @override
+  Future<String> createAsset({
+    required String name,
+    String? code,
+    String? barcode,
+    String? categoryId,
+    String? locationId,
+    required Tracking tracking,
+    double quantity = 1,
+    List<String> units = const [],
+    double priceDay = 0,
+    double declaredValue = 0,
+    String? notes,
+  }) async {
+    String? opt(String? s) => s == null || s.trim().isEmpty ? null : s.trim();
+    final clean = name.trim();
+    final c = opt(code);
+    final b = opt(barcode);
+    final unitNames = _cleanNames(units);
+    final problems = <String>[
+      if (clean.isEmpty) 'The asset needs a name.',
+      if (priceDay < 0) 'The price cannot be negative.',
+      if (declaredValue < 0) 'The value cannot be negative.',
+      if (tracking == Tracking.none && quantity <= 0)
+        'Quantity must be more than zero.',
+      if (tracking == Tracking.serial && unitNames.isEmpty)
+        'Add at least one unit.',
+    ];
+    if (problems.isNotEmpty) throw RuleException(problems);
+    final clashes = await _codeClashes({?c, ?b, ...unitNames});
+    if (clashes.isNotEmpty) {
+      throw RuleException([
+        for (final x in clashes) '$x is already used by another asset or unit.',
+      ]);
+    }
+    return db.transaction(() async {
+      final row = await db
+          .into(db.assets)
+          .insertReturning(
+            AssetsCompanion.insert(
+              name: clean,
+              code: Value(c),
+              barcode: Value(b ?? c),
+              categoryId: Value(categoryId),
+              locationId: Value(locationId),
+              tracking: Value(tracking),
+              qtyManual: Value(tracking == Tracking.serial ? 0 : quantity),
+              rentalPriceDay: Value(priceDay),
+              declaredValue: Value(declaredValue),
+              notes: Value(opt(notes)),
+              updatedAt: _ts,
+            ),
+          );
+      if (tracking == Tracking.serial) {
+        await _insertUnits(row, unitNames);
+      }
+      return row.id;
+    });
+  }
+
+  @override
+  Future<void> addUnits(String assetId, List<String> names) async {
+    final a = await (db.select(
+      db.assets,
+    )..where((x) => x.id.equals(assetId))).getSingle();
+    if (a.tracking != Tracking.serial) {
+      throw RuleException.one('${a.name} is counted by quantity, not by unit.');
+    }
+    final unitNames = _cleanNames(names);
+    if (unitNames.isEmpty) throw RuleException.one('Add at least one unit.');
+    final clashes = await _codeClashes(unitNames);
+    if (clashes.isNotEmpty) {
+      throw RuleException([
+        for (final x in clashes) '$x is already used by another asset or unit.',
+      ]);
+    }
+    await db.transaction(() => _insertUnits(a, unitNames));
+  }
+
+  Future<void> _insertUnits(Asset a, List<String> names) async {
+    for (final n in names) {
+      await db
+          .into(db.serials)
+          .insert(
+            SerialsCompanion.insert(
+              assetId: a.id,
+              name: n,
+              barcode: Value(n),
+              locationId: Value(a.locationId),
+              declaredValue: Value(a.declaredValue),
+              updatedAt: _ts,
+            ),
+          );
+    }
   }
 
   // ============================================================ editor

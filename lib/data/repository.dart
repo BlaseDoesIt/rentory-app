@@ -87,6 +87,22 @@ class AssetSummary {
   double get available => total - out < 0 ? 0 : total - out;
 }
 
+/// One asset with everything its page shows.
+class AssetDetail {
+  const AssetDetail({
+    required this.summary,
+    required this.serials,
+    required this.locationName,
+  });
+
+  final AssetSummary summary;
+
+  /// Its units, by name. Empty for stock counted by quantity.
+  final List<Serial> serials;
+  final String? locationName;
+  Asset get asset => summary.asset;
+}
+
 /// Per-unit outcome of a return: condition and an optional note.
 typedef UnitReturn = ({Condition condition, String? note});
 
@@ -157,6 +173,34 @@ abstract interface class RentoryRepository {
     double? priceDay,
     double? discount,
   });
+
+  // ------------------------------------------------- inventory
+
+  Future<AssetDetail> loadAsset(String assetId);
+  Future<List<Category>> categories();
+  Future<String> createCategory(String name);
+  Future<List<Location>> locations();
+
+  /// A new asset. [tracking] serial gives it one unit per name in [units]
+  /// (each name is also its barcode); otherwise [quantity] is the stock.
+  /// Codes, barcodes and unit names must not clash with anything already
+  /// scannable.
+  Future<String> createAsset({
+    required String name,
+    String? code,
+    String? barcode,
+    String? categoryId,
+    String? locationId,
+    required Tracking tracking,
+    double quantity = 1,
+    List<String> units = const [],
+    double priceDay = 0,
+    double declaredValue = 0,
+    String? notes,
+  });
+
+  /// More units for a serial asset.
+  Future<void> addUnits(String assetId, List<String> names);
 
   // ------------------------------------------------- pickup and return
 
