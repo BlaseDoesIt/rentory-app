@@ -421,37 +421,21 @@ class LabeledValue extends StatelessWidget {
   }
 }
 
-/// The Rentory logo (a box with a key), drawn straight on the page: black
-/// lines in light mode, inverted to white lines in dark mode.
+/// The Rentory logo (a box with a key), drawn straight on the page and
+/// the same in light and dark mode.
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key, this.size = 36});
   final double size;
 
-  /// Swaps black and white, keeps transparency.
-  static const _invert = ColorFilter.matrix([
-    -1, 0, 0, 0, 255, //
-    0, -1, 0, 0, 255, //
-    0, 0, -1, 0, 255, //
-    0, 0, 0, 1, 0, //
-  ]);
-
   @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final logo = Image.asset(
-      'assets/logo.png',
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.medium,
-      semanticLabel: 'Rentory',
-    );
-    return SizedBox(
-      width: size,
-      height: size,
-      child: dark ? ColorFiltered(colorFilter: _invert, child: logo) : logo,
-    );
-  }
+  Widget build(BuildContext context) => Image.asset(
+    'assets/logo.png',
+    width: size,
+    height: size,
+    fit: BoxFit.contain,
+    filterQuality: FilterQuality.medium,
+    semanticLabel: 'Rentory',
+  );
 }
 
 class BottomActionBar extends StatelessWidget {
