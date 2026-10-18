@@ -30,15 +30,23 @@ lib/
 
 ## Screens
 
-Orders (new order, draft editing with asset/service/section lines, unit
-picker with Autofill), pickup (checklist, documents left, signature, condition
-photos; admins may hand over without the contract), return (condition and note
-per unit, documents handed back) and Scan (camera on phones, USB scanner or
-keyboard on PC). Screens only call `RentoryRepository`.
+Orders (new order, asset/service/section lines that can be dragged into
+order, units picked while adding a line or with Autofill, search by customer,
+number, item, internal note or date), pickup (checklist, documents left,
+signature; admins may hand over without the contract), return (condition and
+note per unit, documents handed back) and Scan (camera on phones, USB scanner
+or keyboard on PC). Screens only call `RentoryRepository`.
 
-Photos and signatures are saved under the app documents folder
-(`rentory_photos/`) and recorded in `photos` with a `localPath`; the sync
-engine uploads them.
+Lines live on their own: each one is booked, picked up and returned by itself
+from its menu, lines can be added to an order already under way, and a booked
+line that changes is booked again through the server (`book_lines`). Orders
+and assets with history are archived instead of deleted.
+
+Asset photos, return photos and signatures are saved under the app documents
+folder (`rentory_photos/`) and recorded in `photos` with a `localPath`; the
+sync engine uploads them. Order photos (phones only) are different: they go to
+the phone's gallery (album "Rentory") and the local `order_photos` table,
+never to the server.
 
 ## Languages
 
