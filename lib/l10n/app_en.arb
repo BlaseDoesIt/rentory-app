@@ -273,6 +273,7 @@
     }
   },
   "notConfigured": "This copy of Rentory was built without the server address, so it can't run. Ask for a new build.",
+  "startupFailed": "Rentory couldn't start. Close it and open it again. If this keeps happening, send this message:",
   "noConnection": "No connection",
   "noConnectionHint": "Rentory needs the internet to work. It will continue as soon as the connection is back.",
   "serverProblem": "Can't load your team's data",

@@ -547,6 +547,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This copy of Rentory was built without the server address, so it can\'t run. Ask for a new build.';
 
   @override
+  String get startupFailed =>
+      'Rentory couldn\'t start. Close it and open it again. If this keeps happening, send this message:';
+
+  @override
   String get noConnection => 'No connection';
 
   @override

@@ -1052,6 +1052,12 @@ abstract class AppLocalizations {
   /// **'This copy of Rentory was built without the server address, so it can\'t run. Ask for a new build.'**
   String get notConfigured;
 
+  /// No description provided for @startupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Rentory couldn\'t start. Close it and open it again. If this keeps happening, send this message:'**
+  String get startupFailed;
+
   /// No description provided for @noConnection.
   ///
   /// In en, this message translates to:

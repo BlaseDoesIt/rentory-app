@@ -31,6 +31,7 @@ class RentoryApp extends StatefulWidget {
     this.appearance,
     this.files = const AppFiles(),
     this.backend,
+    this.startupError,
   });
 
   final AppConfig config;
@@ -46,6 +47,9 @@ class RentoryApp extends StatefulWidget {
   /// Skips sign-in and uses this backend as is (tests).
   @visibleForTesting
   final Backend? backend;
+
+  /// Why the server connection couldn't be set up at launch, if it failed.
+  final String? startupError;
 
   @override
   State<RentoryApp> createState() => _RentoryAppState();
@@ -99,6 +103,8 @@ class _RentoryAppState extends State<RentoryApp> {
       );
     }
     if (!widget.config.hasServer) return const _NotConfigured();
+    final error = widget.startupError;
+    if (error != null) return _StartupFailed(error);
     return _SignedInRoot(db: widget.db, files: widget.files, sync: _sync);
   }
 
@@ -152,6 +158,37 @@ class _NotConfigured extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(l.notConfigured, textAlign: TextAlign.center),
+        ),
+      ),
+    );
+  }
+}
+
+/// The server connection couldn't be set up. Shows the reason so it can be
+/// reported.
+class _StartupFailed extends StatelessWidget {
+  const _StartupFailed(this.error);
+  final String error;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l.startupFailed, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              SelectableText(
+                error,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
         ),
       ),
     );

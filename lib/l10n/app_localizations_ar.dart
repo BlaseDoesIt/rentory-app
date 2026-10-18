@@ -556,6 +556,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'تم بناء هذه النسخة من Rentory بدون عنوان الخادم، لذا لا يمكن تشغيلها. اطلب نسخة جديدة.';
 
   @override
+  String get startupFailed =>
+      'تعذّر تشغيل Rentory. أغلقه وافتحه مجددًا. إذا تكرر ذلك، أرسل هذه الرسالة:';
+
+  @override
   String get noConnection => 'لا يوجد اتصال';
 
   @override
