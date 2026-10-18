@@ -53,6 +53,10 @@ android {
             // debug key, which phones with the real release cannot update from.
             signingConfig = signingConfigs.findByName("release")
                 ?: signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }
