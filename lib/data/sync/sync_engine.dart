@@ -64,6 +64,10 @@ class SyncEngine {
   /// An edit came in while a pass was running; run another after it.
   bool _again = false;
 
+  /// Offered on the "server problem" cover when set: a revoked key would
+  /// otherwise leave no way out of it.
+  Future<void> Function()? signOut;
+
   /// The last finished pass could not reach the server. Stays true through
   /// the retry, so the app stays covered until a pass gets through.
   bool get unreachable => _unreachable;

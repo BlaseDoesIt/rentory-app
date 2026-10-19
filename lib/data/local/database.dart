@@ -49,6 +49,14 @@ class RentoryDatabase extends _$RentoryDatabase {
   RentoryDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'rentory'));
 
+  /// The cache of one Odoo database, kept apart from the Supabase one and
+  /// from every other Odoo database, so switching never mixes them.
+  RentoryDatabase.odoo(String database)
+    : super(driftDatabase(name: odooFileName(database)));
+
+  static String odooFileName(String database) =>
+      'rentory_odoo_${database.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')}';
+
   /// In-memory database for tests.
   RentoryDatabase.memory(super.executor);
 
