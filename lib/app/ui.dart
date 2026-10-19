@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/activity.dart';
 import '../data/repository.dart';
 import 'format.dart';
 import 'widgets.dart';
@@ -11,7 +12,8 @@ Future<bool> attempt(
   Future<void> Function() action,
 ) async {
   try {
-    await action();
+    // The app shows a turning circle while this runs.
+    await Activity.track(action);
     return true;
   } on RuleException catch (e) {
     if (context.mounted) await showProblems(context, e.problems);

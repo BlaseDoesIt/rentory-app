@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 
 import '../../domain/enums.dart';
 import '../../domain/rules/availability.dart' as availability;
+import '../activity.dart';
 import '../billing.dart';
 import '../local/database.dart';
 import '../local/local_repository.dart';
@@ -971,8 +972,17 @@ class OdooRepository extends LocalRepository {
       )..where((s) => s.id.equals(serialId))).getSingle()).assetId;
     }
     if (asset == null) throw RuleException.one('A photo needs an asset.');
+    // An asset with no picture of its own gets this one: it is what Odoo
+    // shows on the asset, in Rentory's lists and on its form. Later photos,
+    // and photos of one unit, go to the gallery.
+    final assetOdoo = await _oid('assets', asset);
+    if (serialId == null && !await _hasOwnPicture(asset)) {
+      await _write('rentory.asset', [assetOdoo], {'image_1920': data});
+      await engine.refetchAsset(assetOdoo);
+      return (await assetPhotos(asset)).first.id;
+    }
     final id = await _create('rentory.asset.photo', {
-      'asset_id': await _oid('assets', asset),
+      'asset_id': assetOdoo,
       'serial_id': await _ref('serials', serialId),
       'name': note ?? 'Photo',
       'image_1920': data,
@@ -986,21 +996,29 @@ class OdooRepository extends LocalRepository {
     final photo = await (db.select(
       db.photos,
     )..where((p) => p.id.equals(photoId))).getSingle();
-    if (photo.odooId == null || photo.assetId == null) {
-      throw RuleException.one(
-        "This is the asset's own picture in Odoo; it is already shown first.",
-      );
-    }
-    final first = (await assetPhotos(photo.assetId!))
-        .where((p) => p.odooId != null)
-        .firstOrNull;
-    if (first == null || first.id == photoId) return;
-    await _write(
-      'rentory.asset.photo',
-      [photo.odooId!],
-      {'sequence': first.sequence - 1},
-    );
-    await engine.refetch('rentory.asset.photo', [photo.odooId!]);
+    final path = photo.storagePath;
+    if (photo.assetId == null || path == null) return;
+    // Already the asset's own picture.
+    if (path.startsWith(OdooRemoteStore.assetPrefix)) return;
+    // The cover is the picture Odoo shows on the asset.
+    final bytes = await engine.downloadPhoto(path);
+    final asset = await _oid('assets', photo.assetId!);
+    await _write('rentory.asset', [asset], {'image_1920': base64Encode(bytes)});
+    await engine.refetchAsset(asset);
+  }
+
+  Future<bool> _hasOwnPicture(String assetId) async {
+    final row = await db
+        .customSelect(
+          'SELECT count(*) AS n FROM photos '
+          'WHERE asset_id = ? AND deleted = 0 AND storage_path LIKE ?',
+          variables: [
+            Variable.withString(assetId),
+            Variable.withString('${OdooRemoteStore.assetPrefix}%'),
+          ],
+        )
+        .getSingle();
+    return row.read<int>('n') > 0;
   }
 
   @override
@@ -1056,7 +1074,7 @@ Future<T> odooCall<T>(
   OdooSyncEngine engine,
   Future<T> Function() call, {
   int? order,
-}) async {
+}) => Activity.track(() async {
   final T result;
   try {
     result = await call();
@@ -1066,7 +1084,7 @@ Future<T> odooCall<T>(
   await engine.syncAfterChange();
   if (order != null) await engine.refetchOrder(order);
   return result;
-}
+});
 
 /// Booking goes through Odoo's own `action_book`, in [OdooRepository.book].
 class OdooBookingGateway implements BookingGateway {
@@ -1090,13 +1108,13 @@ class OdooBilling implements BillingService {
   Future<int> _order(String orderId) => odooIdOf(engine.db, 'orders', orderId);
 
   /// Reads that fail on rights are shown, not thrown as crashes.
-  Future<T> _read<T>(Future<T> Function() read) async {
+  Future<T> _read<T>(Future<T> Function() read) => Activity.track(() async {
     try {
       return await read();
     } on OdooException catch (e) {
       throw RuleException.one(e.message);
     }
-  }
+  });
 
   @override
   Future<List<InvoiceInfo>> invoices(String orderId) async {
@@ -1292,9 +1310,9 @@ class OdooBilling implements BillingService {
     return [
       for (final r in rows)
         if ((r['report_name'] as String? ?? '').startsWith('rentory.'))
-          ReportInfo(
-            reportName: r['report_name'] as String,
-            title: r['name'] as String? ?? r['report_name'] as String,
+          ReportInfo.fromOdoo(
+            r['report_name'] as String,
+            r['name'] as String? ?? r['report_name'] as String,
           ),
     ];
   });
@@ -1306,6 +1324,10 @@ class OdooBilling implements BillingService {
   @override
   Future<Uint8List> reportPdf(String orderId, String reportName) async {
     final id = await _order(orderId);
+    return Activity.track(() => _pdf(id, reportName));
+  }
+
+  Future<Uint8List> _pdf(int id, String reportName) async {
     try {
       final data = await _client.call('rentory.order', reportMethod, {
         'ids': [id],

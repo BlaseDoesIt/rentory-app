@@ -542,7 +542,8 @@ List<OdooModelSpec> rentorySpecs() => [
       'sequence': OdooMapper.integer(r['sequence']),
       // The picture stays in Odoo; it is fetched when first shown.
       'storage_path': OdooRemoteStore.photoPath(OdooIds.odooId(r['id'])!),
-      'taken_at': OdooMapper.when(r['create_date']),
+      'taken_at':
+          OdooMapper.when(r['create_date']) ?? OdooMapper.when(r['write_date']),
       'note': OdooMapper.text(r['name']),
     },
   ),

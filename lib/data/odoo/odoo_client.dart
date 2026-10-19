@@ -50,6 +50,12 @@ class OdooException implements Exception {
   String toString() => message;
 }
 
+/// Odoo's sentences use long dashes ("still with the customer — check
+/// them back in"); the app reads them as commas.
+String plainDashes(String text) => text
+    .replaceAll(RegExp(r'\s+[—–]\s+'), ', ')
+    .replaceAll(RegExp('[—–]'), '-');
+
 /// Who the key belongs to.
 class OdooUser {
   const OdooUser({required this.id, required this.name, required this.login});
@@ -97,7 +103,7 @@ class OdooClient {
       final json = jsonDecode(body);
       if (json is Map && json['message'] is String) {
         return OdooException(
-          json['message'] as String,
+          plainDashes(json['message'] as String),
           status: status,
           name: json['name'] as String?,
         );

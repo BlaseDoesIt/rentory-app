@@ -67,11 +67,21 @@ class _PhotoImageState extends State<PhotoImage> {
       builder: (context, snap) {
         final file = snap.data;
         if (file == null) {
-          return placeholder(
-            snap.connectionState == ConnectionState.done
-                ? Icons.image_not_supported_outlined
-                : Icons.image_outlined,
-          );
+          if (snap.connectionState != ConnectionState.done) {
+            return Container(
+              width: widget.width,
+              height: widget.height,
+              decoration: BoxDecoration(gradient: Mono.soft(context)),
+              alignment: Alignment.center,
+              child: const SizedBox(
+                key: Key('photo-loading'),
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          }
+          return placeholder(Icons.image_not_supported_outlined);
         }
         return Image.file(
           file,

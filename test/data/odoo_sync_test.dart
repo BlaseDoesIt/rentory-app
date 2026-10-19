@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rentory/data/billing.dart';
 import 'package:rentory/data/local/database.dart';
 import 'package:rentory/data/odoo/odoo_client.dart';
 import 'package:rentory/data/odoo/odoo_repository.dart';
@@ -529,6 +532,40 @@ void main() {
       });
       expect((await repo.customers(search: 'New')).single.id, id);
     });
+  });
+
+  test(
+    'a photo of an asset without a picture becomes its Odoo picture',
+    () async {
+      await engine.pull();
+      final asset = ids.of('rentory.asset', 10);
+      final file = File('${Directory.systemTemp.path}/rentory_cover_test.jpg')
+        ..writeAsBytesSync([1, 2, 3]);
+      addTearDown(() => file.deleteSync());
+      await repo.addPhoto(localPath: file.path, assetId: asset);
+      expect(odoo.writes.last['vals'], {'image_1920': 'AQID'});
+      expect(odoo.records['rentory.asset']![10]!['image_1920'], 'AQID');
+      final photos = await repo.assetPhotos(asset);
+      expect(photos.first.storagePath, OdooRemoteStore.assetImagePath(10));
+
+      // It has one now: the next photo goes to the gallery.
+      await repo.addPhoto(localPath: file.path, assetId: asset);
+      final create = odoo.actions.lastWhere((a) => a.method == 'create');
+      expect(create.model, 'rentory.asset.photo');
+    },
+  );
+
+  test('report names lose their dash, Odoo messages too', () {
+    final r = ReportInfo.fromOdoo(
+      'rentory.report_price_review',
+      'عرض سعر — Price Review',
+    );
+    expect(r.title, 'عرض سعر');
+    expect(r.subtitle, 'Price Review');
+    expect(
+      plainDashes('These lines are still with the customer — check them'),
+      'These lines are still with the customer, check them',
+    );
   });
 
   test('an asset picture in Odoo becomes its cover', () async {

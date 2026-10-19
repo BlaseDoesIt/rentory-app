@@ -48,11 +48,30 @@ class JournalInfo {
 
 /// A document Odoo can print for an order.
 class ReportInfo {
-  const ReportInfo({required this.reportName, required this.title});
+  const ReportInfo({
+    required this.reportName,
+    required this.title,
+    this.subtitle,
+  });
+
+  /// Odoo names them "عرض سعر — Price Review": the Arabic name is the
+  /// title, the English one the subtitle, and the dash goes.
+  factory ReportInfo.fromOdoo(String reportName, String name) {
+    final parts = name
+        .split(RegExp(r'\s*[—–]\s*'))
+        .where((p) => p.trim().isNotEmpty)
+        .toList();
+    return ReportInfo(
+      reportName: reportName,
+      title: parts.isEmpty ? name : parts.first.trim(),
+      subtitle: parts.length > 1 ? parts.skip(1).join(' ').trim() : null,
+    );
+  }
 
   /// `rentory.report_invoice`, as Odoo names it.
   final String reportName;
   final String title;
+  final String? subtitle;
 }
 
 abstract interface class BillingService {

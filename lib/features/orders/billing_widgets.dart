@@ -450,6 +450,7 @@ Future<void> printOrder(
               key: Key('report-${r.reportName}'),
               leading: const Icon(Icons.picture_as_pdf_outlined),
               title: Text(r.title),
+              subtitle: r.subtitle == null ? null : Text(r.subtitle!),
               onTap: () => Navigator.pop(sheet, r),
             ),
         ],
@@ -457,35 +458,38 @@ Future<void> printOrder(
     ),
   );
   if (report == null || !context.mounted) return;
-  messenger.showSnackBar(SnackBar(content: Text(l.gettingDocument)));
+  final phone = Platform.isAndroid || Platform.isIOS;
+  File? file;
+  // Only the fetch from Odoo shows the turning circle; the share sheet and
+  // the PDF viewer are the user's own time.
   await attempt(context, () async {
     final bytes = await billing.reportPdf(detail.order.id, report.reportName);
-    final phone = Platform.isAndroid || Platform.isIOS;
     final dir = phone
         ? await getTemporaryDirectory()
         : (await getDownloadsDirectory() ??
               await getApplicationDocumentsDirectory());
-    final title = report.title.split('—').last.trim();
-    final name = '${detail.order.number ?? 'order'} - $title'.replaceAll(
-      RegExp(r'[\\/:*?"<>|]'),
+    final title = report.subtitle ?? report.title;
+    final name = '${detail.order.number ?? 'order'} $title'.replaceAll(
+      RegExp(r'[\/:*?"<>|]'),
       '-',
     );
-    final file = File(p.join(dir.path, '$name.pdf'));
-    await file.writeAsBytes(bytes, flush: true);
-    messenger.hideCurrentSnackBar();
-    if (phone) {
-      await SharePlus.instance.share(
-        ShareParams(files: [XFile(file.path, mimeType: 'application/pdf')]),
-      );
-      return;
-    }
-    messenger.showSnackBar(SnackBar(content: Text(l.savedTo(file.path))));
-    if (Platform.isWindows) {
-      await Process.start('explorer', [file.path]);
-    } else if (Platform.isMacOS) {
-      await Process.start('open', [file.path]);
-    } else if (Platform.isLinux) {
-      await Process.start('xdg-open', [file.path]);
-    }
+    file = File(p.join(dir.path, '$name.pdf'));
+    await file!.writeAsBytes(bytes, flush: true);
   });
+  final saved = file;
+  if (saved == null || !await saved.exists()) return;
+  if (phone) {
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(saved.path, mimeType: 'application/pdf')]),
+    );
+    return;
+  }
+  messenger.showSnackBar(SnackBar(content: Text(l.savedTo(saved.path))));
+  if (Platform.isWindows) {
+    await Process.start('explorer', [saved.path]);
+  } else if (Platform.isMacOS) {
+    await Process.start('open', [saved.path]);
+  } else if (Platform.isLinux) {
+    await Process.start('xdg-open', [saved.path]);
+  }
 }

@@ -18,6 +18,7 @@ import '../features/scan/scan_page.dart';
 import '../features/settings/settings_page.dart';
 import 'appearance.dart';
 import 'backend_choice.dart';
+import 'busy_overlay.dart';
 import 'connection_gate.dart';
 import 'format.dart';
 import 'language.dart';
@@ -165,7 +166,9 @@ class _RentoryAppState extends State<RentoryApp> {
       // Above the navigator, so open orders are covered too.
       builder: (context, child) {
         Intl.defaultLocale = Localizations.localeOf(context).languageCode;
-        return ConnectionGate(sync: _sync, child: child!);
+        return BusyOverlay(
+          child: ConnectionGate(sync: _sync, child: child!),
+        );
       },
       home: _home(),
     );
@@ -672,15 +675,20 @@ class _SyncDot extends StatelessWidget {
           message: syncing
               ? context.l10n.syncing
               : context.l10n.synced(when(s.lastSynced)),
-          child: AnimatedContainer(
-            duration: Mono.medium,
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: syncing ? scheme.onSurfaceVariant : scheme.primary,
-            ),
-          ),
+          child: syncing
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: scheme.primary,
+                  ),
+                ),
         );
       },
     );
