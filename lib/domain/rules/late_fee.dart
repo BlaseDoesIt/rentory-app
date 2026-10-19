@@ -1,5 +1,5 @@
 /// Late fees, ported from `rentory.order.line._compute_late_accrual` and
-/// `rentory.order._compute_late_fee`.
+/// `rentory.order._compute_late_fee` (Rentory 2.9.2).
 ///
 /// Accrued, not forward-looking: each unit is counted against the moment it
 /// actually came back, so checking the last item in stops the meter without
@@ -45,31 +45,58 @@ class LateAccrual {
   final double fee;
 }
 
-LateAccrual lineLateAccrual(
+/// How late one unit (or one untracked line's units) was.
+typedef UnitLateSpan = ({int lateDays, double units, bool stillOut});
+
+/// Ported from `rentory.order.line._rentory_unit_late_days` (Rentory 2.9.1).
+///
+/// A unit that is back is measured against its own check-in; one still out
+/// against [now]. Empty for a line that never left or whose order was
+/// cancelled.
+List<UnitLateSpan> unitLateDays(
   LateLineInput line, {
   required DateTime now,
   required bool orderCancelled,
 }) {
   final deadline = line.dateEnd;
   if (!line.rentalState.goneOut || deadline == null || orderCancelled) {
-    return LateAccrual.zero;
+    return const [];
   }
-
-  var unitDays = 0.0;
-  var worst = 0;
   final serials = line.serialReturnedAt;
   if (serials != null && serials.isNotEmpty) {
-    for (final back in serials) {
-      final days = daysOver(deadline, back ?? now);
-      unitDays += days;
-      if (days > worst) worst = days;
-    }
-  } else {
-    final back = line.rentalState == RentalState.returned
-        ? line.returnedAt
-        : null;
-    worst = daysOver(deadline, back ?? now);
-    unitDays = worst * line.quantity;
+    return [
+      for (final back in serials)
+        (
+          lateDays: daysOver(deadline, back ?? now),
+          units: 1.0,
+          stillOut: back == null,
+        ),
+    ];
+  }
+  // Untracked items and services: one date for however many units.
+  final back = line.rentalState == RentalState.returned
+      ? line.returnedAt
+      : null;
+  return [
+    (
+      lateDays: daysOver(deadline, back ?? now),
+      units: line.quantity,
+      stillOut: back == null,
+    ),
+  ];
+}
+
+LateAccrual lineLateAccrual(
+  LateLineInput line, {
+  required DateTime now,
+  required bool orderCancelled,
+}) {
+  final spans = unitLateDays(line, now: now, orderCancelled: orderCancelled);
+  var unitDays = 0.0;
+  var worst = 0;
+  for (final s in spans) {
+    unitDays += s.lateDays * s.units;
+    if (s.lateDays > worst) worst = s.lateDays;
   }
   return LateAccrual(unitDays, worst, line.priceDayNet * unitDays);
 }
@@ -108,14 +135,38 @@ OrderLateFee orderLateFee({
   final dailyRate = roundMoney(rawRate * discountRatio);
 
   if (manual && daysEdited) {
-    // Hand-set day count, billed on everything that actually left,
-    // including what is already back.
+    // Hand-set day count, applied unit by unit (Rentory 2.9.1/2.9.2): what
+    // is still out pays the typed count; a unit already back pays its own
+    // late days, never more than the count. Once everything is back, the
+    // units that came back last stand in for "still out", so a day can
+    // still be added to or shaved off a settled order.
     final days = daysOverride < 0 ? 0 : daysOverride;
-    final rate = lines
-        .where((l) => l.line.rentalState.goneOut)
-        .fold<double>(0, (a, l) => a + l.line.priceDayNet * l.line.quantity);
+    final spans = [
+      for (final l in lines)
+        for (final s in unitLateDays(
+          l.line,
+          now: now,
+          orderCancelled: orderCancelled,
+        ))
+          (price: l.line.priceDayNet, span: s),
+    ];
+    final anythingOut = spans.any((e) => e.span.stillOut);
+    final worst = spans.fold<int>(
+      0,
+      (a, e) => e.span.lateDays > a ? e.span.lateDays : a,
+    );
+    int charged(UnitLateSpan s) {
+      final paysCount = anythingOut ? s.stillOut : s.lateDays >= worst;
+      if (paysCount) return days;
+      return s.lateDays < days ? s.lateDays : days;
+    }
+
+    final raw = spans.fold<double>(
+      0,
+      (a, e) => a + e.price * e.span.units * charged(e.span),
+    );
     return OrderLateFee(
-      amount: roundMoney(rate * days * discountRatio),
+      amount: roundMoney(raw * discountRatio),
       daysBilled: days,
       dailyRate: dailyRate,
     );

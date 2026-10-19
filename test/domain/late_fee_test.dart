@@ -104,7 +104,7 @@ void main() {
       expect(f.wasLate, isTrue);
     });
 
-    test('manual day count bills everything that left', () {
+    test('manual day count on a settled order bills the last units back', () {
       final back = LateLineInput(
         rentalState: RentalState.returned,
         dateEnd: due,
@@ -124,6 +124,49 @@ void main() {
       expect(f.amount, 40);
       expect(f.daysBilled, 2);
       expect(f.dailyRate, 0);
+    });
+
+    group('hand-set days on a partial return (Rentory 2.9.1/2.9.2)', () {
+      // Two 50/day lights 3.5 days over: A back after 1 late day, B still out.
+      final now = DateTime.utc(2026, 10, 20, 12);
+      final end = now.subtract(const Duration(days: 3, hours: 12));
+      LateLineInput light({DateTime? back}) => LateLineInput(
+        rentalState: back == null ? RentalState.pickedUp : RentalState.returned,
+        dateEnd: end,
+        priceDayNet: 50,
+        quantity: 1,
+        returnedAt: back,
+      );
+      OrderLateFee fee({required DateTime aBack, int? days}) => orderLateFee(
+        lines: [
+          (line: light(back: aBack), qtyOutstanding: 0),
+          (line: light(), qtyOutstanding: 1),
+        ],
+        now: now,
+        orderCancelled: false,
+        discountRatio: 1,
+        manual: true,
+        daysEdited: days != null,
+        daysOverride: days ?? 0,
+      );
+      final early = end.add(const Duration(hours: 12));
+
+      test('accrued: each light pays its own days', () {
+        final f = fee(aBack: early);
+        expect(f.amount, 250); // A 1 day + B 4 days
+        expect(f.daysBilled, 4);
+      });
+
+      test('what came back early never pays the typed count', () {
+        expect(fee(aBack: early, days: 2).amount, 150); // A 1 + B 2
+        expect(fee(aBack: early, days: 6).amount, 350); // A 1 + B 6
+        expect(fee(aBack: early, days: 0).amount, 0);
+      });
+
+      test('back as late as the missing one: still only its own days', () {
+        expect(fee(aBack: now).amount, 400); // 4 days each
+        expect(fee(aBack: now, days: 6).amount, 500); // A 4 + B 6
+      });
     });
   });
 }
