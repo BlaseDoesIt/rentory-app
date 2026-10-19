@@ -1987,6 +1987,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tick what goes out now.'**
   String get chooseLinesOut;
+
+  /// No description provided for @server.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get server;
+
+  /// No description provided for @backendSupabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Rentory server'**
+  String get backendSupabase;
+
+  /// No description provided for @backendOdoo.
+  ///
+  /// In en, this message translates to:
+  /// **'Odoo'**
+  String get backendOdoo;
+
+  /// No description provided for @connectToOdoo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Odoo'**
+  String get connectToOdoo;
+
+  /// No description provided for @odooSignInHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with your own Odoo API key. In Odoo: your profile, Account Security, New API Key.'**
+  String get odooSignInHint;
+
+  /// No description provided for @odooUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Odoo address'**
+  String get odooUrl;
+
+  /// No description provided for @odooDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Database'**
+  String get odooDatabase;
+
+  /// No description provided for @odooApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get odooApiKey;
+
+  /// No description provided for @connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connect;
+
+  /// No description provided for @useSupabaseInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the Rentory server instead'**
+  String get useSupabaseInstead;
+
+  /// No description provided for @useOdooInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Odoo instead'**
+  String get useOdooInstead;
+
+  /// No description provided for @odooReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Odoo data is read only in the app for now. Make changes in Odoo.'**
+  String get odooReadOnly;
+
+  /// No description provided for @odooNoRentory.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected, but this database has no Rentory, or your Odoo user has no Rentory access.'**
+  String get odooNoRentory;
+
+  /// No description provided for @odooBadKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Odoo did not accept this API key or database.'**
+  String get odooBadKey;
+
+  /// No description provided for @odooFillAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in the address, database and API key.'**
+  String get odooFillAll;
+
+  /// No description provided for @connectedToOdoo.
+  ///
+  /// In en, this message translates to:
+  /// **'Odoo: {database}'**
+  String connectedToOdoo(String database);
 }
 
 class _AppLocalizationsDelegate

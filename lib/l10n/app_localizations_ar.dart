@@ -1064,4 +1064,57 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get chooseLinesOut => 'حدد ما يخرج الآن.';
+
+  @override
+  String get server => 'الخادم';
+
+  @override
+  String get backendSupabase => 'خادم Rentory';
+
+  @override
+  String get backendOdoo => 'Odoo';
+
+  @override
+  String get connectToOdoo => 'الاتصال بـ Odoo';
+
+  @override
+  String get odooSignInHint =>
+      'سجّل الدخول بمفتاح API الخاص بك في Odoo. في Odoo: ملفك الشخصي، أمان الحساب، مفتاح API جديد.';
+
+  @override
+  String get odooUrl => 'عنوان Odoo';
+
+  @override
+  String get odooDatabase => 'قاعدة البيانات';
+
+  @override
+  String get odooApiKey => 'مفتاح API';
+
+  @override
+  String get connect => 'اتصال';
+
+  @override
+  String get useSupabaseInstead => 'استخدام خادم Rentory بدلاً من ذلك';
+
+  @override
+  String get useOdooInstead => 'الاتصال بـ Odoo بدلاً من ذلك';
+
+  @override
+  String get odooReadOnly =>
+      'بيانات Odoo للقراءة فقط في التطبيق حالياً. أجرِ التعديلات في Odoo.';
+
+  @override
+  String get odooNoRentory =>
+      'تم الاتصال، لكن قاعدة البيانات هذه لا تحتوي على Rentory، أو أن مستخدمك في Odoo ليس لديه صلاحية Rentory.';
+
+  @override
+  String get odooBadKey => 'لم يقبل Odoo مفتاح API هذا أو قاعدة البيانات.';
+
+  @override
+  String get odooFillAll => 'أدخل العنوان وقاعدة البيانات ومفتاح API.';
+
+  @override
+  String connectedToOdoo(String database) {
+    return 'Odoo: $database';
+  }
 }

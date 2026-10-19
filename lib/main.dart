@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app.dart';
 import 'app/appearance.dart';
+import 'app/backend_choice.dart';
 import 'app/language.dart';
 import 'app/services.dart';
 import 'data/local/database.dart';
@@ -29,12 +30,14 @@ Future<void> main() async {
   }
   final language = await LanguageController.load();
   final appearance = await AppearanceController.load();
+  final backendChoice = await BackendController.load();
   runApp(
     RentoryApp(
       config: config,
       db: RentoryDatabase(),
       language: language,
       appearance: appearance,
+      backendChoice: backendChoice,
       startupError: startupError,
     ),
   );

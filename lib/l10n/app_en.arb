@@ -490,9 +490,21 @@
   "removeOrderPhotoQuestion": "Take this photo off the order? It stays in the gallery.",
   "photoNotFound": "This photo is no longer on the phone.",
   "scanAdded": "{name} added",
-  "@scanAdded": {"placeholders": {"name": {"type": "String"}}},
+  "@scanAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "scanAlready": "{name} is already on this order",
-  "@scanAlready": {"placeholders": {"name": {"type": "String"}}},
+  "@scanAlready": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "unbook": "Unbook",
   "deleteOrder": "Delete order",
   "deleteOrderQuestion": "Delete this order? If items ever went out on it, it is archived instead.",
@@ -508,5 +520,28 @@
   "newLocation": "New location",
   "trackingChangeHint": "Switching keeps its history. Units come back if you switch back.",
   "moveLine": "Drag to move",
-  "chooseLinesOut": "Tick what goes out now."
+  "chooseLinesOut": "Tick what goes out now.",
+  "server": "Server",
+  "backendSupabase": "Rentory server",
+  "backendOdoo": "Odoo",
+  "connectToOdoo": "Connect to Odoo",
+  "odooSignInHint": "Sign in with your own Odoo API key. In Odoo: your profile, Account Security, New API Key.",
+  "odooUrl": "Odoo address",
+  "odooDatabase": "Database",
+  "odooApiKey": "API key",
+  "connect": "Connect",
+  "useSupabaseInstead": "Use the Rentory server instead",
+  "useOdooInstead": "Connect to Odoo instead",
+  "odooReadOnly": "Odoo data is read only in the app for now. Make changes in Odoo.",
+  "odooNoRentory": "Connected, but this database has no Rentory, or your Odoo user has no Rentory access.",
+  "odooBadKey": "Odoo did not accept this API key or database.",
+  "odooFillAll": "Fill in the address, database and API key.",
+  "connectedToOdoo": "Odoo: {database}",
+  "@connectedToOdoo": {
+    "placeholders": {
+      "database": {
+        "type": "String"
+      }
+    }
+  }
 }

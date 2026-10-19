@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../app/backend_choice.dart';
 import '../../app/format.dart';
 import '../../app/widgets.dart';
 
@@ -108,6 +109,14 @@ class _SignInPageState extends State<SignInPage> {
                     onPressed: _busy ? null : _signUp,
                     child: Text(l.createAccount),
                   ),
+                  if (BackendScope.maybeOf(context) case final backend?)
+                    TextButton(
+                      key: const Key('use-odoo'),
+                      onPressed: _busy
+                          ? null
+                          : () => backend.choose(BackendKind.odoo),
+                      child: Text(l.useOdooInstead),
+                    ),
                   if (_message != null) ...[
                     const SizedBox(height: 12),
                     Text(_message!, textAlign: TextAlign.center),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/format.dart';
 import '../../app/appearance.dart';
+import '../../app/backend_choice.dart';
 import '../../app/language.dart';
 import '../../app/services.dart';
 import '../../app/widgets.dart';
@@ -41,6 +42,7 @@ class SettingsPage extends StatelessWidget {
     final language = LanguageScope.of(context);
     final appearance = AppearanceScope.of(context);
     final email = services.userEmail ?? '';
+    final backend = BackendScope.maybeOf(context);
     return ContentWidth(
       max: 720,
       child: ListView(
@@ -59,13 +61,47 @@ class SettingsPage extends StatelessWidget {
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Monogram(email.isEmpty ? '?' : email),
-                        title: Text(l.sharedWithTeam),
+                        title: Text(
+                          services.isOdoo
+                              ? l.connectedToOdoo(services.odooDatabase!)
+                              : l.sharedWithTeam,
+                        ),
                         subtitle: Text(l.signedInAs(email)),
                       ),
+                      if (services.isOdoo)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.visibility_outlined),
+                          title: Text(l.odooReadOnly),
+                        ),
                       if (sync != null) _SyncTile(sync),
                     ],
                   ),
                 ),
+                if (backend != null) ...[
+                  const SizedBox(height: 12),
+                  SectionCard(
+                    title: l.server,
+                    child: SegmentedButton<BackendKind>(
+                      key: const Key('backend'),
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: BackendKind.supabase,
+                          icon: const Icon(Icons.cloud_outlined),
+                          label: Text(l.backendSupabase),
+                        ),
+                        ButtonSegment(
+                          value: BackendKind.odoo,
+                          icon: const Icon(Icons.hub_outlined),
+                          label: Text(l.backendOdoo),
+                        ),
+                      ],
+                      selected: {backend.kind},
+                      onSelectionChanged: (s) => backend.choose(s.first),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 SectionCard(
                   title: l.appearance,
@@ -110,19 +146,21 @@ class SettingsPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                SectionCard(
-                  title: l.data,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.auto_awesome_outlined),
-                    title: Text(l.loadDemo),
-                    subtitle: Text(l.loadDemoHint),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _loadDemo(context),
+                if (!services.isOdoo) ...[
+                  const SizedBox(height: 12),
+                  SectionCard(
+                    title: l.data,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.auto_awesome_outlined),
+                      title: Text(l.loadDemo),
+                      subtitle: Text(l.loadDemoHint),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _loadDemo(context),
+                    ),
                   ),
-                ),
+                ],
                 if (services.onSignOut != null) ...[
                   const SizedBox(height: 20),
                   OutlinedButton.icon(

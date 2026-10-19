@@ -7,13 +7,17 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/local/database.dart';
+import '../data/odoo/odoo_client.dart';
+import '../data/odoo/odoo_sync.dart';
 import '../data/sync/sync_engine.dart';
+import '../features/auth/odoo_sign_in_page.dart';
 import '../features/assets/assets_page.dart';
 import '../features/auth/sign_in_page.dart';
 import '../features/orders/orders_page.dart';
 import '../features/scan/scan_page.dart';
 import '../features/settings/settings_page.dart';
 import 'appearance.dart';
+import 'backend_choice.dart';
 import 'connection_gate.dart';
 import 'format.dart';
 import 'language.dart';
@@ -32,6 +36,7 @@ class RentoryApp extends StatefulWidget {
     this.appearance,
     this.files = const AppFiles(),
     this.backend,
+    this.backendChoice,
     this.startupError,
   });
 
@@ -49,6 +54,9 @@ class RentoryApp extends StatefulWidget {
   @visibleForTesting
   final Backend? backend;
 
+  /// Rentory server or Odoo, from Settings.
+  final BackendController? backendChoice;
+
   /// Why the server connection couldn't be set up at launch, if it failed.
   final String? startupError;
 
@@ -61,6 +69,8 @@ class _RentoryAppState extends State<RentoryApp> {
       widget.language ?? LanguageController();
   late final AppearanceController _appearance =
       widget.appearance ?? AppearanceController();
+  late final BackendController _choice =
+      widget.backendChoice ?? BackendController();
 
   /// The signed-in session's sync engine, watched by [ConnectionGate].
   final _sync = ValueNotifier<SyncEngine?>(null);
@@ -83,9 +93,12 @@ class _RentoryAppState extends State<RentoryApp> {
       controller: _appearance,
       child: LanguageScope(
         controller: _language,
-        child: ListenableBuilder(
-          listenable: Listenable.merge([_language, _appearance]),
-          builder: (context, _) => _app(_language.value),
+        child: BackendScope(
+          controller: _choice,
+          child: ListenableBuilder(
+            listenable: Listenable.merge([_language, _appearance, _choice]),
+            builder: (context, _) => _app(_language.value),
+          ),
         ),
       ),
     );
@@ -103,7 +116,20 @@ class _RentoryAppState extends State<RentoryApp> {
         child: const AppShell(),
       );
     }
-    if (!widget.config.hasServer) return const _NotConfigured();
+    if (_choice.kind == BackendKind.odoo) {
+      final credentials = _choice.odoo;
+      if (credentials == null) return OdooSignInPage(backend: _choice);
+      return _OdooRoot(
+        key: ValueKey(
+          '${credentials.url}|${credentials.database}|${credentials.apiKey}',
+        ),
+        credentials: credentials,
+        choice: _choice,
+        files: widget.files,
+        sync: _sync,
+      );
+    }
+    if (!widget.config.hasServer) return _NotConfigured(choice: _choice);
     final error = widget.startupError;
     if (error != null) return _StartupFailed(error);
     return _SignedInRoot(db: widget.db, files: widget.files, sync: _sync);
@@ -149,7 +175,8 @@ class _RentoryAppState extends State<RentoryApp> {
 /// A build made without the server's address. Nothing works offline, so say
 /// so instead of opening an empty app.
 class _NotConfigured extends StatelessWidget {
-  const _NotConfigured();
+  const _NotConfigured({required this.choice});
+  final BackendController choice;
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +185,17 @@ class _NotConfigured extends StatelessWidget {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(l.notConfigured, textAlign: TextAlign.center),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l.notConfigured, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => choice.choose(BackendKind.odoo),
+                child: Text(l.useOdooInstead),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -260,7 +297,9 @@ class _SignedInRootState extends State<_SignedInRoot> {
   @override
   void dispose() {
     _auth.cancel();
-    _backend?.sync?.stop();
+    final engine = _backend?.sync;
+    engine?.stop();
+    _release(widget.sync, engine);
     super.dispose();
   }
 
@@ -274,6 +313,76 @@ class _SignedInRootState extends State<_SignedInRoot> {
       userEmail: _email,
       onSignOut: () => _client.auth.signOut(),
       files: widget.files,
+      child: const AppShell(),
+    );
+  }
+}
+
+/// Stops [ConnectionGate] watching [engine] once the tree is settled (it is
+/// an ancestor, so it can't be told while this subtree is being torn down).
+void _release(ValueNotifier<SyncEngine?> sync, SyncEngine? engine) {
+  if (engine == null) return;
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (sync.value == engine) sync.value = null;
+  });
+}
+
+/// Odoo mode: its own local database per Odoo database, filled from Odoo
+/// for as long as the sign-in lasts.
+class _OdooRoot extends StatefulWidget {
+  const _OdooRoot({
+    super.key,
+    required this.credentials,
+    required this.choice,
+    required this.files,
+    required this.sync,
+  });
+  final OdooCredentials credentials;
+  final BackendController choice;
+  final AppFiles files;
+  final ValueNotifier<SyncEngine?> sync;
+
+  @override
+  State<_OdooRoot> createState() => _OdooRootState();
+}
+
+class _OdooRootState extends State<_OdooRoot> {
+  late final RentoryDatabase _db = RentoryDatabase.odoo(
+    widget.credentials.database,
+  );
+  late final OdooClient _client = OdooClient(widget.credentials);
+  late final OdooSyncEngine _engine = OdooSyncEngine(_db, _client)
+    ..signOut = widget.choice.signOutOfOdoo;
+  late final Backend _backend = odooBackend(_db, _engine);
+
+  @override
+  void initState() {
+    super.initState();
+    _engine.start();
+    // The gate sits above this page: tell it after this frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.sync.value = _engine;
+    });
+  }
+
+  @override
+  void dispose() {
+    _engine.stop();
+    _release(widget.sync, _engine);
+    _client.close();
+    unawaited(_db.close());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Services(
+      db: _db,
+      backend: _backend,
+      userEmail: widget.choice.odooUserName,
+      onSignOut: widget.choice.signOutOfOdoo,
+      files: widget.files,
+      odooDatabase: widget.credentials.database,
       child: const AppShell(),
     );
   }

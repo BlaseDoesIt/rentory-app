@@ -104,6 +104,15 @@ class _Blocker extends StatelessWidget {
                         onPressed: engine.syncNow,
                         child: Text(l.tryAgain),
                       ),
+                    if (!working &&
+                        status.phase == SyncPhase.error &&
+                        engine.signOut != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: engine.signOut,
+                        child: Text(l.signOut),
+                      ),
+                    ],
                   ],
                 ),
               ),

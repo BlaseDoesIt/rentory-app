@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../data/local/database.dart';
 import '../data/local/local_repository.dart';
+import '../data/odoo/odoo_repository.dart';
+import '../data/odoo/odoo_sync.dart';
 import '../data/repository.dart';
 import '../data/sync/remote_store.dart';
 import '../data/sync/sync_engine.dart';
@@ -56,6 +58,7 @@ class Services extends InheritedWidget {
     required this.userEmail,
     required this.onSignOut,
     this.files = const AppFiles(),
+    this.odooDatabase,
     required super.child,
   });
 
@@ -71,6 +74,10 @@ class Services extends InheritedWidget {
   /// Where photos and signatures are saved before they upload.
   final AppFiles files;
 
+  /// Set in Odoo mode: the database the data comes from.
+  final String? odooDatabase;
+  bool get isOdoo => odooDatabase != null;
+
   static Services of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<Services>()!;
 
@@ -81,6 +88,7 @@ class Services extends InheritedWidget {
     userEmail: userEmail,
     onSignOut: onSignOut,
     files: files,
+    odooDatabase: odooDatabase,
     child: child,
   );
 
@@ -93,7 +101,9 @@ class Services extends InheritedWidget {
 
   @override
   bool updateShouldNotify(Services old) =>
-      backend != old.backend || userEmail != old.userEmail;
+      backend != old.backend ||
+      userEmail != old.userEmail ||
+      odooDatabase != old.odooDatabase;
 
   /// Through Supabase: bookings refereed by the server. The local database
   /// is only a cache of it.
@@ -107,6 +117,17 @@ class Services extends InheritedWidget {
     return Backend(repo, sync);
   }
 }
+
+/// Odoo mode: a local copy of the Odoo database's Rentory data, read only
+/// for now.
+Backend odooBackend(RentoryDatabase db, OdooSyncEngine engine) => Backend(
+  OdooReadOnlyRepository(
+    db,
+    gateway: const OdooBookingGateway(),
+    currentUserId: () => engine.currentUserId,
+  ),
+  engine,
+);
 
 /// The repository the screens use and, when shared, the engine syncing it.
 class Backend {

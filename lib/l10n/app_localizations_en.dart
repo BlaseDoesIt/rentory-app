@@ -1061,4 +1061,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chooseLinesOut => 'Tick what goes out now.';
+
+  @override
+  String get server => 'Server';
+
+  @override
+  String get backendSupabase => 'Rentory server';
+
+  @override
+  String get backendOdoo => 'Odoo';
+
+  @override
+  String get connectToOdoo => 'Connect to Odoo';
+
+  @override
+  String get odooSignInHint =>
+      'Sign in with your own Odoo API key. In Odoo: your profile, Account Security, New API Key.';
+
+  @override
+  String get odooUrl => 'Odoo address';
+
+  @override
+  String get odooDatabase => 'Database';
+
+  @override
+  String get odooApiKey => 'API key';
+
+  @override
+  String get connect => 'Connect';
+
+  @override
+  String get useSupabaseInstead => 'Use the Rentory server instead';
+
+  @override
+  String get useOdooInstead => 'Connect to Odoo instead';
+
+  @override
+  String get odooReadOnly =>
+      'Odoo data is read only in the app for now. Make changes in Odoo.';
+
+  @override
+  String get odooNoRentory =>
+      'Connected, but this database has no Rentory, or your Odoo user has no Rentory access.';
+
+  @override
+  String get odooBadKey => 'Odoo did not accept this API key or database.';
+
+  @override
+  String get odooFillAll => 'Fill in the address, database and API key.';
+
+  @override
+  String connectedToOdoo(String database) {
+    return 'Odoo: $database';
+  }
 }

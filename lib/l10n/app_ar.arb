@@ -314,5 +314,21 @@
   "newLocation": "موقع جديد",
   "trackingChangeHint": "التبديل يحتفظ بالسجل. تعود الوحدات إذا عدت إلى العد بالوحدة.",
   "moveLine": "اسحب للنقل",
-  "chooseLinesOut": "حدد ما يخرج الآن."
+  "chooseLinesOut": "حدد ما يخرج الآن.",
+  "server": "الخادم",
+  "backendSupabase": "خادم Rentory",
+  "backendOdoo": "Odoo",
+  "connectToOdoo": "الاتصال بـ Odoo",
+  "odooSignInHint": "سجّل الدخول بمفتاح API الخاص بك في Odoo. في Odoo: ملفك الشخصي، أمان الحساب، مفتاح API جديد.",
+  "odooUrl": "عنوان Odoo",
+  "odooDatabase": "قاعدة البيانات",
+  "odooApiKey": "مفتاح API",
+  "connect": "اتصال",
+  "useSupabaseInstead": "استخدام خادم Rentory بدلاً من ذلك",
+  "useOdooInstead": "الاتصال بـ Odoo بدلاً من ذلك",
+  "odooReadOnly": "بيانات Odoo للقراءة فقط في التطبيق حالياً. أجرِ التعديلات في Odoo.",
+  "odooNoRentory": "تم الاتصال، لكن قاعدة البيانات هذه لا تحتوي على Rentory، أو أن مستخدمك في Odoo ليس لديه صلاحية Rentory.",
+  "odooBadKey": "لم يقبل Odoo مفتاح API هذا أو قاعدة البيانات.",
+  "odooFillAll": "أدخل العنوان وقاعدة البيانات ومفتاح API.",
+  "connectedToOdoo": "Odoo: {database}"
 }
