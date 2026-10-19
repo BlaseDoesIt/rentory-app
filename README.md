@@ -11,7 +11,7 @@ Settings, one at a time, and the two never sync with each other:
 | Mode | Source of truth | Status |
 |---|---|---|
 | Supabase | Supabase, shared by the whole team. A local SQLite copy is only a cache | 1.0 |
-| Odoo | Odoo 19 over the JSON-2 API (`/json/2/<model>/<method>`), signed in with each person's own API key. Loads all Rentory data into its own local cache; read only for now. Writes, reports and invoices are next, see `HANDOFF.md` | read only |
+| Odoo | Odoo 19 over the JSON-2 API (`/json/2/<model>/<method>`), signed in with each person's own API key. Loads all Rentory data into its own local cache. Late days, the payment card, invoices, payments and printed documents go to Odoo; orders, lines and assets are still edited in Odoo, see `HANDOFF.md` | partly |
 
 Rentory never works offline. Until the first sync finishes, and whenever the
 server can't be reached, a "No connection" screen covers the app (open orders
@@ -48,6 +48,15 @@ folder (`rentory_photos/`) and recorded in `photos` with a `localPath`; the
 sync engine uploads them. Order photos (phones only) are different: they go to
 the phone's gallery (album "Rentory") and the local `order_photos` table,
 never to the server.
+
+## Late fees, invoices and documents
+
+The order page's Late fee card shows the late days counted and charged and
+what one more day costs; the days can be set by hand (0 waives the fee) and
+put back. In Odoo mode the order page also has an Invoices card (create,
+invoice and pay, post, register a payment) and a print button for Rentory's
+documents. Printing needs the small Odoo add-on in
+`odoo_addons/rentory_app_api/`, installed next to Rentory.
 
 ## Languages
 
