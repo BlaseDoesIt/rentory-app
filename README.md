@@ -11,7 +11,7 @@ Settings, one at a time, and the two never sync with each other:
 | Mode | Source of truth | Status |
 |---|---|---|
 | Supabase | Supabase, shared by the whole team. A local SQLite copy is only a cache | 1.0 |
-| Odoo | Odoo 19 over the JSON-2 API (`/json/2/<model>/<method>`), using the Rentory module's own actions. Reports through the `rentory_app_api` add-on; invoices and payments through Odoo Accounting | in progress, see `HANDOFF.md` |
+| Odoo | Odoo 19 over the JSON-2 API (`/json/2/<model>/<method>`), signed in with each person's own API key. Loads all Rentory data into its own local cache; read only for now. Writes, reports and invoices are next, see `HANDOFF.md` | read only |
 
 Rentory never works offline. Until the first sync finishes, and whenever the
 server can't be reached, a "No connection" screen covers the app (open orders
