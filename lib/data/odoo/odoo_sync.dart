@@ -19,8 +19,10 @@ class OdooIds {
 
   static const _uuid = Uuid();
 
-  String of(String model, int id) =>
-      _uuid.v5(Namespace.url.value, 'odoo:$database/$model/$id');
+  String of(String model, int id, [String? version]) => _uuid.v5(
+    Namespace.url.value,
+    'odoo:$database/$model/$id${version == null ? '' : '@$version'}',
+  );
 
   /// The id behind a many2one value (`[id, "name"]`, a bare id, or false).
   String? ref(String model, Object? value) {
@@ -606,6 +608,9 @@ class OdooSyncEngine extends SyncEngine {
       if (await _pullPartners(mapper.partners, refresh: reconcile)) {
         changed.add('customers');
       }
+      if ((reconcile || changed.contains('assets')) && await _assetImages()) {
+        changed.add('photos');
+      }
       // The profile row may predate this key's owner getting (or losing)
       // the manager group.
       await db.customStatement(
@@ -682,13 +687,42 @@ class OdooSyncEngine extends SyncEngine {
     return changed;
   }
 
+  /// Reads [odooIds] of [model] again, whatever their `write_date`: after a
+  /// change made from here, which can land within the second of the last
+  /// one and look already held.
+  Future<void> refetch(String model, List<int> odooIds) async {
+    final spec = rentorySpecs().firstWhere((s) => s.model == model);
+    final user = _user ??= await client.whoAmI();
+    final mapper = OdooMapper(ids, uid: user.id, role: _role ?? Role.office);
+    final rows = await client.searchRead(
+      model,
+      domain: [
+        ['id', 'in', odooIds],
+      ],
+      fields: [...spec.fields, 'write_date'],
+      activeTest: !spec.archivable,
+    );
+    if (rows.isEmpty) return;
+    await db.customStatement('PRAGMA foreign_keys = OFF');
+    try {
+      await _store(spec, rows, mapper, force: true);
+    } finally {
+      await db.customStatement('PRAGMA foreign_keys = ON');
+    }
+    db.notifyUpdates({
+      for (final t in db.allTables)
+        if (t.actualTableName == spec.table) TableUpdate.onTable(t),
+    });
+  }
+
   /// Writes a page of records. Ones already held at the same `write_date`
   /// are skipped, so a quiet database writes nothing.
   Future<bool> _store(
     OdooModelSpec spec,
     List<Map<String, Object?>> rows,
-    OdooMapper mapper,
-  ) async {
+    OdooMapper mapper, {
+    bool force = false,
+  }) async {
     final held = <String, String>{
       for (final r
           in await db
@@ -713,7 +747,7 @@ class OdooSyncEngine extends SyncEngine {
         final at = OdooMapper.when(r['write_date'])!;
         // Partners are gathered even from records already held.
         final values = spec.map(r, mapper);
-        if (held[id] == at) continue;
+        if (!force && held[id] == at) continue;
         changed = true;
         await _upsert(spec.table, {
           'id': id,
@@ -806,6 +840,73 @@ class OdooSyncEngine extends SyncEngine {
     return true;
   }
 
+  /// An asset's own picture (`image_1920`, the one Odoo shows on the asset)
+  /// becomes the first photo of its gallery. The row id carries the asset's
+  /// `write_date`, so a new picture is a new row and never a stale cache.
+  Future<bool> _assetImages() async {
+    final pictured = (await client.search(
+      'rentory.asset',
+      domain: const [
+        ['image_1920', '!=', false],
+      ],
+      activeTest: false,
+    )).toSet();
+    final assets = await db
+        .customSelect(
+          'SELECT id, odoo_id, updated_at FROM assets '
+          'WHERE odoo_id IS NOT NULL AND deleted = 0',
+        )
+        .get();
+    final want = <String, ({String assetId, int odooId, String at})>{
+      for (final a in assets)
+        if (pictured.contains(a.read<int>('odoo_id')))
+          ids.of(
+            'rentory.asset.image',
+            a.read<int>('odoo_id'),
+            a.read<String>('updated_at'),
+          ): (
+            assetId: a.read<String>('id'),
+            odooId: a.read<int>('odoo_id'),
+            at: a.read<String>('updated_at'),
+          ),
+    };
+    final have = {
+      for (final r
+          in await db
+              .customSelect(
+                'SELECT id FROM photos WHERE storage_path LIKE ?',
+                variables: [
+                  Variable.withString('${OdooRemoteStore.assetPrefix}%'),
+                ],
+              )
+              .get())
+        r.read<String>('id'),
+    };
+    final stale = have.difference(want.keys.toSet());
+    final fresh = want.keys.toSet().difference(have);
+    if (stale.isEmpty && fresh.isEmpty) return false;
+    await db.transaction(() async {
+      for (final id in stale) {
+        await db.customStatement('DELETE FROM photos WHERE id = ?', [id]);
+      }
+      for (final id in fresh) {
+        final a = want[id]!;
+        await _upsert('photos', {
+          'id': id,
+          'updated_at': a.at,
+          'deleted': 0,
+          'dirty': 0,
+          'asset_id': a.assetId,
+          // Before the unit galleries, which start at Odoo's sequence 10.
+          'sequence': -1000,
+          'storage_path': OdooRemoteStore.assetImagePath(a.odooId),
+          'taken_at': a.at,
+        });
+      }
+    });
+    return true;
+  }
+
   /// Customers are Odoo contacts. Only the ones Rentory records point at are
   /// copied; on a full pass the ones already held are refreshed too.
   Future<bool> _pullPartners(Set<int> wanted, {required bool refresh}) async {
@@ -858,9 +959,11 @@ class OdooRemoteStore implements RemoteStore {
   OdooRemoteStore(this.client);
   final OdooClient client;
 
-  static const _prefix = 'odoo/rentory.asset.photo/';
+  static const _photoPrefix = 'odoo/rentory.asset.photo/';
+  static const assetPrefix = 'odoo/rentory.asset/';
 
-  static String photoPath(int photoId) => '$_prefix$photoId.jpg';
+  static String photoPath(int photoId) => '$_photoPrefix$photoId.jpg';
+  static String assetImagePath(int assetId) => '$assetPrefix$assetId.jpg';
 
   static Never _readOnly() => throw RuleException.one(
     'Connected to Odoo: changes are not sent to Odoo yet.',
@@ -886,15 +989,13 @@ class OdooRemoteStore implements RemoteStore {
 
   @override
   Future<Uint8List> downloadPhoto(String path) async {
-    if (!path.startsWith(_prefix)) {
-      throw ArgumentError.value(path, 'path', 'Not an Odoo photo');
-    }
-    final id = int.parse(path.substring(_prefix.length).split('.').first);
-    final rows = await client.read(
-      'rentory.asset.photo',
-      [id],
-      fields: const ['image_1920'],
-    );
+    final (model, prefix) = path.startsWith(_photoPrefix)
+        ? ('rentory.asset.photo', _photoPrefix)
+        : path.startsWith(assetPrefix)
+        ? ('rentory.asset', assetPrefix)
+        : throw ArgumentError.value(path, 'path', 'Not an Odoo photo');
+    final id = int.parse(path.substring(prefix.length).split('.').first);
+    final rows = await client.read(model, [id], fields: const ['image_1920']);
     final data = rows.isEmpty ? null : rows.first['image_1920'];
     if (data is! String || data.isEmpty) {
       throw StateError('Photo $id has no picture in Odoo');

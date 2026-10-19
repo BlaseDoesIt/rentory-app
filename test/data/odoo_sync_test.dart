@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rentory/data/local/database.dart';
@@ -21,6 +22,7 @@ class FakeOdoo extends OdooClient {
 
   final records = <String, Map<int, Map<String, Object?>>>{};
   final calls = <String>[];
+  final writes = <Map<String, Object?>>[];
   bool manager = true;
 
   void put(String model, int id, Map<String, Object?> fields) {
@@ -38,6 +40,8 @@ class FakeOdoo extends OdooClient {
       final ok = switch (op) {
         '=' => have == value,
         '>=' => (have as String).compareTo(value as String) >= 0,
+        'in' => (value as List).contains(have),
+        '!=' => have != value && !(value == false && have == null),
         _ => throw UnimplementedError('$op'),
       };
       if (!ok) return false;
@@ -64,6 +68,14 @@ class FakeOdoo extends OdooClient {
         return {'uid': 13};
       case 'has_group':
         return manager;
+      case 'write':
+        writes.add(args);
+        for (final id in args['ids'] as List) {
+          records[model]![id]!
+            ..addAll(Map<String, Object?>.from(args['vals'] as Map))
+            ..['write_date'] = '2026-10-19 12:00:00';
+        }
+        return true;
       case 'search_count':
         return rows.length;
       case 'search':
@@ -103,7 +115,7 @@ void main() {
   late RentoryDatabase db;
   late FakeOdoo odoo;
   late OdooSyncEngine engine;
-  late OdooReadOnlyRepository repo;
+  late OdooRepository repo;
   const ids = OdooIds('test-db');
 
   setUp(() {
@@ -183,10 +195,9 @@ void main() {
         'create_date': '2026-09-01 10:00:00',
       });
     engine = OdooSyncEngine(db, odoo);
-    repo = OdooReadOnlyRepository(
+    repo = OdooRepository(
       db,
-      gateway: const OdooBookingGateway(),
-      currentUserId: () => engine.currentUserId,
+      engine,
       clock: () => DateTime.utc(2026, 10, 13, 9),
     );
   });
@@ -270,6 +281,51 @@ void main() {
     odoo.manager = false;
     await engine.pull();
     expect(await repo.currentRole(), Role.office);
+  });
+
+  test('late days and payment edits go to Odoo, then come back', () async {
+    await engine.pull();
+    final id = ids.of('rentory.order', 400);
+    await repo.setLateDays(id, 5);
+    expect(odoo.writes.last['vals'], {
+      'late_fee_manual': true,
+      'late_days_override': 5,
+      'late_days_edited': true,
+    });
+    var d = await repo.loadOrder(id);
+    expect(d.lateDaysCounted, 2);
+    expect(d.lateDaysCharged, 5);
+    expect(d.summary.amounts.lateFee, 250); // the unit still out: 5 x 50
+
+    await repo.setLateDays(id, null);
+    d = await repo.loadOrder(id);
+    expect(d.order.lateDaysEdited, isFalse);
+    expect(d.lateDaysCharged, 2);
+
+    await repo.updateOrder(id, const OrdersCompanion(amountPaid: Value(80)));
+    expect(odoo.writes.last['vals'], {'amount_paid': 80.0});
+    d = await repo.loadOrder(id);
+    expect(d.summary.amounts.paid, 80);
+
+    // Fields the app cannot send yet are refused, not dropped.
+    await expectLater(
+      repo.updateOrder(
+        id,
+        const OrdersCompanion(state: Value(OrderState.cancelled)),
+      ),
+      throwsA(isA<RuleException>()),
+    );
+  });
+
+  test('an asset picture in Odoo becomes its cover', () async {
+    odoo.put('rentory.asset', 10, {
+      ...odoo.records['rentory.asset']![10]!,
+      'image_1920': 'base64...',
+    });
+    await engine.pull();
+    final asset = await repo.loadAsset(ids.of('rentory.asset', 10));
+    expect(asset.photos.first.storagePath, OdooRemoteStore.assetImagePath(10));
+    expect(asset.photos, hasLength(2));
   });
 
   test('changes are refused in Odoo mode, order photos are not', () async {

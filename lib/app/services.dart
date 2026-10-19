@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../data/local/database.dart';
+import '../data/billing.dart';
 import '../data/local/local_repository.dart';
 import '../data/odoo/odoo_repository.dart';
 import '../data/odoo/odoo_sync.dart';
@@ -68,6 +69,9 @@ class Services extends InheritedWidget {
 
   /// Null only in tests.
   SyncEngine? get sync => backend.sync;
+
+  /// Invoices, payments and printed reports: Odoo mode only.
+  BillingService? get billing => backend.billing;
   final String? userEmail;
   final Future<void> Function()? onSignOut;
 
@@ -118,22 +122,17 @@ class Services extends InheritedWidget {
   }
 }
 
-/// Odoo mode: a local copy of the Odoo database's Rentory data, read only
-/// for now.
-Backend odooBackend(RentoryDatabase db, OdooSyncEngine engine) => Backend(
-  OdooReadOnlyRepository(
-    db,
-    gateway: const OdooBookingGateway(),
-    currentUserId: () => engine.currentUserId,
-  ),
-  engine,
-);
+/// Odoo mode: a local copy of the Odoo database's Rentory data. Changes
+/// that work so far go straight to Odoo, then the copy is pulled again.
+Backend odooBackend(RentoryDatabase db, OdooSyncEngine engine) =>
+    Backend(OdooRepository(db, engine), engine, billing: OdooBilling(engine));
 
 /// The repository the screens use and, when shared, the engine syncing it.
 class Backend {
-  const Backend(this.repo, this.sync);
+  const Backend(this.repo, this.sync, {this.billing});
   final RentoryRepository repo;
   final SyncEngine? sync;
+  final BillingService? billing;
 }
 
 /// Pictures kept on this device: condition photos and signatures. The sync

@@ -64,11 +64,21 @@ class OrderDetail {
     required this.summary,
     required this.lines,
     required this.lateDailyRate,
+    this.lateDaysCounted = 0,
+    this.lateDaysCharged = 0,
   });
 
   final OrderSummary summary;
   final List<LineView> lines;
+
+  /// What one more late day costs on what is still out.
   final double lateDailyRate;
+
+  /// The longest overrun of any unit, as the clock counts it.
+  final int lateDaysCounted;
+
+  /// The late days on the bill: the counted ones, or the number set by hand.
+  final int lateDaysCharged;
   Order get order => summary.order;
 }
 
@@ -258,6 +268,10 @@ abstract interface class RentoryRepository {
 
   /// Somebody went over what came back and confirmed its condition.
   Future<void> setItemsExamined(String orderId, bool examined);
+
+  /// Charges [days] late days by hand (0 waives the late fee), or with null
+  /// goes back to the days the order actually ran late.
+  Future<void> setLateDays(String orderId, int? days);
 
   // ------------------------------------------------- inventory
 

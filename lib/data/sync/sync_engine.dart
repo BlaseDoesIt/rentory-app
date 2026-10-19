@@ -114,6 +114,14 @@ class SyncEngine {
     }
   });
 
+  /// A pass that starts after now: waits out one already running, which may
+  /// have read the server before a change just made there.
+  Future<void> syncAfterChange() async {
+    final running = _running;
+    if (running != null) await running;
+    await syncNow();
+  }
+
   Future<void> _pass() async {
     _emit(SyncStatus(SyncPhase.syncing, lastSynced: _last.lastSynced));
     try {

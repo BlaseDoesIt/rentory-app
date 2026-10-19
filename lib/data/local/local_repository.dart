@@ -260,6 +260,16 @@ class LocalRepository implements RentoryRepository {
       ),
       lines: views,
       lateDailyRate: late.dailyRate,
+      lateDaysCounted: [
+        for (final v in views)
+          if (v.line.lineType != LineType.section)
+            lineLateAccrual(
+              _lateInput(v, order),
+              now: now,
+              orderCancelled: order.state == OrderState.cancelled,
+            ).worstDays,
+      ].fold(0, (a, b) => b > a ? b : a),
+      lateDaysCharged: late.daysBilled,
     );
   }
 
@@ -1891,6 +1901,23 @@ class LocalRepository implements RentoryRepository {
           dateEnd: Value(end?.toUtc()),
         ),
       ),
+    );
+  }
+
+  @override
+  Future<void> setLateDays(String orderId, int? days) {
+    if (days != null && days < 0) {
+      throw RuleException.one('Late days cannot be below zero.');
+    }
+    return updateOrder(
+      orderId,
+      days == null
+          ? const OrdersCompanion(lateDaysEdited: Value(false))
+          : OrdersCompanion(
+              lateFeeManual: const Value(true),
+              lateDaysEdited: const Value(true),
+              lateDaysOverride: Value(days),
+            ),
     );
   }
 
