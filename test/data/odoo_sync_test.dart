@@ -23,24 +23,41 @@ class FakeOdoo extends OdooClient {
   final records = <String, Map<int, Map<String, Object?>>>{};
   final calls = <String>[];
   final writes = <Map<String, Object?>>[];
+  final actions =
+      <({String model, String method, Map<String, Object?> args})>[];
+  var nextId = 9000;
   bool manager = true;
 
   void put(String model, int id, Map<String, Object?> fields) {
     records.putIfAbsent(model, () => {})[id] = {
       'id': id,
       'write_date': '2026-10-19 10:00:00',
-      ...fields,
+      ...stored(fields),
     };
   }
+
+  /// `[[6, 0, ids]]` is how a many2many is written; Odoo then reads ids.
+  static Map<String, Object?> stored(Map<String, Object?> vals) => {
+    for (final e in vals.entries)
+      e.key: switch (e.value) {
+        [[6, 0, final List<Object?> ids]] => ids,
+        final v => v,
+      },
+  };
 
   bool _matches(Map<String, Object?> r, List<Object?> domain) {
     for (final c in domain) {
       final [field, op, value] = c as List;
-      final have = r[field as String];
+      final raw = r[field as String];
+      // A many2one compares by its id, as in Odoo.
+      final have = raw is List && raw.length == 2 && raw.last is String
+          ? raw.first
+          : raw;
       final ok = switch (op) {
         '=' => have == value,
         '>=' => (have as String).compareTo(value as String) >= 0,
         'in' => (value as List).contains(have),
+        '>' => have is num && have > (value as num),
         '!=' => have != value && !(value == false && have == null),
         _ => throw UnimplementedError('$op'),
       };
@@ -68,11 +85,25 @@ class FakeOdoo extends OdooClient {
         return {'uid': 13};
       case 'has_group':
         return manager;
+      case 'create':
+        final vals = Map<String, Object?>.from(
+          (args['vals_list'] as List).single as Map,
+        );
+        final id = nextId++;
+        put(model, id, vals);
+        actions.add((model: model, method: method, args: args));
+        return [id];
+      case 'unlink':
+        for (final id in args['ids'] as List) {
+          records[model]?.remove(id);
+        }
+        actions.add((model: model, method: method, args: args));
+        return true;
       case 'write':
         writes.add(args);
         for (final id in args['ids'] as List) {
           records[model]![id]!
-            ..addAll(Map<String, Object?>.from(args['vals'] as Map))
+            ..addAll(stored(Map<String, Object?>.from(args['vals'] as Map)))
             ..['write_date'] = '2026-10-19 12:00:00';
         }
         return true;
@@ -107,7 +138,9 @@ class FakeOdoo extends OdooClient {
             _pick(r, args['fields'] as List),
         ];
     }
-    throw UnimplementedError('$model.$method');
+    // Rentory's actions: recorded, and answered like Odoo does.
+    actions.add((model: model, method: method, args: args));
+    return true;
   }
 }
 
@@ -148,6 +181,7 @@ void main() {
       })
       ..put('rentory.order', 400, {
         'name': 'RNT/2026/00400',
+        'company_id': [13, 'Rental House'],
         'partner_id': [7, 'Syria TV'],
         'date_start': '2026-10-10 08:00:00',
         'date_end': '2026-10-12 08:00:00',
@@ -317,6 +351,186 @@ void main() {
     );
   });
 
+  group('everyday writes', () {
+    String order400() => ids.of('rentory.order', 400);
+    String line4000() => ids.of('rentory.order.line', 4000);
+    ({String model, String method, Map<String, Object?> args}) last(
+      String method,
+    ) => odoo.actions.lastWhere((a) => a.method == method);
+    Map<Object?, Object?> created() =>
+        (last('create').args['vals_list'] as List).single as Map;
+
+    test(
+      'a new order needs a phone, then lands in the orders\' company',
+      () async {
+        await engine.pull();
+        await expectLater(
+          repo.createOrder(
+            customerName: 'Walk-in',
+            start: DateTime.utc(2026, 11, 1, 9),
+            end: DateTime.utc(2026, 11, 2, 9),
+          ),
+          throwsA(isA<RuleException>()),
+        );
+        final id = await repo.createOrder(
+          customerId: ids.of('res.partner', 7),
+          start: DateTime.utc(2026, 11, 1, 9),
+          end: DateTime.utc(2026, 11, 2, 9),
+        );
+        final create = last('create');
+        expect(create.model, 'rentory.order');
+        final vals = created();
+        expect(vals['partner_id'], 7);
+        expect(vals['customer_phone'], '+963 1');
+        expect(vals['date_start'], '2026-11-01 09:00:00');
+        // The orders' company, not the one the user has open in Odoo.
+        expect((create.args['context'] as Map)['allowed_company_ids'], [13]);
+        expect((await repo.loadOrder(id)).order.odooId, 9000);
+      },
+    );
+
+    test('lines carry the asset\'s name, price and units', () async {
+      await engine.pull();
+      await repo.addLine(
+        order400(),
+        type: LineType.asset,
+        assetId: ids.of('rentory.asset', 10),
+        serialIds: [ids.of('rentory.asset.serial', 101)],
+      );
+      final vals = created();
+      expect(vals['name'], 'Light');
+      expect(vals['price_day'], 50.0);
+      expect(vals['quantity'], 1.0);
+      expect(vals['serial_ids'], [
+        [
+          6,
+          0,
+          [101],
+        ],
+      ]);
+    });
+
+    test(
+      'a draft books as an order, a running one books its new lines',
+      () async {
+        await engine.pull();
+        await repo.book(order400());
+        expect(odoo.actions.where((a) => a.method == 'action_book'), isEmpty);
+        odoo.put('rentory.order', 400, {
+          ...odoo.records['rentory.order']![400]!,
+          'state': 'draft',
+          'write_date': '2026-10-19 13:00:00',
+        });
+        await engine.pull();
+        await repo.book(order400());
+        expect(last('action_book').args['ids'], [400]);
+      },
+    );
+
+    test(
+      'a forced pickup tells Odoo, which checks the manager group',
+      () async {
+        await engine.pull();
+        await repo.pickupAll(order400(), force: true);
+        final call = last('action_pickup_all');
+        expect(call.args['ids'], [400]);
+        expect((call.args['context'] as Map)['rentory_force'], true);
+        await repo.pickupAll(order400(), lineIds: [line4000()]);
+        expect(last('action_pickup').args['ids'], [4000]);
+      },
+    );
+
+    test('a return goes through the wizard, one row per unit', () async {
+      await engine.pull();
+      await repo.returnLine(
+        line4000(),
+        units: {
+          ids.of('rentory.asset.serial', 100): (
+            condition: Condition.damaged,
+            note: 'cracked',
+          ),
+        },
+      );
+      final wizard = odoo.actions.firstWhere(
+        (a) => a.model == 'rentory.return.wizard' && a.method == 'create',
+      );
+      final vals = (wizard.args['vals_list'] as List).single as Map;
+      expect(vals['order_id'], 400);
+      expect(vals['line_ids'], [
+        [
+          0,
+          0,
+          {
+            'order_line_id': 4000,
+            'serial_id': 100,
+            'selected': true,
+            'condition_in': 'damaged',
+            'condition_note': 'cracked',
+          },
+        ],
+      ]);
+      expect(last('action_confirm').model, 'rentory.return.wizard');
+    });
+
+    test(
+      'cancel, draft, documents and unbook use Rentory\'s actions',
+      () async {
+        await engine.pull();
+        await repo.cancel(order400());
+        await repo.resetToDraft(order400());
+        await repo.markDocumentsReturned(order400());
+        await repo.unbookLine(line4000());
+        expect(
+          [for (final a in odoo.actions) a.method],
+          containsAllInOrder([
+            'action_cancel',
+            'action_draft',
+            'action_documents_returned',
+            'action_reset_line',
+          ]),
+        );
+      },
+    );
+
+    test('an order with history is not deleted', () async {
+      await engine.pull();
+      await expectLater(
+        repo.removeOrder(order400()),
+        throwsA(isA<RuleException>()),
+      );
+      expect(odoo.actions.where((a) => a.method == 'unlink'), isEmpty);
+    });
+
+    test('assets: status through actions, unknown fields refused', () async {
+      await engine.pull();
+      final asset = ids.of('rentory.asset', 10);
+      await repo.setAssetStatus(asset, AssetManualState.maintenance);
+      expect(last('action_set_maintenance').args['ids'], [10]);
+      await repo.updateAsset(
+        asset,
+        const AssetsCompanion(rentalPriceDay: Value(60)),
+      );
+      expect(odoo.writes.last['vals'], {'rental_price_day': 60.0});
+      await repo.addUnits(asset, ['L-03']);
+      expect(created()['name'], 'L-03');
+      await expectLater(
+        repo.updateAsset(asset, const AssetsCompanion(imagePath: Value('x'))),
+        throwsA(isA<RuleException>()),
+      );
+    });
+
+    test('a new customer is an Odoo contact', () async {
+      await engine.pull();
+      final id = await repo.createCustomer(name: 'New Studio', phone: '123');
+      expect(created(), {
+        'name': 'New Studio',
+        'phone': '123',
+        'customer_rank': 1,
+      });
+      expect((await repo.customers(search: 'New')).single.id, id);
+    });
+  });
+
   test('an asset picture in Odoo becomes its cover', () async {
     odoo.put('rentory.asset', 10, {
       ...odoo.records['rentory.asset']![10]!,
@@ -328,11 +542,10 @@ void main() {
     expect(asset.photos, hasLength(2));
   });
 
-  test('changes are refused in Odoo mode, order photos are not', () async {
+  test('what Odoo cannot do is refused; order photos stay local', () async {
     await engine.pull();
     final id = ids.of('rentory.order', 400);
-    await expectLater(repo.book(id), throwsA(isA<RuleException>()));
-    await expectLater(repo.cancel(id), throwsA(isA<RuleException>()));
+    await expectLater(repo.restoreOrder(id), throwsA(isA<RuleException>()));
     await repo.addOrderPhoto(id, '/tmp/x.jpg');
     expect(await repo.orderPhotos(id), hasLength(1));
     final dirty = await db

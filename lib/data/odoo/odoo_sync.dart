@@ -605,6 +605,17 @@ class OdooSyncEngine extends SyncEngine {
         if (await _pullModel(spec, mapper)) changed.add(spec.table);
         if (reconcile && await _reconcile(spec)) changed.add(spec.table);
       }
+      if (reconcile) {
+        // Every customer, so new orders can pick any of them.
+        mapper.partners.addAll(
+          await client.search(
+            'res.partner',
+            domain: const [
+              ['customer_rank', '>', 0],
+            ],
+          ),
+        );
+      }
       if (await _pullPartners(mapper.partners, refresh: reconcile)) {
         changed.add('customers');
       }
@@ -691,29 +702,146 @@ class OdooSyncEngine extends SyncEngine {
   /// change made from here, which can land within the second of the last
   /// one and look already held.
   Future<void> refetch(String model, List<int> odooIds) async {
+    if (odooIds.isEmpty) return;
+    await _refetchWhere(model, [
+      ['id', 'in', odooIds],
+    ]);
+  }
+
+  /// [refetch] by a domain; returns the records read.
+  Future<List<Map<String, Object?>>> _refetchWhere(
+    String model,
+    List<Object?> domain,
+  ) async {
     final spec = rentorySpecs().firstWhere((s) => s.model == model);
     final user = _user ??= await client.whoAmI();
     final mapper = OdooMapper(ids, uid: user.id, role: _role ?? Role.office);
     final rows = await client.searchRead(
       model,
-      domain: [
-        ['id', 'in', odooIds],
-      ],
+      domain: domain,
       fields: [...spec.fields, 'write_date'],
       activeTest: !spec.archivable,
     );
-    if (rows.isEmpty) return;
+    if (rows.isEmpty) return rows;
     await db.customStatement('PRAGMA foreign_keys = OFF');
     try {
       await _store(spec, rows, mapper, force: true);
     } finally {
       await db.customStatement('PRAGMA foreign_keys = ON');
     }
+    if (mapper.partners.isNotEmpty) {
+      await _pullPartners(mapper.partners, refresh: false);
+    }
+    _notify({spec.table});
+    return rows;
+  }
+
+  void _notify(Set<String> tables) {
+    if (tables.contains('order_lines')) tables.add('order_line_serials');
+    if (tables.contains('orders')) tables.add('order_documents');
     db.notifyUpdates({
       for (final t in db.allTables)
-        if (t.actualTableName == spec.table) TableUpdate.onTable(t),
+        if (tables.contains(t.actualTableName)) TableUpdate.onTable(t),
     });
   }
+
+  /// An order after a change made from here: the order, its lines (and any
+  /// Odoo removed), their checks and every unit they hold or held.
+  Future<void> refetchOrder(int orderId) async {
+    final orderLocal = ids.of('rentory.order', orderId);
+    final before = await db
+        .customSelect(
+          'SELECT s.odoo_id FROM order_line_serials ls '
+          'JOIN order_lines l ON l.id = ls.line_id '
+          'JOIN serials s ON s.id = ls.serial_id '
+          'WHERE l.order_id = ? AND s.odoo_id IS NOT NULL',
+          variables: [Variable.withString(orderLocal)],
+        )
+        .get();
+    await refetch('rentory.order', [orderId]);
+    final lines = await _refetchWhere('rentory.order.line', [
+      ['order_id', '=', orderId],
+    ]);
+    // Lines Odoo no longer has (a reset, a removal).
+    final alive = {for (final l in lines) OdooIds.odooId(l['id'])};
+    final held = await db
+        .customSelect(
+          'SELECT id, odoo_id FROM order_lines '
+          'WHERE order_id = ? AND deleted = 0 AND odoo_id IS NOT NULL',
+          variables: [Variable.withString(orderLocal)],
+        )
+        .get();
+    await markGone('order_lines', [
+      for (final r in held)
+        if (!alive.contains(r.read<int>('odoo_id'))) r.read<String>('id'),
+    ]);
+    await _refetchWhere('rentory.return.check', [
+      ['order_id', '=', orderId],
+    ]);
+    final units = {
+      for (final r in before) r.read<int>('odoo_id'),
+      for (final l in lines)
+        for (final s in OdooMapper.many(l['serial_ids'])) (s as num).toInt(),
+    };
+    await refetch('rentory.asset.serial', units.toList());
+  }
+
+  /// An asset after a change made from here, with its units and pictures.
+  Future<void> refetchAsset(int assetId) async {
+    await refetch('rentory.asset', [assetId]);
+    await _refetchWhere('rentory.asset.serial', [
+      ['asset_id', '=', assetId],
+    ]);
+    await _refetchWhere('rentory.asset.photo', [
+      ['asset_id', '=', assetId],
+    ]);
+    if (await _assetImages()) _notify({'photos'});
+  }
+
+  Future<void> refetchPartners(List<int> partnerIds) async {
+    if (await _pullPartners(partnerIds.toSet(), refresh: false)) {
+      _notify({'customers'});
+    }
+  }
+
+  /// Rows Odoo deleted because of a change made from here.
+  Future<void> markGone(String table, List<String> localIds) async {
+    if (localIds.isEmpty) return;
+    for (final id in localIds) {
+      await db.customStatement('UPDATE "$table" SET deleted = 1 WHERE id = ?', [
+        id,
+      ]);
+    }
+    _notify({table});
+  }
+
+  /// The company Rentory's records live in (the latest order's). Writes run
+  /// there, or a new order would land in whichever company the user has
+  /// open in Odoo.
+  Future<int> rentoryCompany() async {
+    if (_company case final c?) return c;
+    final rows = await client.searchRead(
+      'rentory.order',
+      fields: const ['company_id'],
+      order: 'id desc',
+      limit: 1,
+    );
+    var company = rows.isEmpty
+        ? null
+        : OdooIds.odooId(rows.first['company_id']);
+    if (company == null) {
+      final user = _user ??= await client.whoAmI();
+      final me = await client.read(
+        'res.users',
+        [user.id],
+        fields: const ['company_id'],
+      );
+      company = OdooIds.odooId(me.first['company_id'])!;
+    }
+    return _company = company;
+  }
+
+  int? _company;
 
   /// Writes a page of records. Ones already held at the same `write_date`
   /// are skipped, so a quiet database writes nothing.
