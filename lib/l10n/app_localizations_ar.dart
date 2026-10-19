@@ -1117,4 +1117,99 @@ class AppLocalizationsAr extends AppLocalizations {
   String connectedToOdoo(String database) {
     return 'Odoo: $database';
   }
+
+  @override
+  String get lateDaysCounted => 'أيام التأخير المحسوبة';
+
+  @override
+  String get lateDaysCharged => 'أيام التأخير المفروضة';
+
+  @override
+  String get setByHand => 'مُعدّلة يدوياً';
+
+  @override
+  String get nextLateDay => 'كل يوم إضافي';
+
+  @override
+  String get changeLateDays => 'تعديل أيام التأخير';
+
+  @override
+  String get useCountedDays => 'استخدام الأيام المحسوبة';
+
+  @override
+  String get lateDaysHint => '0 يلغي رسوم التأخير.';
+
+  @override
+  String get invoices => 'الفواتير';
+
+  @override
+  String get noInvoices => 'لا توجد فاتورة بعد.';
+
+  @override
+  String get createInvoice => 'إنشاء فاتورة';
+
+  @override
+  String get invoiceAndPay => 'فوترة ودفع';
+
+  @override
+  String get postInvoice => 'ترحيل';
+
+  @override
+  String get registerPayment => 'تسجيل دفعة';
+
+  @override
+  String get amount => 'المبلغ';
+
+  @override
+  String get journal => 'اليومية';
+
+  @override
+  String get addToOrderPaid => 'أضفها أيضاً إلى المدفوع في الطلب';
+
+  @override
+  String get invoiceDraft => 'مسودة';
+
+  @override
+  String get invoiceCancelled => 'ملغاة';
+
+  @override
+  String get invoiceNotPaid => 'غير مدفوعة';
+
+  @override
+  String get invoicePartial => 'مدفوعة جزئياً';
+
+  @override
+  String get invoicePaid => 'مدفوعة';
+
+  @override
+  String get invoiceInPayment => 'قيد الدفع';
+
+  @override
+  String get printDocument => 'طباعة';
+
+  @override
+  String get gettingDocument => 'جارٍ جلب المستند من Odoo...';
+
+  @override
+  String get noJournals => 'لا توجد يومية نقد أو بنك في شركة هذه الفاتورة.';
+
+  @override
+  String createInvoiceQuestion(String amount) {
+    return 'إنشاء مسودة فاتورة في Odoo بمبلغ $amount؟';
+  }
+
+  @override
+  String invoiceAndPayQuestion(String amount) {
+    return 'إنشاء الفاتورة وترحيلها وتسجيل $amount مدفوعاً؟';
+  }
+
+  @override
+  String postInvoiceQuestion(String name) {
+    return 'ترحيل $name؟ يمكن بعدها تسجيل الدفعات عليها.';
+  }
+
+  @override
+  String savedTo(String path) {
+    return 'حُفظ في $path';
+  }
 }

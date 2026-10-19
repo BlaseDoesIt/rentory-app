@@ -1114,4 +1114,100 @@ class AppLocalizationsEn extends AppLocalizations {
   String connectedToOdoo(String database) {
     return 'Odoo: $database';
   }
+
+  @override
+  String get lateDaysCounted => 'Late days counted';
+
+  @override
+  String get lateDaysCharged => 'Late days charged';
+
+  @override
+  String get setByHand => 'Set by hand';
+
+  @override
+  String get nextLateDay => 'Each more day';
+
+  @override
+  String get changeLateDays => 'Change late days';
+
+  @override
+  String get useCountedDays => 'Use counted days';
+
+  @override
+  String get lateDaysHint => '0 waives the late fee.';
+
+  @override
+  String get invoices => 'Invoices';
+
+  @override
+  String get noInvoices => 'No invoice yet.';
+
+  @override
+  String get createInvoice => 'Create invoice';
+
+  @override
+  String get invoiceAndPay => 'Invoice & pay';
+
+  @override
+  String get postInvoice => 'Post';
+
+  @override
+  String get registerPayment => 'Register payment';
+
+  @override
+  String get amount => 'Amount';
+
+  @override
+  String get journal => 'Journal';
+
+  @override
+  String get addToOrderPaid => 'Also add it to the order\'s Paid';
+
+  @override
+  String get invoiceDraft => 'Draft';
+
+  @override
+  String get invoiceCancelled => 'Cancelled';
+
+  @override
+  String get invoiceNotPaid => 'Not paid';
+
+  @override
+  String get invoicePartial => 'Partly paid';
+
+  @override
+  String get invoicePaid => 'Paid';
+
+  @override
+  String get invoiceInPayment => 'In payment';
+
+  @override
+  String get printDocument => 'Print';
+
+  @override
+  String get gettingDocument => 'Getting the document from Odoo...';
+
+  @override
+  String get noJournals =>
+      'No cash or bank journal in this invoice\'s company.';
+
+  @override
+  String createInvoiceQuestion(String amount) {
+    return 'Raise a draft invoice in Odoo for $amount?';
+  }
+
+  @override
+  String invoiceAndPayQuestion(String amount) {
+    return 'Raise the invoice, post it and register $amount as paid?';
+  }
+
+  @override
+  String postInvoiceQuestion(String name) {
+    return 'Post $name? Payments can then be registered on it.';
+  }
+
+  @override
+  String savedTo(String path) {
+    return 'Saved to $path';
+  }
 }

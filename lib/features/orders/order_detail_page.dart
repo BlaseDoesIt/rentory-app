@@ -16,6 +16,7 @@ import '../scan/scan_page.dart';
 import 'customer_picker.dart';
 import 'line_sheets.dart';
 import 'order_photos.dart';
+import 'billing_widgets.dart';
 import 'order_widgets.dart';
 import 'pickup_page.dart';
 import 'return_page.dart';
@@ -154,6 +155,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     child: Tag(l.archived),
                   ),
                 OrderStatusPill(d.summary),
+                if (Services.of(context).billing case final billing?)
+                  IconButton(
+                    key: const Key('print-order'),
+                    tooltip: l.printDocument,
+                    icon: const Icon(Icons.print_outlined),
+                    onPressed: () => printOrder(context, billing, d),
+                  ),
                 PopupMenuButton<String>(
                   key: const Key('order-menu'),
                   onSelected: (v) => v == 'delete'
@@ -278,6 +286,20 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           ],
           const SizedBox(height: 12),
           _money(l, d),
+          if (LateFeeCard.shows(d)) ...[
+            const SizedBox(height: 12),
+            LateFeeCard(detail: d, busy: _busy, onAct: _act),
+          ],
+          if (Services.of(context).billing case final billing?
+              when InvoicesCard.shows(d)) ...[
+            const SizedBox(height: 12),
+            InvoicesCard(
+              key: ValueKey('invoices-${d.order.updatedAt}'),
+              billing: billing,
+              detail: d,
+              onChanged: _reload,
+            ),
+          ],
           const SizedBox(height: 12),
           _notes(l, o),
           if (draft) ...[

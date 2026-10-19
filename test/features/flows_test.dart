@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rentory/app/app.dart';
 import 'package:rentory/app/language.dart';
 import 'package:rentory/app/services.dart';
+import 'package:rentory/data/billing.dart';
 import 'package:rentory/data/local/database.dart';
 import 'package:rentory/data/local/local_repository.dart';
 import 'package:rentory/domain/enums.dart';
@@ -42,6 +43,65 @@ Future<void> typeInto(WidgetTester tester, Key key, String text) async {
   await tester.ensureVisible(f);
   await tester.enterText(f, text);
   await tester.pump();
+}
+
+/// Odoo's invoices, kept in memory.
+class FakeBilling implements BillingService {
+  final made = <InvoiceInfo>[];
+  final calls = <String>[];
+
+  @override
+  Future<List<InvoiceInfo>> invoices(String orderId) async => [...made];
+
+  @override
+  Future<void> createInvoice(String orderId) async {
+    calls.add('create');
+    made.add(
+      const InvoiceInfo(
+        id: 7,
+        name: '',
+        state: 'draft',
+        paymentState: 'not_paid',
+        amountTotal: 40,
+        amountResidual: 40,
+      ),
+    );
+  }
+
+  @override
+  Future<void> invoiceAndPay(String orderId) async => calls.add('pay all');
+
+  @override
+  Future<void> postInvoice(int invoiceId) async {
+    calls.add('post');
+    made[0] = const InvoiceInfo(
+      id: 7,
+      name: 'INV/0007',
+      state: 'posted',
+      paymentState: 'not_paid',
+      amountTotal: 40,
+      amountResidual: 40,
+    );
+  }
+
+  @override
+  Future<List<JournalInfo>> paymentJournals(int invoiceId) async => const [
+    JournalInfo(id: 3, name: 'Cash'),
+  ];
+
+  @override
+  Future<void> registerPayment(
+    int invoiceId, {
+    required double amount,
+    required int journalId,
+  }) async => calls.add('pay $amount in $journalId');
+
+  @override
+  Future<List<ReportInfo>> reports() async => const [];
+
+  @override
+  Future<Uint8List> reportPdf(String orderId, String reportName) async =>
+      Uint8List(0);
 }
 
 /// [ago] days back from today at 09:00 UTC (negative is the future).
@@ -639,6 +699,89 @@ void main() {
     expect(find.text('Call first'), findsOneWidget);
     final order = (await tester.runAsync(() => repo.loadOrder(o)))!.order;
     expect(order.note, 'Call first');
+    await done(tester);
+  });
+
+  testWidgets('late fee: days changed by hand, waived, then counted again', (
+    tester,
+  ) async {
+    final o = (await tester.runAsync(() async {
+      final o = await repo.createOrder(
+        customerName: 'Late',
+        start: day(-5),
+        end: day(-1),
+      );
+      await repo.addLine(o, type: LineType.asset, assetId: tripod);
+      await repo.book(o);
+      await repo.pickupAll(o, force: true);
+      return o;
+    }))!;
+    tall(tester);
+    await tester.pumpWidget(host(OrderDetailPage(orderId: o)));
+    await settle(tester);
+    expect(find.byKey(const Key('late-fee-card')), findsOneWidget);
+    final counted = (await tester.runAsync(() => repo.loadOrder(o)))!;
+    expect(counted.lateDaysCounted, greaterThan(0));
+    expect(counted.lateDaysCharged, counted.lateDaysCounted);
+
+    await tapOn(tester, find.byKey(const Key('change-late-days')));
+    await tester.enterText(find.byKey(const Key('late-days-field')), '0');
+    await tapOn(tester, find.byKey(const Key('late-days-save')));
+    expect(find.text('Set by hand'), findsOneWidget);
+    var d = (await tester.runAsync(() => repo.loadOrder(o)))!;
+    expect(d.lateDaysCharged, 0);
+    expect(d.summary.amounts.lateFee, 0);
+
+    await tapOn(tester, find.byKey(const Key('use-counted-days')));
+    d = (await tester.runAsync(() => repo.loadOrder(o)))!;
+    expect(d.order.lateDaysEdited, isFalse);
+    expect(d.lateDaysCharged, d.lateDaysCounted);
+    expect(d.summary.amounts.lateFee, greaterThan(0));
+    // No Odoo here: no invoices card and no print button.
+    expect(find.byKey(const Key('invoices-card')), findsNothing);
+    expect(find.byKey(const Key('print-order')), findsNothing);
+    await done(tester);
+  });
+
+  testWidgets('invoices: create, post, register a payment', (tester) async {
+    final o = (await tester.runAsync(bookedOrder))!;
+    final billing = FakeBilling();
+    tall(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: Services(
+          db: db,
+          backend: Backend(repo, null, billing: billing),
+          userEmail: null,
+          onSignOut: null,
+          files: AppFiles(root: files.path),
+          child: OrderDetailPage(orderId: o),
+        ),
+      ),
+    );
+    await settle(tester);
+    expect(find.byKey(const Key('print-order')), findsOneWidget);
+    expect(find.text('No invoice yet.'), findsOneWidget);
+
+    await tapOn(tester, find.byKey(const Key('create-invoice')));
+    await tapOn(tester, find.text('Yes'));
+    expect(billing.calls, ['create']);
+    await tapOn(tester, find.byKey(const Key('post-invoice-7')));
+    await tapOn(tester, find.text('Yes'));
+    expect(find.text('INV/0007'), findsOneWidget);
+
+    await tapOn(tester, find.byKey(const Key('pay-invoice-7')));
+    await tester.enterText(find.byKey(const Key('payment-amount')), '15');
+    await tapOn(tester, find.byKey(const Key('payment-save')));
+    expect(billing.calls.last, 'pay 15.0 in 3');
+    final order = (await tester.runAsync(() => repo.loadOrder(o)))!.order;
+    expect(order.amountPaid, 15);
     await done(tester);
   });
 

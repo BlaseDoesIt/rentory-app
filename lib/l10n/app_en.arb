@@ -543,5 +543,62 @@
         "type": "String"
       }
     }
+  },
+  "lateDaysCounted": "Late days counted",
+  "lateDaysCharged": "Late days charged",
+  "setByHand": "Set by hand",
+  "nextLateDay": "Each more day",
+  "changeLateDays": "Change late days",
+  "useCountedDays": "Use counted days",
+  "lateDaysHint": "0 waives the late fee.",
+  "invoices": "Invoices",
+  "noInvoices": "No invoice yet.",
+  "createInvoice": "Create invoice",
+  "invoiceAndPay": "Invoice & pay",
+  "postInvoice": "Post",
+  "registerPayment": "Register payment",
+  "amount": "Amount",
+  "journal": "Journal",
+  "addToOrderPaid": "Also add it to the order's Paid",
+  "invoiceDraft": "Draft",
+  "invoiceCancelled": "Cancelled",
+  "invoiceNotPaid": "Not paid",
+  "invoicePartial": "Partly paid",
+  "invoicePaid": "Paid",
+  "invoiceInPayment": "In payment",
+  "printDocument": "Print",
+  "gettingDocument": "Getting the document from Odoo...",
+  "noJournals": "No cash or bank journal in this invoice's company.",
+  "createInvoiceQuestion": "Raise a draft invoice in Odoo for {amount}?",
+  "@createInvoiceQuestion": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "invoiceAndPayQuestion": "Raise the invoice, post it and register {amount} as paid?",
+  "@invoiceAndPayQuestion": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "postInvoiceQuestion": "Post {name}? Payments can then be registered on it.",
+  "@postInvoiceQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "savedTo": "Saved to {path}",
+  "@savedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
   }
 }

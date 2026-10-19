@@ -2083,6 +2083,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Odoo: {database}'**
   String connectedToOdoo(String database);
+
+  /// No description provided for @lateDaysCounted.
+  ///
+  /// In en, this message translates to:
+  /// **'Late days counted'**
+  String get lateDaysCounted;
+
+  /// No description provided for @lateDaysCharged.
+  ///
+  /// In en, this message translates to:
+  /// **'Late days charged'**
+  String get lateDaysCharged;
+
+  /// No description provided for @setByHand.
+  ///
+  /// In en, this message translates to:
+  /// **'Set by hand'**
+  String get setByHand;
+
+  /// No description provided for @nextLateDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Each more day'**
+  String get nextLateDay;
+
+  /// No description provided for @changeLateDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Change late days'**
+  String get changeLateDays;
+
+  /// No description provided for @useCountedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Use counted days'**
+  String get useCountedDays;
+
+  /// No description provided for @lateDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'0 waives the late fee.'**
+  String get lateDaysHint;
+
+  /// No description provided for @invoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get invoices;
+
+  /// No description provided for @noInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoice yet.'**
+  String get noInvoices;
+
+  /// No description provided for @createInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invoice'**
+  String get createInvoice;
+
+  /// No description provided for @invoiceAndPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice & pay'**
+  String get invoiceAndPay;
+
+  /// No description provided for @postInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get postInvoice;
+
+  /// No description provided for @registerPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Register payment'**
+  String get registerPayment;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @journal.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get journal;
+
+  /// No description provided for @addToOrderPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Also add it to the order\'s Paid'**
+  String get addToOrderPaid;
+
+  /// No description provided for @invoiceDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get invoiceDraft;
+
+  /// No description provided for @invoiceCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get invoiceCancelled;
+
+  /// No description provided for @invoiceNotPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paid'**
+  String get invoiceNotPaid;
+
+  /// No description provided for @invoicePartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly paid'**
+  String get invoicePartial;
+
+  /// No description provided for @invoicePaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get invoicePaid;
+
+  /// No description provided for @invoiceInPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'In payment'**
+  String get invoiceInPayment;
+
+  /// No description provided for @printDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get printDocument;
+
+  /// No description provided for @gettingDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting the document from Odoo...'**
+  String get gettingDocument;
+
+  /// No description provided for @noJournals.
+  ///
+  /// In en, this message translates to:
+  /// **'No cash or bank journal in this invoice\'s company.'**
+  String get noJournals;
+
+  /// No description provided for @createInvoiceQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Raise a draft invoice in Odoo for {amount}?'**
+  String createInvoiceQuestion(String amount);
+
+  /// No description provided for @invoiceAndPayQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Raise the invoice, post it and register {amount} as paid?'**
+  String invoiceAndPayQuestion(String amount);
+
+  /// No description provided for @postInvoiceQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Post {name}? Payments can then be registered on it.'**
+  String postInvoiceQuestion(String name);
+
+  /// No description provided for @savedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to {path}'**
+  String savedTo(String path);
 }
 
 class _AppLocalizationsDelegate
