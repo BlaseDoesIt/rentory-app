@@ -51,3 +51,6 @@ app.*.map.json
 .env
 *.env
 dart_defines*.json
+
+# Internal working notes, kept local only
+HANDOFF.md

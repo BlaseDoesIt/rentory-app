@@ -6,7 +6,7 @@ import 'repository.dart';
 
 /// Demo inventory based on Rentory's own demo data (`demo/rentory_demo.xml`),
 /// plus made-up customers and a few orders in different states. No real
-/// Sokoon customers or records.
+/// customers or records.
 class DemoSeed {
   DemoSeed(this.db, this.repo);
   final RentoryDatabase db;
